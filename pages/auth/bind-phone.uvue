@@ -1,0 +1,256 @@
+<template>
+	<view class="page">
+		<image class="bg" src="/static/login/bg.png" mode="scaleToFill"></image>
+
+		<view class="nav-back" @click="handleBack">
+			<text class="nav-back-icon"><</text>
+		</view>
+
+		<view class="capsule">
+			<view class="capsule-left">
+				<view class="dot dot-small"></view>
+				<view class="dot dot-large"></view>
+			</view>
+			<view class="capsule-divider"></view>
+			<view class="capsule-ring">
+				<view class="capsule-ring-inner"></view>
+			</view>
+		</view>
+
+		<view class="header">
+			<text class="header-title">绑定手机</text>
+		</view>
+
+		<view class="form">
+			<view class="field">
+				<text class="label">手机号码</text>
+				<input class="input" type="number" maxlength="11" v-model="phone" placeholder="请输入您的手机号" />
+			</view>
+
+			<view class="field">
+				<text class="label">验证码</text>
+				<view class="code-row">
+					<input class="input code-input" type="number" maxlength="6" v-model="code" placeholder="请输入验证码" />
+					<view class="send-code-wrap">
+						<text class="send-code" @click="handleSendCode">获取验证码</text>
+					</view>
+				</view>
+			</view>
+
+			<button class="submit-btn" hover-class="submit-btn-hover" @click="handleSubmit">认证</button>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+const phone = ref('')
+const code = ref('')
+
+const handleBack = () => {
+	uni.navigateBack()
+}
+
+const handleSendCode = () => {
+	uni.showToast({
+		title: '验证码功能待接入',
+		icon: 'none'
+	})
+}
+
+const handleSubmit = () => {
+	uni.showToast({
+		title: '认证功能待接入',
+		icon: 'none'
+	})
+}
+</script>
+
+<style>
+.page {
+	flex: 1;
+	position: relative;
+	background-color: #f8f6f1;
+	overflow: hidden;
+}
+
+.bg {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 750rpx;
+	opacity: 0.98;
+}
+
+.nav-back {
+	position: absolute;
+	top: 72rpx;
+	left: 14rpx;
+	width: 52rpx;
+	height: 52rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 2;
+}
+
+.nav-back-icon {
+	font-size: 32rpx;
+	line-height: 32rpx;
+	color: #111111;
+	font-weight: 600;
+}
+
+.capsule {
+	position: absolute;
+	top: 54rpx;
+	right: 18rpx;
+	width: 168rpx;
+	height: 64rpx;
+	padding-left: 26rpx;
+	padding-right: 18rpx;
+	box-sizing: border-box;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	background-color: rgba(255, 255, 255, 0.94);
+	border-width: 2rpx;
+	border-style: solid;
+	border-color: #1b1b1b;
+	border-radius: 31rpx;
+}
+
+.capsule-left {
+	width: 34rpx;
+	height: 16rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.dot {
+	background-color: #111111;
+	border-radius: 50rpx;
+}
+
+.dot-small {
+	width: 8rpx;
+	height: 8rpx;
+}
+
+.dot-large {
+	width: 10rpx;
+	height: 10rpx;
+}
+
+.capsule-divider {
+	width: 2rpx;
+	height: 30rpx;
+	background-color: #1b1b1b;
+	opacity: 0.72;
+}
+
+.capsule-ring {
+	width: 30rpx;
+	height: 30rpx;
+	border-width: 2rpx;
+	border-style: solid;
+	border-color: #111111;
+	border-radius: 30rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.capsule-ring-inner {
+	width: 11rpx;
+	height: 11rpx;
+	background-color: #111111;
+	border-radius: 11rpx;
+}
+
+.header {
+	padding-top: 78rpx;
+	align-items: center;
+}
+
+.header-title {
+	font-size: 17px;
+	line-height: 24px;
+	color: #1b1b1b;
+	font-weight: 500;
+}
+
+.form {
+	padding-left: 70rpx;
+	padding-right: 70rpx;
+	padding-top: 114rpx;
+}
+
+.field {
+	margin-bottom: 52rpx;
+}
+
+.label {
+	font-size: 18px;
+	line-height: 28px;
+	color: #1b1b1b;
+	font-weight: 500;
+	margin-bottom: 18rpx;
+}
+
+.input {
+	height: 56rpx;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #dddddd;
+	font-size: 17px;
+	color: #1c1c1c;
+	padding-left: 0;
+	padding-right: 0;
+	background-color: transparent;
+}
+
+.code-row {
+	flex-direction: row;
+	align-items: flex-end;
+}
+
+.code-input {
+	flex: 1;
+}
+
+.send-code-wrap {
+	width: 170rpx;
+	height: 56rpx;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #dddddd;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.send-code {
+	font-size: 15px;
+	line-height: 22px;
+	color: #12ba7b;
+	font-weight: 600;
+	text-align: right;
+}
+
+.submit-btn {
+	margin-top: 40rpx;
+	width: 320rpx;
+	height: 58rpx;
+	line-height: 58rpx;
+	padding: 0;
+	align-self: center;
+	background-color: #08b16b;
+	color: #ffffff;
+	font-size: 18px;
+	font-weight: 500;
+	border-width: 0;
+	border-radius: 8rpx;
+}
+
+.submit-btn-hover {
+	opacity: 0.92;
+}
+</style>

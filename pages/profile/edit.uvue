@@ -1,0 +1,409 @@
+<template>
+	<view class="page">
+		<view class="nav-back" @click="handleBack">
+			<text class="nav-back-icon"><</text>
+		</view>
+
+		<view class="capsule">
+			<view class="capsule-left">
+				<view class="dot dot-small"></view>
+				<view class="dot dot-large"></view>
+			</view>
+			<view class="capsule-divider"></view>
+			<view class="capsule-ring">
+				<view class="capsule-ring-inner"></view>
+			</view>
+		</view>
+
+		<view class="header">
+			<text class="header-title">个人资料</text>
+		</view>
+
+		<scroll-view class="form-scroll" scroll-y="true">
+			<view class="form-card">
+				<view class="form-row avatar-row" @click="handleChooseAvatar">
+					<text class="row-label">头像</text>
+					<view class="row-right">
+						<image class="avatar" :src="form.avatarUrl" mode="aspectFill"></image>
+						<text class="row-arrow">></text>
+					</view>
+				</view>
+
+				<view class="form-row">
+					<text class="row-label">昵称</text>
+					<view class="row-right row-input-wrap">
+						<input class="row-input" v-model="form.nickname" placeholder="请输入昵称" />
+						<text class="row-arrow">></text>
+					</view>
+				</view>
+
+				<view class="form-row" @click="handleChooseGender">
+					<text class="row-label">性别</text>
+					<view class="row-right">
+						<text class="row-value">{{ form.gender || '请选择' }}</text>
+						<text class="row-arrow">></text>
+					</view>
+				</view>
+
+				<view class="form-row">
+					<text class="row-label">年龄</text>
+					<view class="row-right row-input-wrap">
+						<input class="row-input" type="number" maxlength="3" v-model="form.age" placeholder="请输入年龄" />
+						<text class="row-arrow">></text>
+					</view>
+				</view>
+
+				<view class="form-row" @click="handleChooseEducation">
+					<text class="row-label">文化程度</text>
+					<view class="row-right">
+						<text class="row-value">{{ form.education || '请选择' }}</text>
+						<text class="row-arrow">></text>
+					</view>
+				</view>
+
+				<view class="form-row">
+					<text class="row-label">执业类别</text>
+					<view class="row-right row-input-wrap">
+						<input class="row-input" v-model="form.practiceType" placeholder="请输入执业类别" />
+						<text class="row-arrow">></text>
+					</view>
+				</view>
+
+				<view class="form-row">
+					<text class="row-label">单位</text>
+					<view class="row-right row-input-wrap">
+						<input class="row-input" v-model="form.organization" placeholder="请输入单位" />
+						<text class="row-arrow">></text>
+					</view>
+				</view>
+
+				<view class="form-row">
+					<text class="row-label">联系电话</text>
+					<view class="row-right row-input-wrap">
+						<input class="row-input" type="number" maxlength="11" v-model="form.phone" placeholder="请输入联系电话" />
+						<text class="row-arrow">></text>
+					</view>
+				</view>
+			</view>
+
+			<view class="actions">
+				<button class="save-btn" hover-class="save-btn-hover" @click="handleSave">保存</button>
+				<text class="hint">当前先做前端本地保存，后端接口已预留</text>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script setup lang="uts">
+type ProfileForm = {
+	avatarUrl : string
+	nickname : string
+	gender : string
+	age : string
+	education : string
+	practiceType : string
+	organization : string
+	phone : string
+}
+
+const storageKey = 'profile_edit_form'
+const educationOptions = ['小学', '初中', '高中', '专科', '本科', '研究生', '博士']
+const genderOptions = ['男', '女']
+const defaultAvatar = '/static/mine/avatar.png'
+
+const form = ref<ProfileForm>({
+	avatarUrl: defaultAvatar,
+	nickname: '',
+	gender: '',
+	age: '',
+	education: '',
+	practiceType: '',
+	organization: '',
+	phone: ''
+})
+
+const handleBack = () => {
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack()
+		return
+	}
+	uni.navigateTo({
+		url: '/pages/mine/index'
+	})
+}
+
+const loadLocalProfile = () => {
+	const cached = uni.getStorageSync(storageKey)
+	if (cached != null && cached != '') {
+		form.value = cached as ProfileForm
+	}
+}
+
+const handleChooseAvatar = () => {
+	uni.chooseImage({
+		count: 1,
+		sizeType: ['compressed'],
+		sourceType: ['album'],
+		success: (res) => {
+			if (res.tempFilePaths != null && res.tempFilePaths.length > 0) {
+				form.value.avatarUrl = res.tempFilePaths[0]
+			}
+		}
+	})
+}
+
+const handleChooseGender = () => {
+	uni.showActionSheet({
+		itemList: genderOptions,
+		success: (res) => {
+			form.value.gender = genderOptions[res.tapIndex]
+		}
+	})
+}
+
+const handleChooseEducation = () => {
+	uni.showActionSheet({
+		itemList: educationOptions,
+		success: (res) => {
+			form.value.education = educationOptions[res.tapIndex]
+		}
+	})
+}
+
+const saveProfileLocal = () => {
+	uni.setStorageSync(storageKey, form.value)
+}
+
+const saveProfileRemote = () => {
+	// TODO: 后端接入后在这里提交接口
+	// POST /api/v1/app/users/profile
+}
+
+const handleSave = () => {
+	saveProfileLocal()
+	saveProfileRemote()
+	uni.showToast({
+		title: '已保存',
+		icon: 'success'
+	})
+}
+
+loadLocalProfile()
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+	position: relative;
+}
+
+.nav-back {
+	position: absolute;
+	top: 74rpx;
+	left: 12rpx;
+	width: 56rpx;
+	height: 56rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 2;
+}
+
+.nav-back-icon {
+	font-size: 34rpx;
+	line-height: 34rpx;
+	color: #111111;
+	font-weight: 600;
+}
+
+.capsule {
+	position: absolute;
+	top: 54rpx;
+	right: 18rpx;
+	width: 168rpx;
+	height: 64rpx;
+	padding-left: 26rpx;
+	padding-right: 18rpx;
+	box-sizing: border-box;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	background-color: rgba(255, 255, 255, 0.94);
+	border-width: 2rpx;
+	border-style: solid;
+	border-color: #1b1b1b;
+	border-radius: 31rpx;
+	z-index: 2;
+}
+
+.capsule-left {
+	width: 34rpx;
+	height: 16rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.dot {
+	background-color: #111111;
+	border-radius: 50rpx;
+}
+
+.dot-small {
+	width: 8rpx;
+	height: 8rpx;
+}
+
+.dot-large {
+	width: 10rpx;
+	height: 10rpx;
+}
+
+.capsule-divider {
+	width: 2rpx;
+	height: 30rpx;
+	background-color: #1b1b1b;
+	opacity: 0.72;
+}
+
+.capsule-ring {
+	width: 30rpx;
+	height: 30rpx;
+	border-width: 2rpx;
+	border-style: solid;
+	border-color: #111111;
+	border-radius: 30rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.capsule-ring-inner {
+	width: 11rpx;
+	height: 11rpx;
+	background-color: #111111;
+	border-radius: 11rpx;
+}
+
+.header {
+	padding-top: 78rpx;
+	align-items: center;
+}
+
+.header-title {
+	font-size: 19px;
+	line-height: 28px;
+	color: #1b1b1b;
+	font-weight: 600;
+}
+
+.form-scroll {
+	flex: 1;
+	padding-top: 30rpx;
+}
+
+.form-card {
+	margin-left: 12rpx;
+	margin-right: 12rpx;
+	background-color: #ffffff;
+}
+
+.form-row {
+	min-height: 98rpx;
+	padding-left: 24rpx;
+	padding-right: 18rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #f0f0f5;
+}
+
+.form-row:last-child {
+	border-bottom-width: 0;
+}
+
+.avatar-row {
+	min-height: 118rpx;
+}
+
+.row-label {
+	font-size: 20px;
+	line-height: 28px;
+	color: #222222;
+	font-weight: 600;
+}
+
+.row-right {
+	flex-direction: row;
+	align-items: center;
+	max-width: 430rpx;
+}
+
+.row-input-wrap {
+	flex: 1;
+	justify-content: flex-end;
+}
+
+.avatar {
+	width: 84rpx;
+	height: 84rpx;
+	border-radius: 42rpx;
+	margin-right: 16rpx;
+}
+
+.row-value {
+	font-size: 18px;
+	line-height: 26px;
+	color: #a8a8a8;
+	text-align: right;
+}
+
+.row-input {
+	flex: 1;
+	height: 52rpx;
+	font-size: 18px;
+	color: #8f8f8f;
+	text-align: right;
+	padding-left: 0;
+	padding-right: 8rpx;
+	background-color: transparent;
+}
+
+.row-arrow {
+	font-size: 22rpx;
+	line-height: 22rpx;
+	color: #c3c3c3;
+}
+
+.actions {
+	margin-top: 34rpx;
+	margin-left: 20rpx;
+	margin-right: 20rpx;
+	padding-bottom: 180rpx;
+}
+
+.save-btn {
+	height: 86rpx;
+	line-height: 86rpx;
+	background-color: #10b66d;
+	color: #ffffff;
+	font-size: 18px;
+	font-weight: 600;
+	border-radius: 12rpx;
+	border-width: 0;
+}
+
+.save-btn-hover {
+	opacity: 0.92;
+}
+
+.hint {
+	margin-top: 16rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #a6a6a6;
+	text-align: center;
+}
+</style>

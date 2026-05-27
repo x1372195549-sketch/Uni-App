@@ -1,0 +1,45 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://doc.dcloud.net.cn/uni-app-x/collocation/pagesjson.html
+		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/auth/bind-phone",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/mine/index",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/profile/edit",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F5F5FB"
+			}
+		},
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "uni-app x"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app x",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F7F4EE"
+	},
+	"uniIdRouter": {}
+}
