@@ -36,20 +36,6 @@
 			}
 		},
 		{
-			"path": "pages/video/index",
-			"style": {
-				"navigationStyle": "custom",
-				"backgroundColor": "#F7F4EE"
-			}
-		},
-		{
-			"path": "pages/video/detail",
-			"style": {
-				"navigationStyle": "custom",
-				"backgroundColor": "#F7F4EE"
-			}
-		},
-		{
 			"path": "pages/audio/index",
 			"style": {
 				"navigationStyle": "custom",

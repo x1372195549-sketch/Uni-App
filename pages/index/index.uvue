@@ -12,9 +12,6 @@
 					<text class="top-tab-text top-tab-text-active">首页</text>
 					<view class="top-tab-line"></view>
 				</view>
-				<view class="top-tab" @click="goVideoPage">
-					<text class="top-tab-text">视频</text>
-				</view>
 				<view class="top-tab" @click="goAudioPage">
 					<text class="top-tab-text">音频</text>
 				</view>
@@ -72,10 +69,6 @@
 </template>
 
 <script setup lang="uts">
-const goVideoPage = () => {
-	uni.navigateTo({ url: '/pages/video/index' })
-}
-
 const goAudioPage = () => {
 	uni.navigateTo({ url: '/pages/audio/index' })
 }
@@ -136,19 +129,19 @@ const goMinePage = () => {
 	position: relative;
 	z-index: 1;
 	height: 96rpx;
-	padding-left: 10rpx;
-	padding-right: 10rpx;
+	padding-left: 28rpx;
+	padding-right: 28rpx;
 	background-color: rgba(251, 250, 246, 0.78);
 	flex-direction: row;
 	align-items: flex-end;
-	justify-content: space-between;
+	justify-content: space-around;
 	border-bottom-width: 1px;
 	border-bottom-style: solid;
 	border-bottom-color: rgba(229, 234, 225, 0.95);
 }
 
 .top-tab {
-	flex: 1;
+	min-width: 88rpx;
 	height: 96rpx;
 	align-items: center;
 	justify-content: center;
