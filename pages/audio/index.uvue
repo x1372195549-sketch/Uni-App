@@ -11,12 +11,12 @@
 				<view class="top-tab" @click="goLearningPage">
 					<text class="top-tab-text">学习</text>
 				</view>
-				<view class="top-tab top-tab-active">
-					<text class="top-tab-text top-tab-text-active">视频</text>
-					<view class="top-tab-line"></view>
+				<view class="top-tab" @click="goVideoPage">
+					<text class="top-tab-text">视频</text>
 				</view>
-				<view class="top-tab" @click="goAudioPage">
-					<text class="top-tab-text">音频</text>
+				<view class="top-tab top-tab-active">
+					<text class="top-tab-text top-tab-text-active">音频</text>
+					<view class="top-tab-line"></view>
 				</view>
 				<view class="top-tab">
 					<text class="top-tab-text">直播</text>
@@ -32,18 +32,20 @@
 
 		<scroll-view class="content" scroll-y="true">
 			<view class="content-shell">
-				<view class="video-card" v-for="item in videoItems" :key="item.id" @click="goVideoDetail(item.id)">
-					<view class="video-cover-shell">
-						<view class="video-cover">
+				<view class="audio-card" v-for="item in audioItems" :key="item.id" @click="goAudioDetail(item.id)">
+					<view class="audio-cover-shell">
+						<view class="audio-cover">
 							<text class="cover-title">{{ item.coverTitle }}</text>
 							<text class="cover-subtitle">{{ item.coverSubtitle }}</text>
-							<view class="cover-avatar"></view>
+							<view class="audio-disc">
+								<view class="audio-disc-inner"></view>
+							</view>
 						</view>
 					</view>
 
-					<view class="video-info">
-						<text class="video-title">{{ item.title }}</text>
-						<view class="video-meta">
+					<view class="audio-info">
+						<text class="audio-title">{{ item.title }}</text>
+						<view class="audio-meta">
 							<text class="teacher-name">{{ item.teacher }}</text>
 							<view class="stats">
 								<text class="stat-text">浏览 {{ item.views }}</text>
@@ -81,7 +83,7 @@
 </template>
 
 <script setup lang="uts">
-type VideoItem = {
+type AudioItem = {
 	id : string
 	coverTitle : string
 	coverSubtitle : string
@@ -91,24 +93,24 @@ type VideoItem = {
 	comments : string
 }
 
-const videoItems = ref<VideoItem[]>([
+const audioItems = ref<AudioItem[]>([
 	{
 		id: '1',
-		coverTitle: '视频封面占位',
-		coverSubtitle: '第一条视频',
-		title: '视频标题占位一，点击进入视频详情页面',
+		coverTitle: '音频封面占位',
+		coverSubtitle: '第一条音频',
+		title: '音频标题占位一，点击进入音频详情页面',
 		teacher: '讲师名称占位',
-		views: '2000',
-		comments: '600'
+		views: '1200',
+		comments: '320'
 	},
 	{
 		id: '2',
-		coverTitle: '视频封面占位',
-		coverSubtitle: '第二条视频',
-		title: '视频标题占位二，点击进入视频详情页面',
+		coverTitle: '音频封面占位',
+		coverSubtitle: '第二条音频',
+		title: '音频标题占位二，点击进入音频详情页面',
 		teacher: '讲师名称占位',
-		views: '2000',
-		comments: '600'
+		views: '1200',
+		comments: '320'
 	}
 ])
 
@@ -118,21 +120,21 @@ const goLearningPage = () => {
 	})
 }
 
+const goVideoPage = () => {
+	uni.navigateTo({
+		url: '/pages/video/index'
+	})
+}
+
 const goMinePage = () => {
 	uni.navigateTo({
 		url: '/pages/mine/index'
 	})
 }
 
-const goAudioPage = () => {
+const goAudioDetail = (id : string) => {
 	uni.navigateTo({
-		url: '/pages/audio/index'
-	})
-}
-
-const goVideoDetail = (id : string) => {
-	uni.navigateTo({
-		url: '/pages/video/detail?id=' + id
+		url: '/pages/audio/detail?id=' + id
 	})
 }
 </script>
@@ -230,7 +232,7 @@ const goVideoDetail = (id : string) => {
 	padding-bottom: 40rpx;
 }
 
-.video-card {
+.audio-card {
 	margin-bottom: 22rpx;
 	border-radius: 20rpx;
 	background-color: #ffffff;
@@ -238,17 +240,17 @@ const goVideoDetail = (id : string) => {
 	box-shadow: 0 12rpx 24rpx rgba(110, 100, 80, 0.05);
 }
 
-.video-cover-shell {
+.audio-cover-shell {
 	padding: 0;
-	background-color: #f8ead8;
+	background-color: #f1e3cf;
 }
 
-.video-cover {
+.audio-cover {
 	height: 260rpx;
 	position: relative;
 	padding-left: 44rpx;
 	padding-top: 48rpx;
-	background-color: #f6e7d7;
+	background-color: #f4e4cf;
 }
 
 .cover-title {
@@ -265,32 +267,40 @@ const goVideoDetail = (id : string) => {
 	color: #8d6e4d;
 }
 
-.cover-avatar {
+.audio-disc {
 	position: absolute;
 	right: 54rpx;
-	bottom: 0;
+	top: 42rpx;
 	width: 148rpx;
-	height: 190rpx;
-	border-top-left-radius: 74rpx;
-	border-top-right-radius: 74rpx;
-	background-color: rgba(255, 255, 255, 0.7);
+	height: 148rpx;
+	border-radius: 74rpx;
+	background-color: rgba(255, 255, 255, 0.78);
+	align-items: center;
+	justify-content: center;
 }
 
-.video-info {
+.audio-disc-inner {
+	width: 40rpx;
+	height: 40rpx;
+	border-radius: 20rpx;
+	background-color: rgba(185, 112, 47, 0.35);
+}
+
+.audio-info {
 	padding-left: 24rpx;
 	padding-right: 24rpx;
 	padding-top: 22rpx;
 	padding-bottom: 22rpx;
 }
 
-.video-title {
+.audio-title {
 	font-size: 18px;
 	line-height: 28px;
 	color: #252525;
 	font-weight: 600;
 }
 
-.video-meta {
+.audio-meta {
 	margin-top: 18rpx;
 	flex-direction: row;
 	align-items: center;
