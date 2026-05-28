@@ -1,0 +1,275 @@
+export type LoginUserProfile = {
+	id : number
+	username : string
+	nickname : string
+	avatarUrl : string
+	lastLoginAt : string
+}
+
+export type LoginResponseData = {
+	tokenType : string
+	accessToken : string
+	expiresIn : number
+	user : LoginUserProfile | null
+}
+
+export type CurrentUser = {
+	id : number
+	username : string
+	nickname : string
+	avatarUrl : string
+	mobile : string
+	email : string
+	profileCompleted : boolean
+	studentId : number
+	certificationStatus : string
+}
+
+type ApiResponse<T> = {
+	success : boolean
+	code : string
+	message : string
+	data : T | null
+}
+
+const BASE_URL = 'http://127.0.0.1:18081'
+const ACCESS_TOKEN_KEY = 'app_auth_access_token'
+const TOKEN_TYPE_KEY = 'app_auth_token_type'
+const LOGIN_USER_KEY = 'app_auth_login_user'
+const CURRENT_USER_KEY = 'app_auth_current_user'
+
+function getTokenType() : string {
+	const tokenType = uni.getStorageSync(TOKEN_TYPE_KEY)
+	return typeof tokenType == 'string' ? tokenType : ''
+}
+
+function getAccessToken() : string {
+	const accessToken = uni.getStorageSync(ACCESS_TOKEN_KEY)
+	return typeof accessToken == 'string' ? accessToken : ''
+}
+
+function buildAuthorization() : string {
+	const tokenType = getTokenType()
+	const accessToken = getAccessToken()
+	if (accessToken == '') {
+		return ''
+	}
+	if (tokenType != '') {
+		return tokenType + ' ' + accessToken
+	}
+	return 'Bearer ' + accessToken
+}
+
+function saveLogin(data : LoginResponseData) {
+	uni.setStorageSync(ACCESS_TOKEN_KEY, data.accessToken)
+	uni.setStorageSync(TOKEN_TYPE_KEY, data.tokenType)
+	if (data.user != null) {
+		uni.setStorageSync(LOGIN_USER_KEY, data.user)
+	}
+}
+
+function saveCurrentUser(user : CurrentUser) {
+	uni.setStorageSync(CURRENT_USER_KEY, user)
+}
+
+export function clearAuthStorage() {
+	uni.removeStorageSync(ACCESS_TOKEN_KEY)
+	uni.removeStorageSync(TOKEN_TYPE_KEY)
+	uni.removeStorageSync(LOGIN_USER_KEY)
+	uni.removeStorageSync(CURRENT_USER_KEY)
+}
+
+export function getCurrentUserFromStorage() : CurrentUser | null {
+	const user = uni.getStorageSync(CURRENT_USER_KEY)
+	if (user == null || user == '') {
+		return null
+	}
+	return user as CurrentUser
+}
+
+export function hasToken() : boolean {
+	return getAccessToken() != ''
+}
+
+export function hasBoundMobile(user : CurrentUser | null) : boolean {
+	if (user == null) {
+		return false
+	}
+	return user.mobile != null && user.mobile != ''
+}
+
+function request<T>(
+	path : string,
+	method : string,
+	data : UTSJSONObject | null,
+	needAuth : boolean,
+	allowEmptyData : boolean,
+	success : (data : T) => void,
+	fail : (message : string) => void
+) {
+	const header : UTSJSONObject = {
+		'Content-Type': 'application/json'
+	}
+	if (needAuth) {
+		const authorization = buildAuthorization()
+		if (authorization == '') {
+			fail('登录状态已失效，请重新登录')
+			return
+		}
+		header['Authorization'] = authorization
+	}
+
+	uni.request({
+		url: BASE_URL + path,
+		method,
+		data,
+		header,
+		success: (res) => {
+			const statusCode = res.statusCode
+			const body = res.data as ApiResponse<T>
+			if (statusCode >= 200 && statusCode < 300 && body != null && body.success == true) {
+				if (body.data != null) {
+					success(body.data)
+					return
+				}
+				if (allowEmptyData) {
+					success(null as T)
+					return
+				}
+			}
+
+			if (body != null && body.message != null && body.message != '') {
+				fail(body.message)
+				return
+			}
+
+			fail('请求失败，请稍后重试')
+		},
+		fail: (err) => {
+			fail(err.errMsg != null && err.errMsg != '' ? err.errMsg : '网络请求失败')
+		}
+	})
+}
+
+export function fetchCurrentUser(
+	success : (user : CurrentUser) => void,
+	fail : (message : string) => void
+) {
+	request<CurrentUser>(
+		'/api/v1/app/auth/me',
+		'GET',
+		null,
+		true,
+		false,
+		(user) => {
+			saveCurrentUser(user)
+			success(user)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function loginByWechat(
+	nickname : string,
+	avatarUrl : string,
+	success : (user : CurrentUser) => void,
+	fail : (message : string) => void
+) {
+	// #ifdef MP-WEIXIN
+	uni.login({
+		success: (loginRes) => {
+			const requestBody : UTSJSONObject = {
+				code: loginRes.code,
+				nickname,
+				avatarUrl
+			}
+			request<LoginResponseData>(
+				'/api/v1/app/auth/wechat-login',
+				'POST',
+				requestBody,
+				false,
+				false,
+				(loginData) => {
+					saveLogin(loginData)
+					fetchCurrentUser(
+						(user) => {
+							success(user)
+						},
+						(message) => {
+							fail(message)
+						}
+					)
+				},
+				(message) => {
+					fail(message)
+				}
+			)
+		},
+		fail: (err) => {
+			fail(err.errMsg != null && err.errMsg != '' ? err.errMsg : '微信登录失败')
+		}
+	})
+	// #endif
+
+	// #ifndef MP-WEIXIN
+	fail('请在微信小程序环境中使用微信授权登录')
+	// #endif
+}
+
+export function sendSmsCode(
+	mobile : string,
+	success : () => void,
+	fail : (message : string) => void
+) {
+	const requestBody : UTSJSONObject = {
+		mobile
+	}
+	request<UTSJSONObject>(
+		'/api/v1/app/auth/sms-code',
+		'POST',
+		requestBody,
+		false,
+		true,
+		() => {
+			success()
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function loginBySms(
+	mobile : string,
+	code : string,
+	success : (user : CurrentUser) => void,
+	fail : (message : string) => void
+) {
+	const requestBody : UTSJSONObject = {
+		mobile,
+		code
+	}
+	request<LoginResponseData>(
+		'/api/v1/app/auth/sms-login',
+		'POST',
+		requestBody,
+		false,
+		false,
+		(loginData) => {
+			saveLogin(loginData)
+			fetchCurrentUser(
+				(user) => {
+					success(user)
+				},
+				(message) => {
+					fail(message)
+				}
+			)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}

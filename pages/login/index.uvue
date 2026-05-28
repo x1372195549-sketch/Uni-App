@@ -19,17 +19,52 @@
 				<text class="title">中医在线申请获得以下权限：</text>
 				<text class="subtitle">获得你的公开信息（昵称、头像等）</text>
 			</view>
-			<button class="auth-btn" hover-class="auth-btn-hover" @click="handleAuthorize">确认授权</button>
+			<button class="auth-btn" hover-class="auth-btn-hover" :disabled="isSubmitting" @click="handleAuthorize">
+				{{ isSubmitting ? '授权中...' : '确认授权' }}
+			</button>
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
-const handleAuthorize = () => {
-	uni.showToast({
-		title: '授权功能待接入',
-		icon: 'none'
+import { hasBoundMobile, loginByWechat } from '../../utils/auth.uts'
+
+const isSubmitting = ref(false)
+
+const redirectAfterLogin = (hasMobile : boolean) => {
+	if (hasMobile) {
+		uni.reLaunch({
+			url: '/pages/index/index'
+		})
+		return
+	}
+
+	uni.navigateTo({
+		url: '/pages/auth/bind-phone'
 	})
+}
+
+const handleAuthorize = () => {
+	if (isSubmitting.value) {
+		return
+	}
+
+	isSubmitting.value = true
+	loginByWechat(
+		'微信用户',
+		'',
+		(user) => {
+			isSubmitting.value = false
+			redirectAfterLogin(hasBoundMobile(user))
+		},
+		(message) => {
+			isSubmitting.value = false
+			uni.showToast({
+				title: message,
+				icon: 'none'
+			})
+		}
+	)
 }
 </script>
 

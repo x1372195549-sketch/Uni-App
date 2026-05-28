@@ -32,36 +32,128 @@
 				<view class="code-row">
 					<input class="input code-input" type="number" maxlength="6" v-model="code" placeholder="请输入验证码" />
 					<view class="send-code-wrap">
-						<text class="send-code" @click="handleSendCode">获取验证码</text>
+						<text class="send-code" @click="handleSendCode">
+							{{ countdown > 0 ? countdown + 's后重发' : (isSendingCode ? '发送中...' : '获取验证码') }}
+						</text>
 					</view>
 				</view>
 			</view>
 
-			<button class="submit-btn" hover-class="submit-btn-hover" @click="handleSubmit">认证</button>
+			<button class="submit-btn" hover-class="submit-btn-hover" :disabled="isSubmitting" @click="handleSubmit">
+				{{ isSubmitting ? '认证中...' : '认证' }}
+			</button>
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
+import { loginBySms, sendSmsCode } from '../../utils/auth.uts'
+
 const phone = ref('')
 const code = ref('')
+const isSendingCode = ref(false)
+const isSubmitting = ref(false)
+const countdown = ref(0)
+let timerId : number = 0
+
+const isValidPhone = (value : string) : boolean => {
+	return /^1\d{10}$/.test(value)
+}
+
+const isValidCode = (value : string) : boolean => {
+	return /^\d{4,8}$/.test(value)
+}
+
+const startCountdown = () => {
+	countdown.value = 60
+	timerId = setInterval(() => {
+		if (countdown.value <= 1) {
+			clearInterval(timerId)
+			timerId = 0
+			countdown.value = 0
+			return
+		}
+		countdown.value = countdown.value - 1
+	}, 1000)
+}
 
 const handleBack = () => {
 	uni.navigateBack()
 }
 
 const handleSendCode = () => {
-	uni.showToast({
-		title: '验证码功能待接入',
-		icon: 'none'
-	})
+	if (isSendingCode.value || countdown.value > 0) {
+		return
+	}
+
+	if (!isValidPhone(phone.value)) {
+		uni.showToast({
+			title: '请输入正确的手机号',
+			icon: 'none'
+		})
+		return
+	}
+
+	isSendingCode.value = true
+	sendSmsCode(
+		phone.value,
+		() => {
+			isSendingCode.value = false
+			startCountdown()
+			uni.showToast({
+				title: '验证码已发送',
+				icon: 'none'
+			})
+		},
+		(message) => {
+			isSendingCode.value = false
+			uni.showToast({
+				title: message,
+				icon: 'none'
+			})
+		}
+	)
 }
 
 const handleSubmit = () => {
-	uni.showToast({
-		title: '认证功能待接入',
-		icon: 'none'
-	})
+	if (isSubmitting.value) {
+		return
+	}
+
+	if (!isValidPhone(phone.value)) {
+		uni.showToast({
+			title: '请输入正确的手机号',
+			icon: 'none'
+		})
+		return
+	}
+
+	if (!isValidCode(code.value)) {
+		uni.showToast({
+			title: '请输入正确的验证码',
+			icon: 'none'
+		})
+		return
+	}
+
+	isSubmitting.value = true
+	loginBySms(
+		phone.value,
+		code.value,
+		() => {
+			isSubmitting.value = false
+			uni.reLaunch({
+				url: '/pages/index/index'
+			})
+		},
+		(message) => {
+			isSubmitting.value = false
+			uni.showToast({
+				title: message,
+				icon: 'none'
+			})
+		}
+	)
 }
 </script>
 
