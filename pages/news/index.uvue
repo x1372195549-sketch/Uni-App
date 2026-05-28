@@ -14,9 +14,8 @@
 				<view class="top-tab" @click="goVideoPage">
 					<text class="top-tab-text">视频</text>
 				</view>
-				<view class="top-tab top-tab-active">
-					<text class="top-tab-text top-tab-text-active">音频</text>
-					<view class="top-tab-line"></view>
+				<view class="top-tab" @click="goAudioPage">
+					<text class="top-tab-text">音频</text>
 				</view>
 				<view class="top-tab" @click="goLivePage">
 					<text class="top-tab-text">直播</text>
@@ -24,29 +23,33 @@
 				<view class="top-tab" @click="goCoursePage">
 					<text class="top-tab-text">课程</text>
 				</view>
-				<view class="top-tab" @click="goNewsPage">
-					<text class="top-tab-text">资讯</text>
+				<view class="top-tab top-tab-active">
+					<text class="top-tab-text top-tab-text-active">资讯</text>
+					<view class="top-tab-line"></view>
 				</view>
 			</view>
 		</view>
 
 		<scroll-view class="content" scroll-y="true">
 			<view class="content-shell">
-				<view class="audio-card" v-for="item in audioItems" :key="item.id" @click="goAudioDetail(item.id)">
-					<view class="audio-cover-shell">
-						<view class="audio-cover">
+				<view class="news-card" v-for="item in newsItems" :key="item.id" @click="goNewsDetail(item.id)">
+					<view class="news-cover-shell">
+						<view class="news-cover">
+							<text class="cover-badge">NEWS</text>
 							<text class="cover-title">{{ item.coverTitle }}</text>
 							<text class="cover-subtitle">{{ item.coverSubtitle }}</text>
-							<view class="audio-disc">
-								<view class="audio-disc-inner"></view>
+							<view class="cover-paper">
+								<view class="paper-line"></view>
+								<view class="paper-line"></view>
+								<view class="paper-line"></view>
 							</view>
 						</view>
 					</view>
 
-					<view class="audio-info">
-						<text class="audio-title">{{ item.title }}</text>
-						<view class="audio-meta">
-							<text class="teacher-name">{{ item.teacher }}</text>
+					<view class="news-info">
+						<text class="news-title">{{ item.title }}</text>
+						<view class="news-meta">
+							<text class="teacher-name">{{ item.source }}</text>
 							<view class="stats">
 								<text class="stat-text">浏览 {{ item.views }}</text>
 								<text class="stat-text">评论 {{ item.comments }}</text>
@@ -83,34 +86,34 @@
 </template>
 
 <script setup lang="uts">
-type AudioItem = {
+type NewsItem = {
 	id : string
 	coverTitle : string
 	coverSubtitle : string
 	title : string
-	teacher : string
+	source : string
 	views : string
 	comments : string
 }
 
-const audioItems = ref<AudioItem[]>([
+const newsItems = ref<NewsItem[]>([
 	{
 		id: '1',
-		coverTitle: '音频封面占位',
-		coverSubtitle: '第一条音频',
-		title: '音频标题占位一，点击进入音频详情页面',
-		teacher: '讲师名称占位',
-		views: '1200',
-		comments: '320'
+		coverTitle: '资讯封面占位',
+		coverSubtitle: '第一条资讯',
+		title: '资讯标题占位一，点击进入资讯详情页面',
+		source: '来源占位',
+		views: '3200',
+		comments: '530'
 	},
 	{
 		id: '2',
-		coverTitle: '音频封面占位',
-		coverSubtitle: '第二条音频',
-		title: '音频标题占位二，点击进入音频详情页面',
-		teacher: '讲师名称占位',
-		views: '1200',
-		comments: '320'
+		coverTitle: '资讯封面占位',
+		coverSubtitle: '第二条资讯',
+		title: '资讯标题占位二，点击进入资讯详情页面',
+		source: '来源占位',
+		views: '3200',
+		comments: '530'
 	}
 ])
 
@@ -122,6 +125,10 @@ const goVideoPage = () => {
 	uni.navigateTo({ url: '/pages/video/index' })
 }
 
+const goAudioPage = () => {
+	uni.navigateTo({ url: '/pages/audio/index' })
+}
+
 const goLivePage = () => {
 	uni.navigateTo({ url: '/pages/live/index' })
 }
@@ -130,16 +137,12 @@ const goCoursePage = () => {
 	uni.navigateTo({ url: '/pages/course/index' })
 }
 
-const goNewsPage = () => {
-	uni.navigateTo({ url: '/pages/news/index' })
-}
-
 const goMinePage = () => {
 	uni.navigateTo({ url: '/pages/mine/index' })
 }
 
-const goAudioDetail = (id : string) => {
-	uni.navigateTo({ url: '/pages/audio/detail?id=' + id })
+const goNewsDetail = (id : string) => {
+	uni.navigateTo({ url: '/pages/news/detail?id=' + id })
 }
 </script>
 
@@ -236,7 +239,7 @@ const goAudioDetail = (id : string) => {
 	padding-bottom: 40rpx;
 }
 
-.audio-card {
+.news-card {
 	margin-bottom: 22rpx;
 	border-radius: 20rpx;
 	background-color: #ffffff;
@@ -244,12 +247,12 @@ const goAudioDetail = (id : string) => {
 	box-shadow: 0 12rpx 24rpx rgba(110, 100, 80, 0.05);
 }
 
-.audio-cover-shell {
+.news-cover-shell {
 	padding: 0;
 	background-color: #f1e3cf;
 }
 
-.audio-cover {
+.news-cover {
 	height: 260rpx;
 	position: relative;
 	padding-left: 44rpx;
@@ -257,7 +260,22 @@ const goAudioDetail = (id : string) => {
 	background-color: #f4e4cf;
 }
 
+.cover-badge {
+	padding-left: 12rpx;
+	padding-right: 12rpx;
+	height: 34rpx;
+	line-height: 34rpx;
+	border-radius: 18rpx;
+	background-color: #bf5d68;
+	color: #ffffff;
+	font-size: 12px;
+	font-weight: 600;
+	align-self: flex-start;
+	text-align: center;
+}
+
 .cover-title {
+	margin-top: 16rpx;
 	font-size: 28px;
 	line-height: 38px;
 	color: #b9702f;
@@ -271,40 +289,41 @@ const goAudioDetail = (id : string) => {
 	color: #8d6e4d;
 }
 
-.audio-disc {
+.cover-paper {
 	position: absolute;
 	right: 54rpx;
 	top: 42rpx;
 	width: 148rpx;
 	height: 148rpx;
-	border-radius: 74rpx;
-	background-color: rgba(255, 255, 255, 0.78);
-	align-items: center;
-	justify-content: center;
+	border-radius: 18rpx;
+	background-color: rgba(255, 255, 255, 0.8);
+	padding-left: 22rpx;
+	padding-right: 22rpx;
+	padding-top: 30rpx;
 }
 
-.audio-disc-inner {
-	width: 40rpx;
-	height: 40rpx;
-	border-radius: 20rpx;
-	background-color: rgba(185, 112, 47, 0.35);
+.paper-line {
+	height: 12rpx;
+	border-radius: 8rpx;
+	background-color: rgba(185, 112, 47, 0.25);
+	margin-bottom: 18rpx;
 }
 
-.audio-info {
+.news-info {
 	padding-left: 24rpx;
 	padding-right: 24rpx;
 	padding-top: 22rpx;
 	padding-bottom: 22rpx;
 }
 
-.audio-title {
+.news-title {
 	font-size: 18px;
 	line-height: 28px;
 	color: #252525;
 	font-weight: 600;
 }
 
-.audio-meta {
+.news-meta {
 	margin-top: 18rpx;
 	flex-direction: row;
 	align-items: center;

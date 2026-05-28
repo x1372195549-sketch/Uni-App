@@ -9,7 +9,7 @@
 
 			<view class="top-tabs">
 				<view class="top-tab top-tab-active">
-					<text class="top-tab-text top-tab-text-active">学习</text>
+					<text class="top-tab-text top-tab-text-active">首页</text>
 					<view class="top-tab-line"></view>
 				</view>
 				<view class="top-tab" @click="goVideoPage">
@@ -18,14 +18,14 @@
 				<view class="top-tab" @click="goAudioPage">
 					<text class="top-tab-text">音频</text>
 				</view>
-				<view class="top-tab">
+				<view class="top-tab" @click="goLivePage">
 					<text class="top-tab-text">直播</text>
 				</view>
-				<view class="top-tab">
+				<view class="top-tab" @click="goCoursePage">
 					<text class="top-tab-text">课程</text>
 				</view>
-				<view class="top-tab">
-					<text class="top-tab-text">图书</text>
+				<view class="top-tab" @click="goNewsPage">
+					<text class="top-tab-text">资讯</text>
 				</view>
 			</view>
 		</view>
@@ -40,7 +40,7 @@
 				</view>
 
 				<view class="placeholder-card">
-					<text class="placeholder-title">学习页面</text>
+					<text class="placeholder-title">首页页面</text>
 					<text class="placeholder-desc">当前先保留页面结构，内容后续再补充。</text>
 				</view>
 			</view>
@@ -73,21 +73,27 @@
 
 <script setup lang="uts">
 const goVideoPage = () => {
-	uni.navigateTo({
-		url: '/pages/video/index'
-	})
+	uni.navigateTo({ url: '/pages/video/index' })
 }
 
 const goAudioPage = () => {
-	uni.navigateTo({
-		url: '/pages/audio/index'
-	})
+	uni.navigateTo({ url: '/pages/audio/index' })
+}
+
+const goLivePage = () => {
+	uni.navigateTo({ url: '/pages/live/index' })
+}
+
+const goCoursePage = () => {
+	uni.navigateTo({ url: '/pages/course/index' })
+}
+
+const goNewsPage = () => {
+	uni.navigateTo({ url: '/pages/news/index' })
 }
 
 const goMinePage = () => {
-	uni.navigateTo({
-		url: '/pages/mine/index'
-	})
+	uni.navigateTo({ url: '/pages/mine/index' })
 }
 </script>
 

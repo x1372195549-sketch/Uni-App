@@ -1,0 +1,315 @@
+<template>
+	<view class="page">
+		<view class="header">
+			<view class="back-btn" @click="goBack">
+				<text class="back-icon"><</text>
+			</view>
+			<text class="header-title">详情</text>
+		</view>
+
+		<scroll-view class="content" scroll-y="true">
+			<view class="hero">
+				<view class="hero-mask"></view>
+				<view class="paper-outer">
+					<view class="paper-line"></view>
+					<view class="paper-line"></view>
+					<view class="paper-line"></view>
+				</view>
+			</view>
+
+			<view class="tabs">
+				<view class="tab-item" @click="activeTab = 'intro'">
+					<text :class="activeTab == 'intro' ? 'tab-text tab-text-active' : 'tab-text'">简介</text>
+					<view v-if="activeTab == 'intro'" class="tab-line"></view>
+				</view>
+				<view class="tab-item" @click="activeTab = 'catalog'">
+					<text :class="activeTab == 'catalog' ? 'tab-text tab-text-active' : 'tab-text'">目录</text>
+					<view v-if="activeTab == 'catalog'" class="tab-line"></view>
+				</view>
+			</view>
+
+			<view v-if="activeTab == 'intro'" class="intro-panel">
+				<text class="media-title">资讯标题占位 {{ newsId }}</text>
+
+				<view class="stats-row">
+					<text class="stats-text">浏览 3200</text>
+					<text class="stats-text">收藏 1200</text>
+				</view>
+
+				<text class="section-title">资讯介绍</text>
+				<text class="intro-text">
+					这里是资讯简介占位内容。后续可接入真实的资讯简介、来源说明、发布时间、摘要与补充说明等文本信息。
+					这里保留为较长段落，用于模拟设计图中的正文排版效果，方便你后续直接替换成接口返回内容。
+				</text>
+			</view>
+
+			<view v-else class="catalog-panel">
+				<view class="catalog-row catalog-row-active" v-for="item in catalogItems" :key="item.id">
+					<text class="catalog-title">{{ item.title }}</text>
+					<text class="catalog-duration">{{ item.duration }}</text>
+				</view>
+
+				<view class="exam-wrap">
+					<button class="exam-btn" hover-class="exam-btn-hover">进入考核</button>
+				</view>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script setup lang="uts">
+type CatalogItem = {
+	id : string
+	title : string
+	duration : string
+}
+
+const newsId = ref('')
+const activeTab = ref('intro')
+
+const catalogItems = ref<CatalogItem[]>([
+	{ id: '1', title: '资讯1：目录标题占位一', duration: '10\'20"' },
+	{ id: '2', title: '资讯2：目录标题占位二', duration: '10\'20"' },
+	{ id: '3', title: '资讯3：目录标题占位三', duration: '10\'20"' },
+	{ id: '4', title: '资讯4：目录标题占位四', duration: '10\'20"' }
+])
+
+const goBack = () => {
+	uni.navigateBack()
+}
+
+const loadParams = () => {
+	const pages = getCurrentPages()
+	if (pages.length > 0) {
+		const current = pages[pages.length - 1]
+		if (current != null && current.options != null) {
+			if (current.options['id'] != null) {
+				newsId.value = current.options['id'] as string
+			}
+			if (current.options['tab'] != null) {
+				activeTab.value = current.options['tab'] as string
+			}
+		}
+	}
+}
+
+loadParams()
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f7f7f2;
+}
+
+.header {
+	height: 88rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	background-color: #f7f7f2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #ece9e1;
+	position: relative;
+}
+
+.back-btn {
+	position: absolute;
+	left: 16rpx;
+	top: 0;
+	bottom: 0;
+	width: 56rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.back-icon {
+	font-size: 30rpx;
+	line-height: 30rpx;
+	color: #222222;
+	font-weight: 600;
+}
+
+.header-title {
+	font-size: 20px;
+	line-height: 30px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.content {
+	flex: 1;
+}
+
+.hero {
+	height: 420rpx;
+	position: relative;
+	background-color: #d8c9b5;
+	align-items: center;
+	justify-content: center;
+}
+
+.hero-mask {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(60, 54, 44, 0.2);
+}
+
+.paper-outer {
+	width: 220rpx;
+	height: 220rpx;
+	border-radius: 20rpx;
+	background-color: rgba(255, 255, 255, 0.88);
+	padding-left: 30rpx;
+	padding-right: 30rpx;
+	padding-top: 44rpx;
+	z-index: 1;
+}
+
+.paper-line {
+	height: 14rpx;
+	border-radius: 8rpx;
+	background-color: rgba(185, 112, 47, 0.28);
+	margin-bottom: 22rpx;
+}
+
+.tabs {
+	height: 108rpx;
+	padding-left: 44rpx;
+	padding-right: 44rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	align-items: center;
+}
+
+.tab-item {
+	margin-right: 74rpx;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.tab-text {
+	font-size: 16px;
+	line-height: 24px;
+	color: #9f9f9f;
+}
+
+.tab-text-active {
+	color: #262626;
+	font-weight: 600;
+}
+
+.tab-line {
+	margin-top: 10rpx;
+	width: 58rpx;
+	height: 6rpx;
+	border-radius: 4rpx;
+	background-color: #b85d69;
+}
+
+.intro-panel {
+	padding-left: 46rpx;
+	padding-right: 46rpx;
+	padding-top: 34rpx;
+	padding-bottom: 48rpx;
+	background-color: #ffffff;
+}
+
+.media-title {
+	font-size: 18px;
+	line-height: 28px;
+	color: #242424;
+	font-weight: 600;
+	text-align: center;
+}
+
+.stats-row {
+	margin-top: 34rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.stats-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #9e9e9e;
+	margin-left: 28rpx;
+}
+
+.section-title {
+	margin-top: 38rpx;
+	font-size: 15px;
+	line-height: 22px;
+	color: #2b2b2b;
+}
+
+.intro-text {
+	margin-top: 28rpx;
+	font-size: 12px;
+	line-height: 24px;
+	color: #8f8f8f;
+}
+
+.catalog-panel {
+	padding-top: 6rpx;
+	padding-bottom: 60rpx;
+	background-color: #ffffff;
+	min-height: 860rpx;
+}
+
+.catalog-row {
+	min-height: 106rpx;
+	padding-left: 28rpx;
+	padding-right: 28rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.catalog-row-active {
+	background-color: #f3f3f3;
+}
+
+.catalog-title {
+	flex: 1;
+	font-size: 14px;
+	line-height: 22px;
+	color: #353535;
+	padding-right: 20rpx;
+}
+
+.catalog-duration {
+	font-size: 12px;
+	line-height: 18px;
+	color: #a9a9a9;
+}
+
+.exam-wrap {
+	margin-top: 150rpx;
+	align-items: center;
+}
+
+.exam-btn {
+	width: 300rpx;
+	height: 84rpx;
+	line-height: 84rpx;
+	border-radius: 18rpx;
+	background-color: #b66572;
+	color: #ffffff;
+	font-size: 18px;
+	font-weight: 600;
+	border-width: 0;
+}
+
+.exam-btn-hover {
+	opacity: 0.92;
+}
+</style>
