@@ -5,12 +5,12 @@
 		</view>
 
 		<view class="top-tabs">
-			<view class="top-tab top-tab-active">
-				<text class="top-tab-text top-tab-text-active">学习</text>
-				<view class="top-tab-line"></view>
+			<view class="top-tab" @click="goLearningPage">
+				<text class="top-tab-text">学习</text>
 			</view>
-			<view class="top-tab" @click="goVideoPage">
-				<text class="top-tab-text">视频</text>
+			<view class="top-tab top-tab-active">
+				<text class="top-tab-text top-tab-text-active">视频</text>
+				<view class="top-tab-line"></view>
 			</view>
 			<view class="top-tab">
 				<text class="top-tab-text">音频</text>
@@ -28,9 +28,25 @@
 
 		<scroll-view class="content" scroll-y="true">
 			<view class="content-shell">
-				<view class="placeholder-card">
-					<text class="placeholder-title">学习页面</text>
-					<text class="placeholder-desc">当前先保留页面结构，内容后续再补充。</text>
+				<view class="video-card" v-for="item in videoItems" :key="item.id" @click="goVideoDetail(item.id)">
+					<view class="video-cover-shell">
+						<view class="video-cover">
+							<text class="cover-title">{{ item.coverTitle }}</text>
+							<text class="cover-subtitle">{{ item.coverSubtitle }}</text>
+							<view class="cover-avatar"></view>
+						</view>
+					</view>
+
+					<view class="video-info">
+						<text class="video-title">{{ item.title }}</text>
+						<view class="video-meta">
+							<text class="teacher-name">{{ item.teacher }}</text>
+							<view class="stats">
+								<text class="stat-text">浏览 {{ item.views }}</text>
+								<text class="stat-text">评论 {{ item.comments }}</text>
+							</view>
+						</view>
+					</view>
 				</view>
 			</view>
 		</scroll-view>
@@ -61,15 +77,52 @@
 </template>
 
 <script setup lang="uts">
-const goVideoPage = () => {
-	uni.navigateTo({
-		url: '/pages/video/index'
+type VideoItem = {
+	id : string
+	coverTitle : string
+	coverSubtitle : string
+	title : string
+	teacher : string
+	views : string
+	comments : string
+}
+
+const videoItems = ref<VideoItem[]>([
+	{
+		id: '1',
+		coverTitle: '视频封面占位',
+		coverSubtitle: '第一条视频',
+		title: '视频标题占位一，点击进入视频详情页面',
+		teacher: '讲师名称占位',
+		views: '2000',
+		comments: '600'
+	},
+	{
+		id: '2',
+		coverTitle: '视频封面占位',
+		coverSubtitle: '第二条视频',
+		title: '视频标题占位二，点击进入视频详情页面',
+		teacher: '讲师名称占位',
+		views: '2000',
+		comments: '600'
+	}
+])
+
+const goLearningPage = () => {
+	uni.reLaunch({
+		url: '/pages/index/index'
 	})
 }
 
 const goMinePage = () => {
 	uni.navigateTo({
 		url: '/pages/mine/index'
+	})
+}
+
+const goVideoDetail = (id : string) => {
+	uni.navigateTo({
+		url: '/pages/video/detail?id=' + id
 	})
 }
 </script>
@@ -153,32 +206,89 @@ const goMinePage = () => {
 	padding-bottom: 40rpx;
 }
 
-.placeholder-card {
-	min-height: 420rpx;
+.video-card {
+	margin-bottom: 22rpx;
 	border-radius: 20rpx;
 	background-color: #ffffff;
-	border-width: 1px;
-	border-style: dashed;
-	border-color: #ddd7cc;
-	align-items: center;
-	justify-content: center;
-	padding-left: 32rpx;
-	padding-right: 32rpx;
+	overflow: hidden;
+	box-shadow: 0 12rpx 24rpx rgba(110, 100, 80, 0.05);
 }
 
-.placeholder-title {
-	font-size: 22px;
-	line-height: 32px;
-	color: #2f2f2f;
+.video-cover-shell {
+	padding: 0;
+	background-color: #f8ead8;
+}
+
+.video-cover {
+	height: 300rpx;
+	position: relative;
+	padding-left: 44rpx;
+	padding-top: 56rpx;
+	background-color: #f6e7d7;
+}
+
+.cover-title {
+	font-size: 30px;
+	line-height: 40px;
+	color: #b9702f;
 	font-weight: 600;
-	margin-bottom: 16rpx;
 }
 
-.placeholder-desc {
-	font-size: 14px;
+.cover-subtitle {
+	margin-top: 18rpx;
+	font-size: 20px;
+	line-height: 28px;
+	color: #8d6e4d;
+}
+
+.cover-avatar {
+	position: absolute;
+	right: 58rpx;
+	bottom: 0;
+	width: 170rpx;
+	height: 220rpx;
+	border-top-left-radius: 90rpx;
+	border-top-right-radius: 90rpx;
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+.video-info {
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+	padding-top: 22rpx;
+	padding-bottom: 22rpx;
+}
+
+.video-title {
+	font-size: 18px;
+	line-height: 28px;
+	color: #252525;
+	font-weight: 600;
+}
+
+.video-meta {
+	margin-top: 18rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.teacher-name {
+	font-size: 15px;
 	line-height: 22px;
-	color: #9d978d;
-	text-align: center;
+	color: #a8a8a8;
+}
+
+.stats {
+	flex-direction: row;
+	align-items: center;
+}
+
+.stat-text {
+	font-size: 13px;
+	line-height: 20px;
+	color: #a0a0a0;
+	margin-left: 18rpx;
 }
 
 .tabbar {

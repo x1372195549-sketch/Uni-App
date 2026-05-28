@@ -34,6 +34,20 @@
 				"navigationStyle": "custom",
 				"backgroundColor": "#F7F4EE"
 			}
+		},
+		{
+			"path": "pages/video/index",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/video/detail",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
 		}
 	],
 	"globalStyle": {
