@@ -31,7 +31,8 @@
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "uni-app x"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
 			}
 		}
 	],

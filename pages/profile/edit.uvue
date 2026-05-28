@@ -4,17 +4,6 @@
 			<text class="nav-back-icon"><</text>
 		</view>
 
-		<view class="capsule">
-			<view class="capsule-left">
-				<view class="dot dot-small"></view>
-				<view class="dot dot-large"></view>
-			</view>
-			<view class="capsule-divider"></view>
-			<view class="capsule-ring">
-				<view class="capsule-ring-inner"></view>
-			</view>
-		</view>
-
 		<view class="header">
 			<text class="header-title">个人资料</text>
 		</view>
@@ -70,9 +59,9 @@
 				</view>
 
 				<view class="form-row">
-					<text class="row-label">单位</text>
+					<text class="row-label">地区</text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.organization" placeholder="请输入单位" />
+						<input class="row-input" v-model="form.organization" placeholder="请输入地区" />
 						<text class="row-arrow">></text>
 					</view>
 				</view>
@@ -215,74 +204,6 @@ loadLocalProfile()
 	line-height: 34rpx;
 	color: #111111;
 	font-weight: 600;
-}
-
-.capsule {
-	position: absolute;
-	top: 54rpx;
-	right: 18rpx;
-	width: 168rpx;
-	height: 64rpx;
-	padding-left: 26rpx;
-	padding-right: 18rpx;
-	box-sizing: border-box;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-	background-color: rgba(255, 255, 255, 0.94);
-	border-width: 2rpx;
-	border-style: solid;
-	border-color: #1b1b1b;
-	border-radius: 31rpx;
-	z-index: 2;
-}
-
-.capsule-left {
-	width: 34rpx;
-	height: 16rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.dot {
-	background-color: #111111;
-	border-radius: 50rpx;
-}
-
-.dot-small {
-	width: 8rpx;
-	height: 8rpx;
-}
-
-.dot-large {
-	width: 10rpx;
-	height: 10rpx;
-}
-
-.capsule-divider {
-	width: 2rpx;
-	height: 30rpx;
-	background-color: #1b1b1b;
-	opacity: 0.72;
-}
-
-.capsule-ring {
-	width: 30rpx;
-	height: 30rpx;
-	border-width: 2rpx;
-	border-style: solid;
-	border-color: #111111;
-	border-radius: 30rpx;
-	align-items: center;
-	justify-content: center;
-}
-
-.capsule-ring-inner {
-	width: 11rpx;
-	height: 11rpx;
-	background-color: #111111;
-	border-radius: 11rpx;
 }
 
 .header {
