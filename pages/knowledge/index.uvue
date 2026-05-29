@@ -50,9 +50,9 @@
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">考核</text>
 			</view>
-			<view class="tab-item">
+			<view class="tab-item" @click="goConsultPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
-				<text class="tab-label">专家库</text>
+				<text class="tab-label">咨询</text>
 			</view>
 			<view class="tab-item tab-item-active">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikudianji.png" mode="aspectFit"></image>
@@ -122,6 +122,10 @@ const goLearningPage = () => {
 
 const goMinePage = () => {
 	uni.navigateTo({ url: '/pages/mine/index' })
+}
+
+const goConsultPage = () => {
+	uni.navigateTo({ url: '/pages/consult/index' })
 }
 
 refreshBooks()

@@ -1,0 +1,325 @@
+<template>
+	<view class="page">
+		<view class="header">
+			<view class="header-back" @click="goBack">
+				<image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+			</view>
+			<text class="header-title">医生详情</text>
+		</view>
+
+		<scroll-view class="scroll" scroll-y="true">
+			<view class="hero">
+				<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
+				<view class="avatar-shell">
+					<view class="avatar-circle">
+						<text class="avatar-text">{{ shortName }}</text>
+					</view>
+				</view>
+			</view>
+
+			<view class="info-card">
+				<view class="name-row">
+					<text class="doctor-name">{{ doctorName }}</text>
+					<text class="doctor-title">{{ doctorTitle }}</text>
+				</view>
+				<text class="meta-text">单位：{{ organization }}</text>
+				<text class="meta-text">专业方向：{{ specialty }}</text>
+				<text class="meta-text">分类标签：{{ tag }}</text>
+			</view>
+
+			<view class="section">
+				<view class="section-head">
+					<view class="section-line"></view>
+					<text class="section-title">履历介绍</text>
+				</view>
+				<text class="section-content">
+					{{ introduction }}
+				</text>
+			</view>
+
+			<view class="section">
+				<view class="section-head section-head-between">
+					<view class="section-head-left">
+						<view class="section-line"></view>
+						<text class="section-title">专家答疑</text>
+					</view>
+					<text class="more-text">更多</text>
+				</view>
+
+				<view class="qa-item">
+					<text class="qa-title">{{ qaTitleOne }}</text>
+					<view class="qa-row">
+						<text class="qa-time">2020/08/08</text>
+						<text class="qa-status">已回答</text>
+					</view>
+				</view>
+
+				<view class="qa-item">
+					<text class="qa-title">{{ qaTitleTwo }}</text>
+					<view class="qa-row">
+						<text class="qa-time">2020/06/22</text>
+						<text class="qa-status">已回答</text>
+					</view>
+				</view>
+			</view>
+
+			<view class="action-wrap">
+				<button class="consult-btn" hover-class="consult-btn-hover">咨询专家</button>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script setup lang="uts">
+const currentPages = getCurrentPages()
+
+let doctorName = '符惠娟'
+let doctorTitle = '主任中医师'
+let organization = '常州市中医院'
+let specialty = '中医心血管'
+let tag = '中医心血管'
+
+if (currentPages.length > 0) {
+	const currentPage = currentPages[currentPages.length - 1]
+	const options = currentPage.options
+	if (options != null) {
+		doctorName = options['name'] != null ? decodeURIComponent(options['name']) : doctorName
+		doctorTitle = options['title'] != null ? decodeURIComponent(options['title']) : doctorTitle
+		organization = options['organization'] != null ? decodeURIComponent(options['organization']) : organization
+		specialty = options['specialty'] != null ? decodeURIComponent(options['specialty']) : specialty
+		tag = options['tag'] != null ? decodeURIComponent(options['tag']) : tag
+	}
+}
+
+const shortName = doctorName.length > 0 ? doctorName.substring(0, 1) : '医'
+
+const introduction =
+	'这里保留医生详情介绍占位内容，后续将由数据库返回医生的履历简介、研究方向、代表成果和临床经验等信息，用于完整替换当前文案。'
+
+const qaTitleOne =
+	'符主任您好！请问胸闷气短跟黑心慌，高血压口服美托洛尔，利尿剂。'
+
+const qaTitleTwo =
+	'请问脑梗塞治疗方法'
+
+const goBack = () => {
+	uni.navigateBack()
+}
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+}
+
+.header {
+	height: 96rpx;
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.header-back {
+	position: absolute;
+	left: 20rpx;
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.header-back-icon {
+	width: 24rpx;
+	height: 24rpx;
+}
+
+.header-title {
+	font-size: 22px;
+	line-height: 32px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.scroll {
+	flex: 1;
+}
+
+.hero {
+	height: 250rpx;
+	position: relative;
+	overflow: hidden;
+}
+
+.hero-bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 750rpx;
+	height: 250rpx;
+	opacity: 0.95;
+}
+
+.avatar-shell {
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+
+.avatar-circle {
+	width: 160rpx;
+	height: 160rpx;
+	border-radius: 80rpx;
+	background-color: #d9eef8;
+	border-width: 8rpx;
+	border-style: solid;
+	border-color: #3dbfe2;
+	align-items: center;
+	justify-content: center;
+	margin-top: 20rpx;
+}
+
+.avatar-text {
+	font-size: 54px;
+	font-weight: 600;
+	color: #2b829f;
+}
+
+.info-card {
+	margin-left: 28rpx;
+	margin-right: 28rpx;
+	margin-top: 16rpx;
+	padding-bottom: 12rpx;
+}
+
+.name-row {
+	flex-direction: row;
+	align-items: center;
+}
+
+.doctor-name {
+	font-size: 24px;
+	line-height: 34px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.doctor-title {
+	margin-left: 18rpx;
+	font-size: 16px;
+	line-height: 24px;
+	color: #1db56f;
+	font-weight: 600;
+}
+
+.meta-text {
+	margin-top: 10rpx;
+	font-size: 15px;
+	line-height: 22px;
+	color: #8a8f98;
+}
+
+.section {
+	margin-left: 28rpx;
+	margin-right: 28rpx;
+	margin-top: 18rpx;
+	padding-top: 6rpx;
+}
+
+.section-head {
+	flex-direction: row;
+	align-items: center;
+}
+
+.section-head-between {
+	justify-content: space-between;
+}
+
+.section-head-left {
+	flex-direction: row;
+	align-items: center;
+}
+
+.section-line {
+	width: 8rpx;
+	height: 28rpx;
+	border-radius: 8rpx;
+	background-color: #18b775;
+	margin-right: 14rpx;
+}
+
+.section-title {
+	font-size: 19px;
+	line-height: 28px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.section-content {
+	margin-top: 20rpx;
+	font-size: 15px;
+	line-height: 28px;
+	color: #6e7680;
+}
+
+.more-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #2f2f2f;
+}
+
+.qa-item {
+	padding-top: 18rpx;
+	padding-bottom: 18rpx;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #ececec;
+}
+
+.qa-title {
+	font-size: 16px;
+	line-height: 26px;
+	color: #2f2f2f;
+}
+
+.qa-row {
+	margin-top: 10rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.qa-time {
+	font-size: 13px;
+	line-height: 18px;
+	color: #9aa0a8;
+}
+
+.qa-status {
+	font-size: 14px;
+	line-height: 20px;
+	color: #18b775;
+}
+
+.action-wrap {
+	padding: 34rpx 28rpx 48rpx;
+}
+
+.consult-btn {
+	height: 88rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	color: #ffffff;
+	font-size: 18px;
+	line-height: 88rpx;
+}
+
+.consult-btn-hover {
+	opacity: 0.9;
+}
+</style>

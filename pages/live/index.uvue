@@ -66,9 +66,9 @@
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">考核</text>
 			</view>
-			<view class="tab-item">
+			<view class="tab-item" @click="goConsultPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
-				<text class="tab-label">专家库</text>
+				<text class="tab-label">咨询</text>
 			</view>
 			<view class="tab-item" @click="goKnowledgePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
@@ -140,6 +140,10 @@ const goLiveDetail = (id : string) => {
 
 const goKnowledgePage = () => {
 	uni.navigateTo({ url: '/pages/knowledge/index' })
+}
+
+const goConsultPage = () => {
+	uni.navigateTo({ url: '/pages/consult/index' })
 }
 </script>
 

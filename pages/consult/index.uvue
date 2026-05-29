@@ -1,0 +1,457 @@
+<template>
+	<view class="page">
+		<view class="header">
+			<view class="header-back" @click="goLearningPage">
+				<image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+			</view>
+			<text class="header-title">咨询</text>
+		</view>
+
+		<view class="content-shell">
+			<scroll-view class="category-panel" scroll-y="true">
+				<view
+					v-for="item in categories"
+					:key="item.id"
+					class="category-item"
+					:class="{ 'category-item-active': currentCategoryId === item.id }"
+					@click="selectCategory(item.id)"
+				>
+					<view v-if="currentCategoryId === item.id" class="category-line"></view>
+					<text class="category-text" :class="{ 'category-text-active': currentCategoryId === item.id }">{{ item.name }}</text>
+				</view>
+			</scroll-view>
+
+			<scroll-view class="doctor-panel" scroll-y="true">
+				<view class="doctor-grid">
+					<view
+						v-for="doctor in currentDoctors"
+						:key="doctor.id"
+						class="doctor-card"
+						@click="goDoctorDetail(doctor)"
+					>
+						<view class="doctor-avatar-wrap">
+							<image v-if="doctor.avatarUrl !== ''" class="doctor-avatar" :src="doctor.avatarUrl" mode="aspectFill"></image>
+							<view v-else class="doctor-avatar doctor-avatar-placeholder">
+								<text class="doctor-avatar-text">{{ doctor.shortName }}</text>
+							</view>
+						</view>
+						<text class="doctor-name">{{ doctor.name }}</text>
+						<text class="doctor-brief">{{ doctor.brief }}</text>
+						<text class="doctor-tag">{{ doctor.tag }}</text>
+					</view>
+				</view>
+			</scroll-view>
+		</view>
+
+		<view class="tabbar">
+			<view class="tab-item" @click="goLearningPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">学习</text>
+			</view>
+			<view class="tab-item">
+				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">考核</text>
+			</view>
+			<view class="tab-item tab-item-active">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
+				<text class="tab-label tab-label-active">咨询</text>
+			</view>
+			<view class="tab-item" @click="goKnowledgePage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">知识库</text>
+			</view>
+			<view class="tab-item" @click="goMinePage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">我的</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+type CategoryItem = {
+	id : string
+	name : string
+}
+
+type DoctorItem = {
+	id : string
+	categoryId : string
+	name : string
+	shortName : string
+	brief : string
+	tag : string
+	organization : string
+	title : string
+	specialty : string
+	introduction : string
+	qaTitleOne : string
+	qaTitleTwo : string
+	avatarUrl : string
+}
+
+const categories = ref<CategoryItem[]>([
+	{ id: 'internal', name: '中医内科' },
+	{ id: 'cardio', name: '心血管' },
+	{ id: 'brain', name: '脑病' },
+	{ id: 'elder', name: '老年病' },
+	{ id: 'lung', name: '肺病' },
+	{ id: 'spleen', name: '脾胃病' },
+	{ id: 'kidney', name: '肾病' },
+	{ id: 'rheumatism', name: '风湿病' },
+	{ id: 'surgery', name: '中医外科' },
+	{ id: 'bone', name: '中医骨伤科' },
+	{ id: 'gynecology', name: '中医妇科' },
+	{ id: 'pediatrics', name: '中医儿科' },
+	{ id: 'acupuncture', name: '中医五官科' }
+])
+
+const doctors = ref<DoctorItem[]>([
+	{
+		id: 'd1',
+		categoryId: 'cardio',
+		name: '符惠娟',
+		shortName: '符',
+		brief: '常州市中医院 心血管方向 主任中医师',
+		tag: '中医心血管',
+		organization: '常州市中医院',
+		title: '主任中医师',
+		specialty: '中医心血管',
+		introduction: '符惠娟，常州市中医院心血管科主任中医师，医学硕士。这里保留医生详情占位内容，后续可替换成数据库返回的简介。',
+		qaTitleOne: '符主任您好！请问胸闷气短跟黑心慌，高血压口服美托洛尔，利尿剂。',
+		qaTitleTwo: '请问脑梗塞治疗方法',
+		avatarUrl: ''
+	},
+	{
+		id: 'd2',
+		categoryId: 'cardio',
+		name: '林轶蓉',
+		shortName: '林',
+		brief: '镇江市中医院 心血管方向 副主任医师',
+		tag: '中医心血管',
+		organization: '镇江市中医院',
+		title: '副主任医师',
+		specialty: '中医心血管',
+		introduction: '林轶蓉，镇江市中医院心血管科副主任医师，这里保留医生详情占位内容。',
+		qaTitleOne: '请问心悸失眠如何调理',
+		qaTitleTwo: '高血压伴头晕如何辨证',
+		avatarUrl: ''
+	},
+	{
+		id: 'd3',
+		categoryId: 'cardio',
+		name: '刘健',
+		shortName: '刘',
+		brief: '江苏省中医院 心内科方向 副主任中医师',
+		tag: '中医心血管',
+		organization: '江苏省中医院',
+		title: '副主任中医师',
+		specialty: '中医心血管',
+		introduction: '刘健，江苏省中医院心内科方向专家，占位简介。',
+		qaTitleOne: '胸闷胸痛平时需要注意什么',
+		qaTitleTwo: '冠心病饮食如何调理',
+		avatarUrl: ''
+	},
+	{
+		id: 'd4',
+		categoryId: 'brain',
+		name: '刘敏',
+		shortName: '敏',
+		brief: '徐州市中医院 脑病方向 科研副主任',
+		tag: '脑病方向',
+		organization: '徐州市中医院',
+		title: '副主任医师',
+		specialty: '脑病方向',
+		introduction: '刘敏，徐州市中医院脑病方向专家，占位简介。',
+		qaTitleOne: '头晕头痛持续发作怎么办',
+		qaTitleTwo: '脑病恢复期如何调养',
+		avatarUrl: ''
+	},
+	{
+		id: 'd5',
+		categoryId: 'surgery',
+		name: '王庆春',
+		shortName: '王',
+		brief: '连云港市中医院 外科方向 主任中医师',
+		tag: '中医心血管',
+		organization: '连云港市中医院',
+		title: '主任中医师',
+		specialty: '中医外科',
+		introduction: '王庆春，连云港市中医院外科方向专家，占位简介。',
+		qaTitleOne: '术后体虚怎样进行中医调理',
+		qaTitleTwo: '慢性伤口恢复如何用药',
+		avatarUrl: ''
+	},
+	{
+		id: 'd6',
+		categoryId: 'surgery',
+		name: '郑晓丹',
+		shortName: '郑',
+		brief: '南通市中医院 中医外科 医学博士',
+		tag: '中医心血管',
+		organization: '南通市中医院',
+		title: '医学博士',
+		specialty: '中医外科',
+		introduction: '郑晓丹，南通市中医院中医外科专家，占位简介。',
+		qaTitleOne: '术后调理期间饮食注意事项',
+		qaTitleTwo: '长期慢性炎症如何调理',
+		avatarUrl: ''
+	},
+	{
+		id: 'd7',
+		categoryId: 'acupuncture',
+		name: '邹冲',
+		shortName: '邹',
+		brief: '江苏省中医院 五官科方向 主治医师',
+		tag: '中医心血管',
+		organization: '江苏省中医院',
+		title: '主治医师',
+		specialty: '中医五官科',
+		introduction: '邹冲，江苏省中医院五官科方向专家，占位简介。',
+		qaTitleOne: '耳鸣耳聋如何进行中医调理',
+		qaTitleTwo: '过敏性鼻炎怎么辨证治疗',
+		avatarUrl: ''
+	}
+])
+
+const currentCategoryId = ref('cardio')
+const currentDoctors = ref<DoctorItem[]>([])
+
+const refreshDoctors = () => {
+	currentDoctors.value = doctors.value.filter((item : DoctorItem) : boolean => item.categoryId == currentCategoryId.value)
+}
+
+const selectCategory = (id : string) => {
+	currentCategoryId.value = id
+	refreshDoctors()
+}
+
+const goDoctorDetail = (doctor : DoctorItem) => {
+	uni.navigateTo({
+		url:
+			'/pages/consult/detail?id=' + doctor.id +
+			'&name=' + encodeURIComponent(doctor.name) +
+			'&title=' + encodeURIComponent(doctor.title) +
+			'&organization=' + encodeURIComponent(doctor.organization) +
+			'&specialty=' + encodeURIComponent(doctor.specialty) +
+			'&tag=' + encodeURIComponent(doctor.tag)
+	})
+}
+
+const goLearningPage = () => {
+	uni.reLaunch({ url: '/pages/index/index' })
+}
+
+const goKnowledgePage = () => {
+	uni.navigateTo({ url: '/pages/knowledge/index' })
+}
+
+const goMinePage = () => {
+	uni.navigateTo({ url: '/pages/mine/index' })
+}
+
+refreshDoctors()
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+}
+
+.header {
+	height: 96rpx;
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.header-back {
+	position: absolute;
+	left: 20rpx;
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.header-back-icon {
+	width: 24rpx;
+	height: 24rpx;
+}
+
+.header-title {
+	font-size: 24px;
+	line-height: 34px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.content-shell {
+	flex: 1;
+	flex-direction: row;
+	padding-bottom: 104rpx;
+}
+
+.category-panel {
+	width: 190rpx;
+	background-color: #f1f2f5;
+}
+
+.category-item {
+	min-height: 96rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	padding-top: 18rpx;
+	padding-bottom: 18rpx;
+	justify-content: center;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #e6e6e9;
+	position: relative;
+}
+
+.category-item-active {
+	background-color: #ffffff;
+}
+
+.category-line {
+	position: absolute;
+	left: 0;
+	top: 18rpx;
+	bottom: 18rpx;
+	width: 8rpx;
+	border-radius: 0 8rpx 8rpx 0;
+	background-color: #2fdc96;
+}
+
+.category-text {
+	font-size: 16px;
+	line-height: 24px;
+	color: #7f8590;
+	text-align: center;
+}
+
+.category-text-active {
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.doctor-panel {
+	flex: 1;
+	background-color: #ffffff;
+}
+
+.doctor-grid {
+	padding: 16rpx 18rpx 28rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.doctor-card {
+	width: 154rpx;
+	margin-bottom: 20rpx;
+	background-color: #ffffff;
+	border-radius: 14rpx;
+	padding: 14rpx 10rpx 16rpx;
+	box-shadow: 0 8rpx 18rpx rgba(78, 82, 63, 0.08);
+	align-items: center;
+}
+
+.doctor-avatar-wrap {
+	width: 110rpx;
+	height: 110rpx;
+	border-radius: 55rpx;
+	overflow: hidden;
+	background-color: #eef6ff;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 12rpx;
+}
+
+.doctor-avatar {
+	width: 110rpx;
+	height: 110rpx;
+	border-radius: 55rpx;
+}
+
+.doctor-avatar-placeholder {
+	background-color: #d9eef8;
+}
+
+.doctor-avatar-text {
+	font-size: 30px;
+	font-weight: 600;
+	color: #2e8aa7;
+}
+
+.doctor-name {
+	font-size: 18px;
+	line-height: 26px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.doctor-brief {
+	margin-top: 8rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #b4b4b4;
+	text-align: center;
+	height: 48rpx;
+}
+
+.doctor-tag {
+	margin-top: 10rpx;
+	padding: 4rpx 10rpx;
+	border-radius: 8rpx;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #36b979;
+	font-size: 10px;
+	line-height: 16px;
+	color: #36b979;
+}
+
+.tabbar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 96rpx;
+	padding-bottom: 8rpx;
+	background-color: #ffffff;
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: #ececec;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-around;
+}
+
+.tab-item {
+	align-items: center;
+	justify-content: center;
+}
+
+.tab-icon-image {
+	width: 40rpx;
+	height: 40rpx;
+}
+
+.tab-label {
+	margin-top: 6rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #b4b4b4;
+}
+
+.tab-label-active {
+	color: #18b775;
+	font-weight: 600;
+}
+</style>

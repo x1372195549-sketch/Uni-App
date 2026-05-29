@@ -91,11 +91,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goMinePage = () => {
       common_vendor.index.navigateTo({ url: "/pages/mine/index" });
     };
+    const goConsultPage = () => {
+      common_vendor.index.navigateTo({ url: "/pages/consult/index" });
+    };
     refreshBooks();
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = {
-        a: common_assets._imports_0$3,
+        a: common_assets._imports_0$2,
         b: common_vendor.o(goLearningPage),
         c: common_vendor.f(common_vendor.unref(categories), (item, k0, i0) => {
           return common_vendor.e({
@@ -125,10 +128,11 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         f: common_vendor.o(goLearningPage),
         g: common_assets._imports_2,
         h: common_assets._imports_3,
-        i: common_assets._imports_4$1,
-        j: common_assets._imports_5,
-        k: common_vendor.o(goMinePage),
-        l: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        i: common_vendor.o(goConsultPage),
+        j: common_assets._imports_4$1,
+        k: common_assets._imports_5,
+        l: common_vendor.o(goMinePage),
+        m: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       };
       return __returned__;
     };

@@ -14,7 +14,9 @@
     "pages/news/index",
     "pages/news/detail",
     "pages/knowledge/index",
-    "pages/knowledge/book-detail"
+    "pages/knowledge/book-detail",
+    "pages/consult/index",
+    "pages/consult/detail"
   ],
   "window": {
     "navigationBarTextStyle": "black",

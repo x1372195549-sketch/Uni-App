@@ -104,6 +104,20 @@
 				"navigationStyle": "custom",
 				"backgroundColor": "#F7F4EE"
 			}
+		},
+		{
+			"path": "pages/consult/index",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/consult/detail",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
 		}
 	],
 	"globalStyle": {

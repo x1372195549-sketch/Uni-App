@@ -17,6 +17,8 @@ if (!Math) {
   "./pages/news/detail.js";
   "./pages/knowledge/index.js";
   "./pages/knowledge/book-detail.js";
+  "./pages/consult/index.js";
+  "./pages/consult/detail.js";
 }
 const _sfc_main = common_vendor.defineComponent({
   onLaunch() {

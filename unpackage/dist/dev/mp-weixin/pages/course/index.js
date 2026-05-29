@@ -76,10 +76,13 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goKnowledgePage = () => {
       common_vendor.index.navigateTo({ url: "/pages/knowledge/index" });
     };
+    const goConsultPage = () => {
+      common_vendor.index.navigateTo({ url: "/pages/consult/index" });
+    };
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = {
-        a: common_assets._imports_0$2,
+        a: common_assets._imports_1$3,
         b: common_vendor.o(goLearningPage),
         c: common_vendor.o(goAudioPage),
         d: common_vendor.o(goLivePage),
@@ -98,14 +101,15 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, item.id)
           };
         }),
-        g: common_assets._imports_1$4,
+        g: common_assets._imports_1$5,
         h: common_assets._imports_2,
         i: common_assets._imports_3,
-        j: common_assets._imports_4,
-        k: common_vendor.o(goKnowledgePage),
-        l: common_assets._imports_5,
-        m: common_vendor.o(goMinePage),
-        n: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        j: common_vendor.o(goConsultPage),
+        k: common_assets._imports_4,
+        l: common_vendor.o(goKnowledgePage),
+        m: common_assets._imports_5,
+        n: common_vendor.o(goMinePage),
+        o: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       };
       return __returned__;
     };

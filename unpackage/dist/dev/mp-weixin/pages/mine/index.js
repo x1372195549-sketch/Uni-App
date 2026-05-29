@@ -68,6 +68,11 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         url: "/pages/index/index"
       });
     };
+    const goConsultPage = () => {
+      common_vendor.index.navigateTo({
+        url: "/pages/consult/index"
+      });
+    };
     loadUserData();
     return (_ctx, _cache) => {
       "raw js";
@@ -94,9 +99,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         j: common_vendor.o(goLearningHome),
         k: common_assets._imports_2,
         l: common_assets._imports_3,
-        m: common_assets._imports_4,
-        n: common_assets._imports_6,
-        o: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        m: common_vendor.o(goConsultPage),
+        n: common_assets._imports_4,
+        o: common_assets._imports_6,
+        p: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };
