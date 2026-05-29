@@ -90,6 +90,20 @@
 				"navigationStyle": "custom",
 				"backgroundColor": "#F7F4EE"
 			}
+		},
+		{
+			"path": "pages/knowledge/index",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/knowledge/book-detail",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
 		}
 	],
 	"globalStyle": {

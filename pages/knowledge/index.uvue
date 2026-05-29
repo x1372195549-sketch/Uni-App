@@ -1,0 +1,306 @@
+<template>
+	<view class="page">
+		<view class="header">
+			<view class="header-back" @click="goLearningPage">
+				<image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+			</view>
+			<text class="header-title">知识库</text>
+		</view>
+
+		<view class="content-shell">
+			<view class="category-panel">
+				<view
+					v-for="item in categories"
+					:key="item.id"
+					class="category-item"
+					:class="{ 'category-item-active': currentCategoryId === item.id }"
+					@click="selectCategory(item.id)"
+				>
+					<view v-if="currentCategoryId === item.id" class="category-line"></view>
+					<text
+						class="category-text"
+						:class="{ 'category-text-active': currentCategoryId === item.id }"
+					>{{ item.name }}</text>
+				</view>
+			</view>
+
+			<scroll-view class="book-panel" scroll-y="true">
+				<view class="book-grid">
+					<view
+						v-for="book in currentBooks"
+						:key="book.id"
+						class="book-card"
+						@click="goBookDetail(book)"
+					>
+						<view class="book-cover" :style="{ backgroundColor: book.coverColor }">
+							<text class="book-cover-title">{{ book.shortTitle }}</text>
+						</view>
+						<text class="book-name">{{ book.name }}</text>
+					</view>
+				</view>
+			</scroll-view>
+		</view>
+
+		<view class="tabbar">
+			<view class="tab-item" @click="goLearningPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">学习</text>
+			</view>
+			<view class="tab-item">
+				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">考核</text>
+			</view>
+			<view class="tab-item">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
+				<text class="tab-label">专家库</text>
+			</view>
+			<view class="tab-item tab-item-active">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikudianji.png" mode="aspectFit"></image>
+				<text class="tab-label tab-label-active">知识库</text>
+			</view>
+			<view class="tab-item" @click="goMinePage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">我的</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+type CategoryItem = {
+	id : string
+	name : string
+}
+
+type BookItem = {
+	id : string
+	categoryId : string
+	name : string
+	shortTitle : string
+	author : string
+	coverColor : string
+}
+
+const categories = ref<CategoryItem[]>([
+	{ id: 'theory', name: '中医基础理论' },
+	{ id: 'diagnosis', name: '中医诊断学' },
+	{ id: 'herbs', name: '中药学' },
+	{ id: 'formula', name: '方剂学' },
+	{ id: 'internal', name: '中医内科' },
+	{ id: 'surgery', name: '中医外科' },
+	{ id: 'classic', name: '四大经典' }
+])
+
+const books = ref<BookItem[]>([
+	{ id: 'b1', categoryId: 'theory', name: '中医基础理论概论', shortTitle: '基础\n理论', author: '王某某', coverColor: '#dfead2' },
+	{ id: 'b2', categoryId: 'theory', name: '中医阴阳五行导读', shortTitle: '阴阳\n五行', author: '李某某', coverColor: '#f3d88d' },
+	{ id: 'b3', categoryId: 'theory', name: '脏腑经络入门', shortTitle: '脏腑\n经络', author: '周某某', coverColor: '#d5e1f2' },
+	{ id: 'b4', categoryId: 'theory', name: '中医诊断学图解', shortTitle: '诊断\n图解', author: '赵某某', coverColor: '#f1ddb9' }
+])
+
+const currentCategoryId = ref('theory')
+const currentBooks = ref<BookItem[]>([])
+
+const refreshBooks = () => {
+	currentBooks.value = books.value.filter((item : BookItem) : boolean => item.categoryId == currentCategoryId.value)
+}
+
+const selectCategory = (id : string) => {
+	currentCategoryId.value = id
+	refreshBooks()
+}
+
+const goBookDetail = (book : BookItem) => {
+	uni.navigateTo({
+		url: '/pages/knowledge/book-detail?id=' + book.id + '&name=' + encodeURIComponent(book.name) + '&author=' + encodeURIComponent(book.author)
+	})
+}
+
+const goLearningPage = () => {
+	uni.reLaunch({ url: '/pages/index/index' })
+}
+
+const goMinePage = () => {
+	uni.navigateTo({ url: '/pages/mine/index' })
+}
+
+refreshBooks()
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+}
+
+.header {
+	height: 96rpx;
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.header-back {
+	position: absolute;
+	left: 20rpx;
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.header-back-icon {
+	width: 24rpx;
+	height: 24rpx;
+}
+
+.header-title {
+	font-size: 24px;
+	line-height: 34px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.content-shell {
+	flex: 1;
+	flex-direction: row;
+	padding-bottom: 104rpx;
+}
+
+.category-panel {
+	width: 184rpx;
+	background-color: #f1f2f5;
+}
+
+.category-item {
+	height: 118rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	background-color: #eef0f3;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: rgba(225, 227, 231, 0.9);
+}
+
+.category-item-active {
+	background-color: #ffffff;
+}
+
+.category-line {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 8rpx;
+	background-color: #b85d69;
+}
+
+.category-text {
+	font-size: 17px;
+	line-height: 24px;
+	color: #a6a6a6;
+	text-align: center;
+}
+
+.category-text-active {
+	color: #b85d69;
+	font-weight: 600;
+}
+
+.book-panel {
+	flex: 1;
+	background-color: #ffffff;
+}
+
+.book-grid {
+	padding-left: 18rpx;
+	padding-right: 18rpx;
+	padding-top: 16rpx;
+	padding-bottom: 24rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.book-card {
+	width: 156rpx;
+	margin-bottom: 28rpx;
+	align-items: center;
+}
+
+.book-cover {
+	width: 132rpx;
+	height: 180rpx;
+	border-radius: 8rpx;
+	padding-left: 12rpx;
+	padding-right: 12rpx;
+	padding-top: 18rpx;
+	align-items: center;
+	justify-content: flex-start;
+	box-shadow: 0 8rpx 18rpx rgba(105, 100, 90, 0.08);
+}
+
+.book-cover-title {
+	font-size: 18px;
+	line-height: 24px;
+	color: #4f523f;
+	font-weight: 600;
+	text-align: center;
+}
+
+.book-name {
+	margin-top: 12rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #4a4a4a;
+	text-align: center;
+}
+
+.tabbar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 96rpx;
+	padding-bottom: 8rpx;
+	background-color: rgba(255, 255, 255, 0.98);
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: #e9e9e4;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-around;
+}
+
+.tab-item {
+	align-items: center;
+	justify-content: center;
+}
+
+.tab-item-active {
+	margin-top: -2rpx;
+}
+
+.tab-icon-image {
+	width: 42rpx;
+	height: 42rpx;
+	margin-bottom: 6rpx;
+}
+
+.tab-label {
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+}
+
+.tab-label-active {
+	color: #18b775;
+	font-weight: 600;
+}
+</style>

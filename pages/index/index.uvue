@@ -56,7 +56,7 @@
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
 				<text class="tab-label">专家库</text>
 			</view>
-			<view class="tab-item">
+			<view class="tab-item" @click="goKnowledgePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">知识库</text>
 			</view>
@@ -87,6 +87,10 @@ const goNewsPage = () => {
 
 const goMinePage = () => {
 	uni.navigateTo({ url: '/pages/mine/index' })
+}
+
+const goKnowledgePage = () => {
+	uni.navigateTo({ url: '/pages/knowledge/index' })
 }
 </script>
 
