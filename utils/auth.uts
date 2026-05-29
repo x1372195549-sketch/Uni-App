@@ -32,11 +32,22 @@ type ApiResponse<T> = {
 	data : T | null
 }
 
-const BASE_URL = 'http://127.0.0.1:18081'
+const BASE_URL = 'https://api-test.arez.cc.cd'
+export type WechatLoginData = {
+	registered : boolean
+	needBindMobile : boolean
+	bindToken : string
+	tokenType : string
+	accessToken : string
+	expiresIn : number
+	user : LoginUserProfile | null
+}
+
 const ACCESS_TOKEN_KEY = 'app_auth_access_token'
 const TOKEN_TYPE_KEY = 'app_auth_token_type'
 const LOGIN_USER_KEY = 'app_auth_login_user'
 const CURRENT_USER_KEY = 'app_auth_current_user'
+const BIND_TOKEN_KEY = 'app_auth_bind_token'
 
 function getTokenType() : string {
 	const tokenType = uni.getStorageSync(TOKEN_TYPE_KEY)
@@ -60,7 +71,7 @@ function buildAuthorization() : string {
 	return 'Bearer ' + accessToken
 }
 
-function saveLogin(data : LoginResponseData) {
+export function saveLogin(data : LoginResponseData) {
 	uni.setStorageSync(ACCESS_TOKEN_KEY, data.accessToken)
 	uni.setStorageSync(TOKEN_TYPE_KEY, data.tokenType)
 	if (data.user != null) {
@@ -72,11 +83,75 @@ function saveCurrentUser(user : CurrentUser) {
 	uni.setStorageSync(CURRENT_USER_KEY, user)
 }
 
+export type AppProfile = {
+	id : number
+	username : string
+	mobile : string
+	email : string
+	nickname : string
+	profileSignature : string
+	avatarUrl : string
+	authProvider : string
+	gender : string
+	status : string
+	profileCompleted : boolean
+	studentId : number
+	certificationStatus : string
+}
+
+export type AppProfileUpdateRequest = {
+	nickname? : string
+	profileSignature? : string
+	avatarUrl? : string
+	email? : string
+	gender? : string
+}
+
+export function fetchProfile(
+	success : (profile : AppProfile) => void,
+	fail : (message : string) => void
+) {
+	request<AppProfile>(
+		'/api/v1/app/profile',
+		'GET',
+		null,
+		true,
+		false,
+		(profile) => {
+			success(profile)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function updateProfile(
+	data : AppProfileUpdateRequest,
+	success : (profile : AppProfile) => void,
+	fail : (message : string) => void
+) {
+	request<AppProfile>(
+		'/api/v1/app/profile',
+		'PUT',
+		data as UTSJSONObject,
+		true,
+		false,
+		(profile) => {
+			success(profile)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
 export function clearAuthStorage() {
 	uni.removeStorageSync(ACCESS_TOKEN_KEY)
 	uni.removeStorageSync(TOKEN_TYPE_KEY)
 	uni.removeStorageSync(LOGIN_USER_KEY)
 	uni.removeStorageSync(CURRENT_USER_KEY)
+	uni.removeStorageSync(BIND_TOKEN_KEY)
 }
 
 export function getCurrentUserFromStorage() : CurrentUser | null {
@@ -96,6 +171,19 @@ export function hasBoundMobile(user : CurrentUser | null) : boolean {
 		return false
 	}
 	return user.mobile != null && user.mobile != ''
+}
+
+function saveBindToken(token : string) {
+	uni.setStorageSync(BIND_TOKEN_KEY, token)
+}
+
+export function getBindToken() : string {
+	const token = uni.getStorageSync(BIND_TOKEN_KEY)
+	return typeof token == 'string' ? token : ''
+}
+
+export function clearBindToken() {
+	uni.removeStorageSync(BIND_TOKEN_KEY)
 }
 
 function request<T>(
@@ -174,7 +262,7 @@ export function fetchCurrentUser(
 export function loginByWechat(
 	nickname : string,
 	avatarUrl : string,
-	success : (user : CurrentUser) => void,
+	success : (user : CurrentUser | null) => void,
 	fail : (message : string) => void
 ) {
 	// #ifdef MP-WEIXIN
@@ -185,14 +273,27 @@ export function loginByWechat(
 				nickname,
 				avatarUrl
 			}
-			request<LoginResponseData>(
+			request<WechatLoginData>(
 				'/api/v1/app/auth/wechat-login',
 				'POST',
 				requestBody,
 				false,
 				false,
 				(loginData) => {
-					saveLogin(loginData)
+					if (loginData.needBindMobile) {
+						// New user, save bindToken and tell page to bind phone
+						saveBindToken(loginData.bindToken)
+						success(null)
+						return
+					}
+					// Existing user, save token and fetch profile
+					const saveData : LoginResponseData = {
+						tokenType: loginData.tokenType,
+						accessToken: loginData.accessToken,
+						expiresIn: loginData.expiresIn,
+						user: loginData.user
+					}
+					saveLogin(saveData)
 					fetchCurrentUser(
 						(user) => {
 							success(user)
@@ -218,6 +319,33 @@ export function loginByWechat(
 	// #endif
 }
 
+export function wechatBindMobile(
+	bindToken : string,
+	mobile : string,
+	code : string,
+	success : (data : LoginResponseData) => void,
+	fail : (message : string) => void
+) {
+	const requestBody : UTSJSONObject = {
+		bindToken,
+		mobile,
+		code
+	}
+	request<LoginResponseData>(
+		'/api/v1/app/auth/wechat-bind-mobile',
+		'POST',
+		requestBody,
+		false,
+		false,
+		(loginData) => {
+			success(loginData)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
 export function sendSmsCode(
 	mobile : string,
 	success : () => void,
@@ -233,6 +361,26 @@ export function sendSmsCode(
 		false,
 		true,
 		() => {
+			success()
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function logout(
+	success : () => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/auth/logout',
+		'POST',
+		null,
+		true,
+		true,
+		() => {
+			clearAuthStorage()
 			success()
 		},
 		(message) => {

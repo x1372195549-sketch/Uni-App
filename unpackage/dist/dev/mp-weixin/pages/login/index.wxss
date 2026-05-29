@@ -1,0 +1,122 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.page {
+	flex: 1;
+	position: relative;
+	background-color: #f8f6f1;
+	overflow: hidden;
+}
+.bg {
+	position: absolute;
+	width: 750rpx;
+	top: 0;
+	bottom: 0;
+	opacity: 0.98;
+}
+.capsule {
+	position: absolute;
+	top: 54rpx;
+	right: 18rpx;
+	width: 168rpx;
+	height: 64rpx;
+	padding-left: 26rpx;
+	padding-right: 18rpx;
+	box-sizing: border-box;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	background-color: rgba(255, 255, 255, 0.94);
+	border-width: 2rpx;
+	border-style: solid;
+	border-color: #1b1b1b;
+	border-radius: 31rpx;
+}
+.capsule-left {
+	width: 34rpx;
+	height: 16rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+.dot {
+	background-color: #111111;
+	border-radius: 50rpx;
+}
+.dot-small {
+	width: 8rpx;
+	height: 8rpx;
+}
+.dot-large {
+	width: 10rpx;
+	height: 10rpx;
+}
+.capsule-divider {
+	width: 2rpx;
+	height: 30rpx;
+	background-color: #1b1b1b;
+	opacity: 0.72;
+}
+.capsule-ring {
+	width: 30rpx;
+	height: 30rpx;
+	border-width: 2rpx;
+	border-style: solid;
+	border-color: #111111;
+	border-radius: 30rpx;
+	align-items: center;
+	justify-content: center;
+}
+.capsule-ring-inner {
+	width: 11rpx;
+	height: 11rpx;
+	background-color: #111111;
+	border-radius: 11rpx;
+}
+.content {
+	flex: 1;
+	padding-top: 232rpx;
+	padding-left: 0;
+	padding-right: 0;
+	align-items: center;
+}
+.logo {
+	width: 314rpx;
+	height: 314rpx;
+	margin-bottom: 74rpx;
+}
+.info {
+	width: 560rpx;
+	align-items: center;
+	margin-bottom: 52rpx;
+}
+.title {
+	color: #0f6c41;
+	font-size: 21px;
+	line-height: 30px;
+	font-weight: 700;
+	text-align: center;
+	margin-bottom: 10rpx;
+}
+.subtitle {
+	color: #0f6c41;
+	font-size: 15px;
+	line-height: 24px;
+	text-align: center;
+}
+.auth-btn {
+	width: 434rpx;
+	height: 68rpx;
+	line-height: 68rpx;
+	padding: 0;
+	background-color: #0b6a3d;
+	color: #ffffff;
+	font-size: 18px;
+	font-weight: 500;
+	border-width: 0;
+	border-radius: 10rpx;
+	box-shadow: 0 6rpx 12rpx rgba(11, 106, 61, 0.08);
+}
+.auth-btn-hover {
+	opacity: 0.92;
+}

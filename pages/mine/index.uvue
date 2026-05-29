@@ -5,17 +5,16 @@
 		<view class="content">
 			<view class="profile-shell">
 				<view class="profile-head">
-					<image class="avatar" src="/static/mine/avatar.png" mode="aspectFill"></image>
+					<image class="avatar" :src="avatarUrl || '/static/mine/avatar.png'" mode="aspectFill"></image>
 					<view class="profile-main">
 						<view class="name-row">
-							<text class="nickname">忆瞳雪づ</text>
-							<text class="user-type">（普通用户）</text>
+							<text class="nickname">{{ nickname || '微信用户' }}</text>
+							<text class="user-type">{{ userTypeText }}</text>
 						</view>
 						<view class="sub-row">
-							<text class="student-no">学习号：</text>
-							<text :class="isCertified ? 'cert-tag cert-tag-on' : 'cert-tag cert-tag-off'">
-								{{ isCertified ? '学员认证' : '学员未认证' }}
-							</text>
+							<text class="student-no">{{ studentNo }}</text>
+							<text v-if="isCertified" class="cert-tag cert-tag-on">学员认证</text>
+							<text v-else class="cert-tag cert-tag-off">学员未认证</text>
 						</view>
 					</view>
 				</view>
@@ -63,17 +62,51 @@
 </template>
 
 <script setup lang="uts">
+import { hasToken, fetchCurrentUser, fetchProfile, getCurrentUserFromStorage, logout } from '../../utils/auth.uts'
+
+const nickname = ref('')
+const avatarUrl = ref('')
+const userTypeText = ref('')
+const studentNo = ref('')
 const isCertified = ref(false)
+const isLoggedIn = ref(hasToken())
 
 const menuItems = ref([
 	{ label: '个人资料', icon: '/static/mine/icon_about.png' },
 	{ label: '我的收藏', icon: '/static/mine/icon_favorite.png' },
 	{ label: '学习历史', icon: '/static/mine/icon_history.png' },
-	{ label: '我的学习卡片', icon: '/static/mine/icon_history.png' },
 	{ label: '意见反馈', icon: '/static/mine/icon_about.png' },
-	{ label: '设置', icon: '/static/mine/icon_about.png' },
+	{ label: '退出登录', icon: '/static/mine/icon_about.png' },
 	{ label: '使用手册', icon: '/static/mine/icon_manual.png' }
 ])
+
+const loadUserData = () => {
+	if (!isLoggedIn.value) {
+		uni.reLaunch({
+			url: '/pages/login/index'
+		})
+		return
+	}
+
+	const cached = getCurrentUserFromStorage()
+	if (cached != null) {
+		nickname.value = cached.nickname
+		isCertified.value = cached.certificationStatus == '2'
+	}
+
+	fetchProfile(
+		(profile) => {
+			nickname.value = profile.nickname
+			avatarUrl.value = profile.avatarUrl
+			studentNo.value = profile.studentId != 0 ? '学员' : ''
+			isCertified.value = profile.certificationStatus == '2'
+			userTypeText.value = profile.profileCompleted ? '（已认证）' : '（普通用户）'
+		},
+		() => {
+			// Use cached data if API fails
+		}
+	)
+}
 
 const goEditProfile = () => {
 	uni.navigateTo({
@@ -84,6 +117,22 @@ const goEditProfile = () => {
 const handleMenuClick = (label : string) => {
 	if (label == '个人资料') {
 		goEditProfile()
+		return
+	}
+	if (label == '退出登录') {
+		logout(
+			() => {
+				uni.reLaunch({
+					url: '/pages/login/index'
+				})
+			},
+			(message) => {
+				uni.showToast({
+					title: message,
+					icon: 'none'
+				})
+			}
+		)
 	}
 }
 
@@ -92,6 +141,8 @@ const goLearningHome = () => {
 		url: '/pages/index/index'
 	})
 }
+
+loadUserData()
 </script>
 
 <style>

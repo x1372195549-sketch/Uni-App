@@ -1,0 +1,128 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+	position: relative;
+}
+.nav-back {
+	position: absolute;
+	top: 74rpx;
+	left: 12rpx;
+	width: 56rpx;
+	height: 56rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 2;
+}
+.nav-back-icon {
+	font-size: 34rpx;
+	line-height: 34rpx;
+	color: #111111;
+	font-weight: 600;
+}
+.header {
+	padding-top: 78rpx;
+	align-items: center;
+}
+.header-title {
+	font-size: 19px;
+	line-height: 28px;
+	color: #1b1b1b;
+	font-weight: 600;
+}
+.form-scroll {
+	flex: 1;
+	padding-top: 30rpx;
+}
+.form-card {
+	margin-left: 12rpx;
+	margin-right: 12rpx;
+	background-color: #ffffff;
+}
+.form-row {
+	min-height: 98rpx;
+	padding-left: 24rpx;
+	padding-right: 18rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #f0f0f5;
+}
+.form-row:last-child {
+	border-bottom-width: 0;
+}
+.avatar-row {
+	min-height: 118rpx;
+}
+.row-label {
+	font-size: 20px;
+	line-height: 28px;
+	color: #222222;
+	font-weight: 600;
+}
+.row-right {
+	flex-direction: row;
+	align-items: center;
+	max-width: 430rpx;
+}
+.row-input-wrap {
+	flex: 1;
+	justify-content: flex-end;
+}
+.avatar {
+	width: 84rpx;
+	height: 84rpx;
+	border-radius: 42rpx;
+	margin-right: 16rpx;
+}
+.row-value {
+	font-size: 18px;
+	line-height: 26px;
+	color: #a8a8a8;
+	text-align: right;
+}
+.row-input {
+	flex: 1;
+	height: 52rpx;
+	font-size: 18px;
+	color: #8f8f8f;
+	text-align: right;
+	padding-left: 0;
+	padding-right: 8rpx;
+	background-color: transparent;
+}
+.row-arrow {
+	font-size: 22rpx;
+	line-height: 22rpx;
+	color: #c3c3c3;
+}
+.actions {
+	margin-top: 34rpx;
+	margin-left: 20rpx;
+	margin-right: 20rpx;
+	padding-bottom: 180rpx;
+}
+.save-btn {
+	height: 86rpx;
+	line-height: 86rpx;
+	background-color: #10b66d;
+	color: #ffffff;
+	font-size: 18px;
+	font-weight: 600;
+	border-radius: 12rpx;
+	border-width: 0;
+}
+.save-btn-hover {
+	opacity: 0.92;
+}
+.hint {
+	margin-top: 16rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #a6a6a6;
+	text-align: center;
+}

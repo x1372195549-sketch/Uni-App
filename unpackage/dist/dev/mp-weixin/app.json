@@ -1,0 +1,26 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/auth/bind-phone",
+    "pages/mine/index",
+    "pages/profile/edit",
+    "pages/index/index",
+    "pages/audio/index",
+    "pages/audio/detail",
+    "pages/live/index",
+    "pages/live/detail",
+    "pages/course/index",
+    "pages/course/detail",
+    "pages/news/index",
+    "pages/news/detail",
+    "pages/knowledge/index",
+    "pages/knowledge/book-detail"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "uni-app x",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F7F4EE"
+  },
+  "usingComponents": {}
+}

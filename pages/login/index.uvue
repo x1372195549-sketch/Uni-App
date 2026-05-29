@@ -55,6 +55,13 @@ const handleAuthorize = () => {
 		'',
 		(user) => {
 			isSubmitting.value = false
+			if (user == null) {
+				// New WeChat user, need to bind phone
+				uni.navigateTo({
+					url: '/pages/auth/bind-phone'
+				})
+				return
+			}
 			redirectAfterLogin(hasBoundMobile(user))
 		},
 		(message) => {

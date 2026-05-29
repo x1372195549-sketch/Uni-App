@@ -1,0 +1,146 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.page {
+	flex: 1;
+	background-color: #f7f7f2;
+}
+.header {
+	height: 88rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	background-color: #f7f7f2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #ece9e1;
+	position: relative;
+}
+.back-btn {
+	position: absolute;
+	left: 16rpx;
+	top: 0;
+	bottom: 0;
+	width: 56rpx;
+	align-items: center;
+	justify-content: center;
+}
+.back-icon {
+	font-size: 30rpx;
+	line-height: 30rpx;
+	color: #222222;
+	font-weight: 600;
+}
+.header-title {
+	font-size: 20px;
+	line-height: 30px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+.content {
+	flex: 1;
+}
+.hero {
+	height: 420rpx;
+	position: relative;
+	background-color: #d8c9b5;
+	align-items: center;
+	justify-content: center;
+}
+.hero-mask {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(60, 54, 44, 0.2);
+}
+.signal-stack {
+	width: 220rpx;
+	height: 220rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 1;
+	position: relative;
+}
+.signal-dot {
+	width: 72rpx;
+	height: 72rpx;
+	border-radius: 36rpx;
+	background-color: rgba(185, 112, 47, 0.42);
+	z-index: 3;
+}
+.signal-ring {
+	position: absolute;
+	border-width: 10rpx;
+	border-style: solid;
+	border-color: rgba(255, 255, 255, 0.88);
+	border-radius: 999rpx;
+}
+.signal-ring-one {
+	width: 134rpx;
+	height: 134rpx;
+}
+.signal-ring-two {
+	width: 220rpx;
+	height: 220rpx;
+}
+.detail-panel {
+	padding-left: 46rpx;
+	padding-right: 46rpx;
+	padding-top: 34rpx;
+	padding-bottom: 60rpx;
+	background-color: #ffffff;
+	min-height: 860rpx;
+}
+.media-title {
+	font-size: 18px;
+	line-height: 28px;
+	color: #242424;
+	font-weight: 600;
+	text-align: center;
+}
+.stats-row {
+	margin-top: 34rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-end;
+}
+.stats-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #9e9e9e;
+	margin-left: 28rpx;
+}
+.section-title {
+	margin-top: 38rpx;
+	font-size: 15px;
+	line-height: 22px;
+	color: #2b2b2b;
+}
+.intro-text {
+	margin-top: 28rpx;
+	font-size: 12px;
+	line-height: 24px;
+	color: #8f8f8f;
+}
+.action-wrap {
+	margin-top: 140rpx;
+	align-items: center;
+}
+.action-btn {
+	width: 300rpx;
+	height: 84rpx;
+	line-height: 84rpx;
+	border-radius: 18rpx;
+	background-color: #b66572;
+	color: #ffffff;
+	font-size: 18px;
+	font-weight: 600;
+	border-width: 0;
+}
+.action-btn-hover {
+	opacity: 0.92;
+}

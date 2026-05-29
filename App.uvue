@@ -8,6 +8,18 @@
 		},
 		onShow() {
 			console.log('App Show')
+			// #ifndef APP-ANDROID || APP-HARMONY
+			const pages = getCurrentPages()
+			const needAuth = pages.length == 0 || pages[pages.length - 1].route == 'pages/login/index'
+			if (!needAuth) {
+				const token = uni.getStorageSync('app_auth_access_token')
+				if (token == null || token == '') {
+					uni.reLaunch({
+						url: '/pages/login/index'
+					})
+				}
+			}
+			// #endif
 		},
 		onHide() {
 			console.log('App Hide')

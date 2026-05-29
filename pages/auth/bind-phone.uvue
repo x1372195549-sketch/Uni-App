@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="uts">
-import { loginBySms, sendSmsCode } from '../../utils/auth.uts'
+import { loginBySms, sendSmsCode, wechatBindMobile, saveLogin, clearBindToken, getBindToken } from '../../utils/auth.uts'
 
 const phone = ref('')
 const code = ref('')
@@ -55,6 +55,7 @@ const isSendingCode = ref(false)
 const isSubmitting = ref(false)
 const countdown = ref(0)
 let timerId : number = 0
+const bindToken = getBindToken()
 
 const isValidPhone = (value : string) : boolean => {
 	return /^1\d{10}$/.test(value)
@@ -137,23 +138,48 @@ const handleSubmit = () => {
 	}
 
 	isSubmitting.value = true
-	loginBySms(
-		phone.value,
-		code.value,
-		() => {
-			isSubmitting.value = false
-			uni.reLaunch({
-				url: '/pages/index/index'
-			})
-		},
-		(message) => {
-			isSubmitting.value = false
-			uni.showToast({
-				title: message,
-				icon: 'none'
-			})
-		}
-	)
+
+	const onLoginSuccess = () => {
+		isSubmitting.value = false
+		uni.reLaunch({
+			url: '/pages/index/index'
+		})
+	}
+
+	const onLoginFail = (message : string) => {
+		isSubmitting.value = false
+		uni.showToast({
+			title: message,
+			icon: 'none'
+		})
+	}
+
+	if (bindToken != '') {
+		// WeChat binding flow: bind phone to WeChat account
+		wechatBindMobile(
+			bindToken,
+			phone.value,
+			code.value,
+			(loginData) => {
+				saveLogin(loginData)
+				clearBindToken()
+				onLoginSuccess()
+			},
+			(message) => {
+				onLoginFail(message)
+			}
+		)
+	} else {
+		// Direct SMS login flow
+		loginBySms(
+			phone.value,
+			code.value,
+			onLoginSuccess,
+			(message) => {
+				onLoginFail(message)
+			}
+		)
+	}
 }
 </script>
 
