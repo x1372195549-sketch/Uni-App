@@ -73,11 +73,16 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         url: "/pages/consult/index"
       });
     };
+    const goKnowledgePage = () => {
+      common_vendor.index.navigateTo({
+        url: "/pages/knowledge/index"
+      });
+    };
     loadUserData();
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = common_vendor.e({
-        a: common_assets._imports_0$1,
+        a: common_assets._imports_0$2,
         b: common_vendor.unref(avatarUrl) || "/static/mine/avatar.png",
         c: common_vendor.t(common_vendor.unref(nickname) || "微信用户"),
         d: common_vendor.t(common_vendor.unref(userTypeText)),
@@ -98,11 +103,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         i: common_assets._imports_1$2,
         j: common_vendor.o(goLearningHome),
         k: common_assets._imports_2,
-        l: common_assets._imports_3,
-        m: common_vendor.o(goConsultPage),
-        n: common_assets._imports_4,
-        o: common_assets._imports_6,
-        p: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        l: common_vendor.o(goKnowledgePage),
+        m: common_assets._imports_3,
+        n: common_vendor.o(goConsultPage),
+        o: common_assets._imports_4,
+        p: common_assets._imports_6,
+        q: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

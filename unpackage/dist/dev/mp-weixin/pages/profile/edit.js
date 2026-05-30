@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
 class ProfileForm extends UTS.UTSType {
   static get$UTSMetadata$() {
@@ -169,35 +170,36 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = {
-        a: common_vendor.o(handleBack),
-        b: common_vendor.unref(form).avatarUrl,
-        c: common_vendor.o(handleChooseAvatar),
-        d: common_vendor.unref(form).nickname,
-        e: common_vendor.o(($event) => {
+        a: common_assets._imports_0$1,
+        b: common_vendor.o(handleBack),
+        c: common_vendor.unref(form).avatarUrl,
+        d: common_vendor.o(handleChooseAvatar),
+        e: common_vendor.unref(form).nickname,
+        f: common_vendor.o(($event) => {
           return common_vendor.unref(form).nickname = $event.detail.value;
         }),
-        f: common_vendor.t(common_vendor.unref(form).gender || "请选择"),
-        g: common_vendor.o(handleChooseGender),
-        h: common_vendor.o([($event) => {
+        g: common_vendor.t(common_vendor.unref(form).gender || "请选择"),
+        h: common_vendor.o(handleChooseGender),
+        i: common_vendor.o([($event) => {
           return common_vendor.unref(form).age = $event.detail.value;
         }, handleAgeInput]),
-        i: common_vendor.unref(form).age,
-        j: common_vendor.t(common_vendor.unref(form).education || "请选择"),
-        k: common_vendor.o(handleChooseEducation),
-        l: common_vendor.unref(form).practiceType,
-        m: common_vendor.o(($event) => {
+        j: common_vendor.unref(form).age,
+        k: common_vendor.t(common_vendor.unref(form).education || "请选择"),
+        l: common_vendor.o(handleChooseEducation),
+        m: common_vendor.unref(form).practiceType,
+        n: common_vendor.o(($event) => {
           return common_vendor.unref(form).practiceType = $event.detail.value;
         }),
-        n: common_vendor.unref(form).organization,
-        o: common_vendor.o(($event) => {
+        o: common_vendor.unref(form).organization,
+        p: common_vendor.o(($event) => {
           return common_vendor.unref(form).organization = $event.detail.value;
         }),
-        p: common_vendor.o([($event) => {
+        q: common_vendor.o([($event) => {
           return common_vendor.unref(form).phone = $event.detail.value;
         }, handlePhoneInput]),
-        q: common_vendor.unref(form).phone,
-        r: common_vendor.o(handleSave),
-        s: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        r: common_vendor.unref(form).phone,
+        s: common_vendor.o(handleSave),
+        t: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       };
       return __returned__;
     };

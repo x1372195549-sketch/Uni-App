@@ -98,7 +98,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = {
-        a: common_assets._imports_0$2,
+        a: common_assets._imports_0$1,
         b: common_vendor.o(goLearningPage),
         c: common_vendor.f(common_vendor.unref(categories), (item, k0, i0) => {
           return common_vendor.e({

@@ -17,10 +17,8 @@
 	z-index: 2;
 }
 .nav-back-icon {
-	font-size: 34rpx;
-	line-height: 34rpx;
-	color: #111111;
-	font-weight: 600;
+	width: 26rpx;
+	height: 26rpx;
 }
 .header {
 	padding-top: 78rpx;

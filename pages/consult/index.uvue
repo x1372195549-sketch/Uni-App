@@ -10,14 +10,37 @@
 		<view class="content-shell">
 			<scroll-view class="category-panel" scroll-y="true">
 				<view
-					v-for="item in categories"
+					v-for="item in primaryCategories"
 					:key="item.id"
-					class="category-item"
-					:class="{ 'category-item-active': currentCategoryId === item.id }"
-					@click="selectCategory(item.id)"
+					class="category-group"
 				>
-					<view v-if="currentCategoryId === item.id" class="category-line"></view>
-					<text class="category-text" :class="{ 'category-text-active': currentCategoryId === item.id }">{{ item.name }}</text>
+					<view
+						class="category-item"
+						:class="{ 'category-item-active': currentPrimaryId === item.id && currentSecondaryId === '' }"
+						@click="selectPrimaryCategory(item.id)"
+					>
+						<view v-if="currentPrimaryId === item.id && currentSecondaryId === ''" class="category-line"></view>
+						<text
+							class="category-text"
+							:class="{ 'category-text-active': currentPrimaryId === item.id && currentSecondaryId === '' }"
+						>{{ item.name }}</text>
+					</view>
+
+					<view v-if="currentPrimaryId === item.id && item.children.length > 0" class="subcategory-wrap">
+						<view
+							v-for="child in item.children"
+							:key="child.id"
+							class="subcategory-item"
+							:class="{ 'subcategory-item-active': currentSecondaryId === child.id }"
+							@click="selectSecondaryCategory(item.id, child.id)"
+						>
+							<view v-if="currentSecondaryId === child.id" class="category-line subcategory-line"></view>
+							<text
+								class="subcategory-text"
+								:class="{ 'subcategory-text-active': currentSecondaryId === child.id }"
+							>{{ child.name }}</text>
+						</view>
+					</view>
 				</view>
 			</scroll-view>
 
@@ -53,7 +76,7 @@
 				<text class="tab-label">考核</text>
 			</view>
 			<view class="tab-item tab-item-active">
-				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjiadianji.png" mode="aspectFit"></image>
 				<text class="tab-label tab-label-active">咨询</text>
 			</view>
 			<view class="tab-item" @click="goKnowledgePage">
@@ -69,14 +92,21 @@
 </template>
 
 <script setup lang="uts">
-type CategoryItem = {
+type CategoryChild = {
 	id : string
 	name : string
 }
 
+type CategoryItem = {
+	id : string
+	name : string
+	children : CategoryChild[]
+}
+
 type DoctorItem = {
 	id : string
-	categoryId : string
+	primaryCategoryId : string
+	secondaryCategoryId : string
 	name : string
 	shortName : string
 	brief : string
@@ -90,139 +120,183 @@ type DoctorItem = {
 	avatarUrl : string
 }
 
-const categories = ref<CategoryItem[]>([
-	{ id: 'internal', name: '中医内科' },
-	{ id: 'cardio', name: '心血管' },
-	{ id: 'brain', name: '脑病' },
-	{ id: 'elder', name: '老年病' },
-	{ id: 'lung', name: '肺病' },
-	{ id: 'spleen', name: '脾胃病' },
-	{ id: 'kidney', name: '肾病' },
-	{ id: 'rheumatism', name: '风湿病' },
-	{ id: 'surgery', name: '中医外科' },
-	{ id: 'bone', name: '中医骨伤科' },
-	{ id: 'gynecology', name: '中医妇科' },
-	{ id: 'pediatrics', name: '中医儿科' },
-	{ id: 'acupuncture', name: '中医五官科' }
+const primaryCategories = ref<CategoryItem[]>([
+	{
+		id: 'internal',
+		name: '中医内科',
+		children: [
+			{ id: 'cardio', name: '心血管' },
+			{ id: 'brain', name: '脑病' },
+			{ id: 'elder', name: '老年病' },
+			{ id: 'lung', name: '肺病' },
+			{ id: 'spleen', name: '脾胃病' },
+			{ id: 'kidney', name: '肾病' },
+			{ id: 'rheumatism', name: '风湿病' }
+		]
+	},
+	{ id: 'surgery', name: '中医外科', children: [] },
+	{ id: 'bone', name: '中医骨伤科', children: [] },
+	{ id: 'gynecology', name: '中医妇科', children: [] },
+	{ id: 'pediatrics', name: '中医儿科', children: [] },
+	{ id: 'acupuncture', name: '中医五官科', children: [] }
 ])
 
 const doctors = ref<DoctorItem[]>([
 	{
 		id: 'd1',
-		categoryId: 'cardio',
+		primaryCategoryId: 'internal',
+		secondaryCategoryId: 'cardio',
 		name: '符惠娟',
 		shortName: '符',
-		brief: '常州市中医院 心血管方向 主任中医师',
+		brief: '常州市中医院心血管科主任中医师，医学硕士，简介占位内容会在后续由数据库替换。',
 		tag: '中医心血管',
 		organization: '常州市中医院',
 		title: '主任中医师',
 		specialty: '中医心血管',
-		introduction: '符惠娟，常州市中医院心血管科主任中医师，医学硕士。这里保留医生详情占位内容，后续可替换成数据库返回的简介。',
-		qaTitleOne: '符主任您好！请问胸闷气短跟黑心慌，高血压口服美托洛尔，利尿剂。',
+		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
+		qaTitleOne: '符主任您好！请问胸闷气短跟黑心慌，高血压口服药物期间如何调理？',
 		qaTitleTwo: '请问脑梗塞治疗方法',
 		avatarUrl: ''
 	},
 	{
 		id: 'd2',
-		categoryId: 'cardio',
+		primaryCategoryId: 'internal',
+		secondaryCategoryId: 'cardio',
 		name: '林轶蓉',
 		shortName: '林',
-		brief: '镇江市中医院 心血管方向 副主任医师',
+		brief: '镇江市中医院心血管方向副主任医师，占位简介至少三行显示，后续替换真实数据库内容。',
 		tag: '中医心血管',
 		organization: '镇江市中医院',
 		title: '副主任医师',
 		specialty: '中医心血管',
-		introduction: '林轶蓉，镇江市中医院心血管科副主任医师，这里保留医生详情占位内容。',
-		qaTitleOne: '请问心悸失眠如何调理',
-		qaTitleTwo: '高血压伴头晕如何辨证',
+		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
+		qaTitleOne: '请问心悸失眠如何调理？',
+		qaTitleTwo: '高血压伴头晕如何辨证？',
 		avatarUrl: ''
 	},
 	{
 		id: 'd3',
-		categoryId: 'cardio',
+		primaryCategoryId: 'internal',
+		secondaryCategoryId: 'cardio',
 		name: '刘健',
 		shortName: '刘',
-		brief: '江苏省中医院 心内科方向 副主任中医师',
+		brief: '江苏省中医院心内科方向副主任中医师，医生简介占位内容，等待数据库替换。',
 		tag: '中医心血管',
 		organization: '江苏省中医院',
 		title: '副主任中医师',
 		specialty: '中医心血管',
-		introduction: '刘健，江苏省中医院心内科方向专家，占位简介。',
-		qaTitleOne: '胸闷胸痛平时需要注意什么',
-		qaTitleTwo: '冠心病饮食如何调理',
+		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
+		qaTitleOne: '胸闷胸痛平时需要注意什么？',
+		qaTitleTwo: '冠心病饮食如何调理？',
 		avatarUrl: ''
 	},
 	{
 		id: 'd4',
-		categoryId: 'brain',
+		primaryCategoryId: 'internal',
+		secondaryCategoryId: 'brain',
 		name: '刘敏',
 		shortName: '敏',
-		brief: '徐州市中医院 脑病方向 科研副主任',
+		brief: '徐州市中医院脑病方向副主任医师，当前为占位简介内容，后续由接口统一替换。',
 		tag: '脑病方向',
 		organization: '徐州市中医院',
 		title: '副主任医师',
 		specialty: '脑病方向',
-		introduction: '刘敏，徐州市中医院脑病方向专家，占位简介。',
-		qaTitleOne: '头晕头痛持续发作怎么办',
-		qaTitleTwo: '脑病恢复期如何调养',
+		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
+		qaTitleOne: '头晕头痛持续发作怎么办？',
+		qaTitleTwo: '脑病恢复期如何调养？',
 		avatarUrl: ''
 	},
 	{
 		id: 'd5',
-		categoryId: 'surgery',
-		name: '王庆春',
-		shortName: '王',
-		brief: '连云港市中医院 外科方向 主任中医师',
-		tag: '中医心血管',
-		organization: '连云港市中医院',
-		title: '主任中医师',
-		specialty: '中医外科',
-		introduction: '王庆春，连云港市中医院外科方向专家，占位简介。',
-		qaTitleOne: '术后体虚怎样进行中医调理',
-		qaTitleTwo: '慢性伤口恢复如何用药',
+		primaryCategoryId: 'internal',
+		secondaryCategoryId: 'elder',
+		name: '赵宁',
+		shortName: '赵',
+		brief: '老年病方向医生占位简介内容，至少展示三行并在超出时省略，方便后续接真实数据。',
+		tag: '老年病',
+		organization: '南京市中医院',
+		title: '主任医师',
+		specialty: '老年病调养',
+		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
+		qaTitleOne: '老人睡眠差和食欲差怎么调养？',
+		qaTitleTwo: '慢病管理需要注意什么？',
 		avatarUrl: ''
 	},
 	{
 		id: 'd6',
-		categoryId: 'surgery',
-		name: '郑晓丹',
-		shortName: '郑',
-		brief: '南通市中医院 中医外科 医学博士',
-		tag: '中医心血管',
-		organization: '南通市中医院',
-		title: '医学博士',
+		primaryCategoryId: 'surgery',
+		secondaryCategoryId: '',
+		name: '王庆春',
+		shortName: '王',
+		brief: '连云港市中医院外科方向主任中医师，医生信息当前保留占位内容。',
+		tag: '中医外科',
+		organization: '连云港市中医院',
+		title: '主任中医师',
 		specialty: '中医外科',
-		introduction: '郑晓丹，南通市中医院中医外科专家，占位简介。',
-		qaTitleOne: '术后调理期间饮食注意事项',
-		qaTitleTwo: '长期慢性炎症如何调理',
+		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
+		qaTitleOne: '术后体虚怎样进行中医调理？',
+		qaTitleTwo: '慢性伤口恢复如何用药？',
 		avatarUrl: ''
 	},
 	{
 		id: 'd7',
-		categoryId: 'acupuncture',
+		primaryCategoryId: 'surgery',
+		secondaryCategoryId: '',
+		name: '郑晓丹',
+		shortName: '郑',
+		brief: '南通市中医院中医外科医学博士，医生简介占位内容等待数据库导入。',
+		tag: '中医外科',
+		organization: '南通市中医院',
+		title: '医学博士',
+		specialty: '中医外科',
+		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
+		qaTitleOne: '术后调理期间饮食注意事项？',
+		qaTitleTwo: '长期慢性炎症如何调理？',
+		avatarUrl: ''
+	},
+	{
+		id: 'd8',
+		primaryCategoryId: 'acupuncture',
+		secondaryCategoryId: '',
 		name: '邹冲',
 		shortName: '邹',
-		brief: '江苏省中医院 五官科方向 主治医师',
-		tag: '中医心血管',
+		brief: '江苏省中医院五官科方向主治医师，医生简介占位内容后续直接替换。',
+		tag: '中医五官科',
 		organization: '江苏省中医院',
 		title: '主治医师',
 		specialty: '中医五官科',
-		introduction: '邹冲，江苏省中医院五官科方向专家，占位简介。',
-		qaTitleOne: '耳鸣耳聋如何进行中医调理',
-		qaTitleTwo: '过敏性鼻炎怎么辨证治疗',
+		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
+		qaTitleOne: '耳鸣耳聋如何进行中医调理？',
+		qaTitleTwo: '过敏性鼻炎怎么辨证治疗？',
 		avatarUrl: ''
 	}
 ])
 
-const currentCategoryId = ref('cardio')
+const currentPrimaryId = ref('internal')
+const currentSecondaryId = ref('')
 const currentDoctors = ref<DoctorItem[]>([])
 
 const refreshDoctors = () => {
-	currentDoctors.value = doctors.value.filter((item : DoctorItem) : boolean => item.categoryId == currentCategoryId.value)
+	currentDoctors.value = doctors.value.filter((item : DoctorItem) : boolean => {
+		if (item.primaryCategoryId != currentPrimaryId.value) {
+			return false
+		}
+		if (currentSecondaryId.value == '') {
+			return true
+		}
+		return item.secondaryCategoryId == currentSecondaryId.value
+	})
 }
 
-const selectCategory = (id : string) => {
-	currentCategoryId.value = id
+const selectPrimaryCategory = (id : string) => {
+	currentPrimaryId.value = id
+	currentSecondaryId.value = ''
+	refreshDoctors()
+}
+
+const selectSecondaryCategory = (primaryId : string, childId : string) => {
+	currentPrimaryId.value = primaryId
+	currentSecondaryId.value = childId
 	refreshDoctors()
 }
 
@@ -260,7 +334,8 @@ refreshDoctors()
 }
 
 .header {
-	height: 96rpx;
+	height: 120rpx;
+	padding-top: 18rpx;
 	padding-left: 24rpx;
 	padding-right: 24rpx;
 	flex-direction: row;
@@ -272,6 +347,7 @@ refreshDoctors()
 .header-back {
 	position: absolute;
 	left: 20rpx;
+	top: 26rpx;
 	width: 68rpx;
 	height: 68rpx;
 	align-items: center;
@@ -301,6 +377,10 @@ refreshDoctors()
 	background-color: #f1f2f5;
 }
 
+.category-group {
+	background-color: #f1f2f5;
+}
+
 .category-item {
 	min-height: 96rpx;
 	padding-left: 20rpx;
@@ -318,6 +398,27 @@ refreshDoctors()
 	background-color: #ffffff;
 }
 
+.subcategory-wrap {
+	background-color: #f7f7f9;
+}
+
+.subcategory-item {
+	min-height: 92rpx;
+	padding-left: 22rpx;
+	padding-right: 18rpx;
+	padding-top: 18rpx;
+	padding-bottom: 18rpx;
+	justify-content: center;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #ececef;
+	position: relative;
+}
+
+.subcategory-item-active {
+	background-color: #ffffff;
+}
+
 .category-line {
 	position: absolute;
 	left: 0;
@@ -326,6 +427,11 @@ refreshDoctors()
 	width: 8rpx;
 	border-radius: 0 8rpx 8rpx 0;
 	background-color: #2fdc96;
+}
+
+.subcategory-line {
+	top: 20rpx;
+	bottom: 20rpx;
 }
 
 .category-text {
@@ -340,6 +446,18 @@ refreshDoctors()
 	font-weight: 600;
 }
 
+.subcategory-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #8f96a0;
+	text-align: center;
+}
+
+.subcategory-text-active {
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
 .doctor-panel {
 	flex: 1;
 	background-color: #ffffff;
@@ -349,17 +467,22 @@ refreshDoctors()
 	padding: 16rpx 18rpx 28rpx;
 	flex-direction: row;
 	flex-wrap: wrap;
-	justify-content: space-between;
+	justify-content: flex-start;
 }
 
 .doctor-card {
 	width: 154rpx;
+	margin-right: 14rpx;
 	margin-bottom: 20rpx;
 	background-color: #ffffff;
 	border-radius: 14rpx;
-	padding: 14rpx 10rpx 16rpx;
+	padding: 14rpx 12rpx 16rpx;
 	box-shadow: 0 8rpx 18rpx rgba(78, 82, 63, 0.08);
 	align-items: center;
+}
+
+.doctor-card:nth-child(3n) {
+	margin-right: 0;
 }
 
 .doctor-avatar-wrap {
@@ -390,6 +513,7 @@ refreshDoctors()
 }
 
 .doctor-name {
+	margin-top: 4rpx;
 	font-size: 18px;
 	line-height: 26px;
 	color: #2f2f2f;
@@ -398,23 +522,26 @@ refreshDoctors()
 
 .doctor-brief {
 	margin-top: 8rpx;
+	width: 100%;
+	height: 90rpx;
+	overflow: hidden;
 	font-size: 11px;
-	line-height: 16px;
+	line-height: 15px;
 	color: #b4b4b4;
-	text-align: center;
-	height: 48rpx;
+	text-align: left;
 }
 
 .doctor-tag {
 	margin-top: 10rpx;
-	padding: 4rpx 10rpx;
+	padding: 3rpx 10rpx;
 	border-radius: 8rpx;
 	border-width: 1px;
 	border-style: solid;
 	border-color: #36b979;
-	font-size: 10px;
-	line-height: 16px;
+	font-size: 9px;
+	line-height: 13px;
 	color: #36b979;
+	align-self: flex-start;
 }
 
 .tabbar {

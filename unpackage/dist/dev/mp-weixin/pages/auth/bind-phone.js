@@ -110,21 +110,22 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       "raw js";
       const __returned__ = {
         a: common_assets._imports_0,
-        b: common_vendor.o(handleBack),
-        c: common_vendor.unref(phone),
-        d: common_vendor.o(($event) => {
+        b: common_assets._imports_0$1,
+        c: common_vendor.o(handleBack),
+        d: common_vendor.unref(phone),
+        e: common_vendor.o(($event) => {
           return common_vendor.isRef(phone) ? phone.value = $event.detail.value : null;
         }),
-        e: common_vendor.unref(code),
-        f: common_vendor.o(($event) => {
+        f: common_vendor.unref(code),
+        g: common_vendor.o(($event) => {
           return common_vendor.isRef(code) ? code.value = $event.detail.value : null;
         }),
-        g: common_vendor.t(common_vendor.unref(countdown) > 0 ? common_vendor.unref(countdown) + "s后重发" : common_vendor.unref(isSendingCode) ? "发送中..." : "获取验证码"),
-        h: common_vendor.o(handleSendCode),
-        i: common_vendor.t(common_vendor.unref(isSubmitting) ? "认证中..." : "认证"),
-        j: common_vendor.unref(isSubmitting),
-        k: common_vendor.o(handleSubmit),
-        l: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        h: common_vendor.t(common_vendor.unref(countdown) > 0 ? common_vendor.unref(countdown) + "s后重发" : common_vendor.unref(isSendingCode) ? "发送中..." : "获取验证码"),
+        i: common_vendor.o(handleSendCode),
+        j: common_vendor.t(common_vendor.unref(isSubmitting) ? "认证中..." : "认证"),
+        k: common_vendor.unref(isSubmitting),
+        l: common_vendor.o(handleSubmit),
+        m: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       };
       return __returned__;
     };

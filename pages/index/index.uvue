@@ -106,7 +106,7 @@ const goConsultPage = () => {
 
 .hero-shell {
 	position: relative;
-	height: 188rpx;
+	height: 236rpx;
 	overflow: hidden;
 }
 
@@ -115,13 +115,14 @@ const goConsultPage = () => {
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 188rpx;
+	height: 236rpx;
 }
 
 .header {
 	position: relative;
 	z-index: 1;
-	height: 92rpx;
+	padding-top: 34rpx;
+	height: 118rpx;
 	align-items: center;
 	justify-content: center;
 }
@@ -137,6 +138,7 @@ const goConsultPage = () => {
 	position: relative;
 	z-index: 1;
 	height: 96rpx;
+	margin-top: 18rpx;
 	padding-left: 28rpx;
 	padding-right: 28rpx;
 	background-color: rgba(251, 250, 246, 0.78);

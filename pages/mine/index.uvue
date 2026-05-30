@@ -41,7 +41,7 @@
 				<image class="tab-icon-image" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">学习</text>
 			</view>
-			<view class="tab-item">
+			<view class="tab-item" @click="goKnowledgePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">考核</text>
 			</view>
@@ -145,6 +145,12 @@ const goLearningHome = () => {
 const goConsultPage = () => {
 	uni.navigateTo({
 		url: '/pages/consult/index'
+	})
+}
+
+const goKnowledgePage = () => {
+	uni.navigateTo({
+		url: '/pages/knowledge/index'
 	})
 }
 

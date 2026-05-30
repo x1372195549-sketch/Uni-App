@@ -63,7 +63,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = common_vendor.e({
-        a: common_assets._imports_0$2,
+        a: common_assets._imports_0$1,
         b: common_vendor.o(goBack),
         c: common_vendor.t(common_vendor.unref(bookTitle)),
         d: common_vendor.o(hideDrawer),

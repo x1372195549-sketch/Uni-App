@@ -1,7 +1,7 @@
 <template>
 	<view class="page">
 		<view class="nav-back" @click="handleBack">
-			<text class="nav-back-icon"><</text>
+			<image class="nav-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
 		</view>
 
 		<view class="header">
@@ -272,10 +272,8 @@ loadProfile()
 }
 
 .nav-back-icon {
-	font-size: 34rpx;
-	line-height: 34rpx;
-	color: #111111;
-	font-weight: 600;
+	width: 26rpx;
+	height: 26rpx;
 }
 
 .header {
