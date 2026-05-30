@@ -80,7 +80,7 @@
 				<image class="reader-tab-icon-image" src="/static/reader/icon_yuedushezhi.png" mode="aspectFit"></image>
 				<text class="reader-tab-text">阅读设置</text>
 			</view>
-			<view class="reader-tab-item">
+			<view class="reader-tab-item" @click="goExamPage">
 				<image class="reader-tab-icon-image" src="/static/reader/icon_kaoheweidianji.png" mode="aspectFit"></image>
 				<text class="reader-tab-text">考核</text>
 			</view>
@@ -152,6 +152,12 @@ const toggleDrawer = (panel : string) => {
 	}
 	currentPanel.value = panel
 	drawerVisible.value = true
+}
+
+const goExamPage = () => {
+	uni.navigateTo({
+		url: '/pages/exam/index?sourceType=book&sourceId=book-demo&sourceName=' + encodeURIComponent(bookTitle.value)
+	})
 }
 </script>
 

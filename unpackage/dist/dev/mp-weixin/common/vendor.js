@@ -9491,6 +9491,7 @@ const createSubpackageApp = initCreateSubpackageApp();
   wx.createPluginApp = global.createPluginApp = createPluginApp;
   wx.createSubpackageApp = global.createSubpackageApp = createSubpackageApp;
 }
+exports.computed = computed;
 exports.createSSRApp = createSSRApp;
 exports.defineComponent = defineComponent;
 exports.e = e;
@@ -9500,6 +9501,8 @@ exports.index = index;
 exports.isRef = isRef;
 exports.n = n;
 exports.o = o;
+exports.onMounted = onMounted;
+exports.onUnmounted = onUnmounted;
 exports.ref = ref;
 exports.sei = sei;
 exports.t = t;

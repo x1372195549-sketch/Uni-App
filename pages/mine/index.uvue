@@ -41,7 +41,7 @@
 				<image class="tab-icon-image" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">学习</text>
 			</view>
-			<view class="tab-item" @click="goKnowledgePage">
+			<view class="tab-item" @click="goExamPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">考核</text>
 			</view>
@@ -49,7 +49,7 @@
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
 				<text class="tab-label">咨询</text>
 			</view>
-			<view class="tab-item">
+			<view class="tab-item" @click="goKnowledgePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">知识库</text>
 			</view>
@@ -139,6 +139,12 @@ const handleMenuClick = (label : string) => {
 const goLearningHome = () => {
 	uni.reLaunch({
 		url: '/pages/index/index'
+	})
+}
+
+const goExamPage = () => {
+	uni.navigateTo({
+		url: '/pages/exam/index'
 	})
 }
 

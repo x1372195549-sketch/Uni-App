@@ -16,7 +16,10 @@
     "pages/knowledge/index",
     "pages/knowledge/book-detail",
     "pages/consult/index",
-    "pages/consult/detail"
+    "pages/consult/detail",
+    "pages/exam/index",
+    "pages/exam/paper",
+    "pages/exam/result"
   ],
   "window": {
     "navigationBarTextStyle": "black",

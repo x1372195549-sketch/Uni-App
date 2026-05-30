@@ -46,7 +46,7 @@
 				<image class="tab-icon-image" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">学习</text>
 			</view>
-			<view class="tab-item">
+			<view class="tab-item" @click="goExamPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">考核</text>
 			</view>
@@ -118,6 +118,10 @@ const goBookDetail = (book : BookItem) => {
 
 const goLearningPage = () => {
 	uni.reLaunch({ url: '/pages/index/index' })
+}
+
+const goExamPage = () => {
+	uni.navigateTo({ url: '/pages/exam/index' })
 }
 
 const goMinePage = () => {

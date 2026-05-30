@@ -1,0 +1,124 @@
+:host{display:flex;flex-direction:column}
+
+.page {
+	flex: 1;
+	background-color: #ffffff;
+}
+.header {
+	height: 96rpx;
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	background-color: #ffffff;
+}
+.header-back {
+	position: absolute;
+	left: 20rpx;
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+.header-back-icon {
+	width: 24rpx;
+	height: 24rpx;
+}
+.header-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #2f2f2f;
+	font-weight: 500;
+}
+.result-body {
+	flex: 1;
+	align-items: center;
+	padding-top: 110rpx;
+}
+.trophy-box {
+	width: 260rpx;
+	height: 280rpx;
+	position: relative;
+	align-items: center;
+}
+.trophy-left {
+	position: absolute;
+	left: 18rpx;
+	top: 58rpx;
+	width: 54rpx;
+	height: 86rpx;
+	border-top-left-radius: 54rpx;
+	border-bottom-left-radius: 54rpx;
+	border-width: 16rpx;
+	border-style: solid;
+	border-right-width: 0;
+	border-color: #d89f15;
+}
+.trophy-right {
+	position: absolute;
+	right: 18rpx;
+	top: 58rpx;
+	width: 54rpx;
+	height: 86rpx;
+	border-top-right-radius: 54rpx;
+	border-bottom-right-radius: 54rpx;
+	border-width: 16rpx;
+	border-style: solid;
+	border-left-width: 0;
+	border-color: #d89f15;
+}
+.trophy-cup {
+	margin-top: 20rpx;
+	width: 170rpx;
+	height: 132rpx;
+	border-bottom-left-radius: 36rpx;
+	border-bottom-right-radius: 36rpx;
+	border-top-left-radius: 24rpx;
+	border-top-right-radius: 24rpx;
+	background-color: #e0ab22;
+	align-items: center;
+	justify-content: center;
+}
+.trophy-star {
+	width: 52rpx;
+	height: 52rpx;
+	border-radius: 12rpx;
+	background-color: rgba(255, 235, 170, 0.45);
+}
+.trophy-stem {
+	margin-top: 8rpx;
+	width: 54rpx;
+	height: 64rpx;
+	background-color: #d59816;
+}
+.trophy-base {
+	margin-top: 8rpx;
+	width: 148rpx;
+	height: 30rpx;
+	border-radius: 12rpx;
+	background-color: #bf7c09;
+}
+.result-text {
+	margin-top: 34rpx;
+	font-size: 18px;
+	line-height: 28px;
+	color: #e04f36;
+	font-weight: 600;
+}
+.home-btn {
+	margin-top: 40rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 8rpx;
+	background-color: #12b368;
+	align-items: center;
+	justify-content: center;
+}
+.home-btn-text {
+	font-size: 18px;
+	line-height: 26px;
+	color: #ffffff;
+	font-weight: 600;
+}

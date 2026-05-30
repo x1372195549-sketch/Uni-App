@@ -118,6 +118,27 @@
 				"navigationStyle": "custom",
 				"backgroundColor": "#F7F4EE"
 			}
+		},
+		{
+			"path": "pages/exam/index",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/exam/paper",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/exam/result",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#FFFFFF"
+			}
 		}
 	],
 	"globalStyle": {

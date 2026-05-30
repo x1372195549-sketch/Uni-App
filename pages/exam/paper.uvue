@@ -1,0 +1,423 @@
+<template>
+	<view class="page">
+		<view class="header">
+			<view class="header-back" @click="goBack">
+				<image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+			</view>
+			<text class="header-title">江苏中医在线答题</text>
+		</view>
+
+		<view class="content">
+			<text class="paper-name">{{ paperTitle }}</text>
+			<text class="time-label">剩余时间</text>
+			<text class="time-value">{{ timeDisplay }} / 10:00</text>
+			<text class="paper-meta">共10道题，共10分钟</text>
+
+			<view class="question-box">
+				<text class="question-index">{{ currentQuestionIndex + 1 }}. {{ currentQuestion.typeLabel }}</text>
+				<text class="question-title">{{ currentQuestion.title }}</text>
+
+				<view v-if="currentQuestion.type == 'single'" class="option-list">
+					<view
+						v-for="option in currentQuestion.options"
+						:key="option.key"
+						class="option-card"
+						:class="{ 'option-card-active': selectedSingle == option.key }"
+						@click="selectSingle(option.key)"
+					>
+						<text class="option-key">{{ option.key }}</text>
+						<text class="option-text">{{ option.text }}</text>
+					</view>
+				</view>
+
+				<view v-else-if="currentQuestion.type == 'multiple'" class="option-list">
+					<view
+						v-for="option in currentQuestion.options"
+						:key="option.key"
+						class="option-card"
+						:class="{ 'option-card-active': isMultipleSelected(option.key) }"
+						@click="toggleMultiple(option.key)"
+					>
+						<text class="option-key">{{ option.key }}</text>
+						<text class="option-text">{{ option.text }}</text>
+					</view>
+				</view>
+
+				<view v-else class="fill-box">
+					<textarea
+						v-model="fillAnswer"
+						class="fill-input"
+						placeholder="请输入答案占位内容"
+						auto-height="true"
+					></textarea>
+				</view>
+			</view>
+		</view>
+
+		<view class="footer">
+			<view class="footer-btn footer-btn-light" @click="prevQuestion">
+				<text class="footer-btn-light-text">上一题</text>
+			</view>
+			<view class="footer-btn footer-btn-primary" @click="nextOrSubmit">
+				<text class="footer-btn-primary-text">{{ currentQuestionIndex == questions.length - 1 ? '提交答卷' : '下一题' }}</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+type ExamOption = {
+	key : string
+	text : string
+}
+
+type ExamQuestion = {
+	id : string
+	type : string
+	typeLabel : string
+	title : string
+	options : ExamOption[]
+	correctAnswer : string
+}
+
+const currentPages = getCurrentPages()
+let pageTitle = '实用中医方药学模拟练习卷'
+
+if (currentPages.length > 0) {
+	const currentPage = currentPages[currentPages.length - 1]
+	const options = currentPage.options
+	if (options != null && options['title'] != null) {
+		pageTitle = decodeURIComponent(options['title'] as string)
+	}
+}
+
+const paperTitle = ref(pageTitle)
+const remainSeconds = ref(597)
+const currentQuestionIndex = ref(0)
+let timer : number = -1
+
+const questions = ref<ExamQuestion[]>([
+	{
+		id: 'q1',
+		type: 'single',
+		typeLabel: '单选题',
+		title: '辛凉解表药中薄荷的归经是',
+		options: [
+			{ key: 'A', text: '肺、肝经' },
+			{ key: 'B', text: '脾、胃经' },
+			{ key: 'C', text: '肺、大肠经' },
+			{ key: 'D', text: '心、肝经' }
+		],
+		correctAnswer: 'A'
+	},
+	{
+		id: 'q2',
+		type: 'multiple',
+		typeLabel: '多选题',
+		title: '下列属于中医基础理论学习重点的是',
+		options: [
+			{ key: 'A', text: '阴阳学说' },
+			{ key: 'B', text: '五行学说' },
+			{ key: 'C', text: '藏象学说' },
+			{ key: 'D', text: '计算机网络' }
+		],
+		correctAnswer: 'A,B,C'
+	},
+	{
+		id: 'q3',
+		type: 'blank',
+		typeLabel: '填空题',
+		title: '请填写一条中医知识点占位内容。',
+		options: [],
+		correctAnswer: '中医基础理论'
+	}
+])
+
+const answers = ref<Record<string, string>>({})
+
+const currentQuestion = computed(() : ExamQuestion => {
+	return questions.value[currentQuestionIndex.value]
+})
+
+const timeDisplay = computed(() : string => {
+	const minutes = Math.floor(remainSeconds.value / 60)
+	const seconds = remainSeconds.value % 60
+	const mm = minutes < 10 ? '0' + minutes.toString() : minutes.toString()
+	const ss = seconds < 10 ? '0' + seconds.toString() : seconds.toString()
+	return mm + ':' + ss
+})
+
+const selectedSingle = computed(() : string => {
+	const value = answers.value[currentQuestion.value.id]
+	return value == null ? '' : value
+})
+
+const fillAnswer = computed({
+	get() : string {
+		const value = answers.value[currentQuestion.value.id]
+		return value == null ? '' : value
+	},
+	set(value : string) {
+		answers.value[currentQuestion.value.id] = value
+	}
+})
+
+const selectSingle = (key : string) => {
+	answers.value[currentQuestion.value.id] = key
+}
+
+const isMultipleSelected = (key : string) : boolean => {
+	const value = answers.value[currentQuestion.value.id]
+	if (value == null || value.length == 0) {
+		return false
+	}
+	return value.split(',').includes(key)
+}
+
+const toggleMultiple = (key : string) => {
+	const value = answers.value[currentQuestion.value.id]
+	let selected = value == null || value.length == 0 ? [] as string[] : value.split(',')
+	if (selected.includes(key)) {
+		selected = selected.filter((item : string) : boolean => item != key)
+	} else {
+		selected.push(key)
+	}
+	selected.sort()
+	answers.value[currentQuestion.value.id] = selected.join(',')
+}
+
+const prevQuestion = () => {
+	if (currentQuestionIndex.value > 0) {
+		currentQuestionIndex.value -= 1
+	}
+}
+
+const nextOrSubmit = () => {
+	if (currentQuestionIndex.value < questions.value.length - 1) {
+		currentQuestionIndex.value += 1
+		return
+	}
+	submitPaper()
+}
+
+const submitPaper = () => {
+	if (timer != -1) {
+		clearInterval(timer)
+		timer = -1
+	}
+	let correctCount = 0
+	questions.value.forEach((question : ExamQuestion) => {
+		const answer = answers.value[question.id]
+		if (answer != null && answer == question.correctAnswer) {
+			correctCount += 1
+		}
+	})
+	uni.redirectTo({
+		url: '/pages/exam/result?total=' + questions.value.length.toString() + '&correct=' + correctCount.toString()
+	})
+}
+
+const goBack = () => {
+	if (timer != -1) {
+		clearInterval(timer)
+		timer = -1
+	}
+	uni.navigateBack()
+}
+
+onMounted(() => {
+	timer = setInterval(() => {
+		if (remainSeconds.value <= 0) {
+			submitPaper()
+			return
+		}
+		remainSeconds.value -= 1
+	}, 1000)
+})
+
+onUnmounted(() => {
+	if (timer != -1) {
+		clearInterval(timer)
+		timer = -1
+	}
+})
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f7f4ee;
+}
+
+.header {
+	height: 96rpx;
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	background-color: #f7f4ee;
+}
+
+.header-back {
+	position: absolute;
+	left: 20rpx;
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.header-back-icon {
+	width: 24rpx;
+	height: 24rpx;
+}
+
+.header-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #2f2f2f;
+	font-weight: 500;
+}
+
+.content {
+	flex: 1;
+	padding-left: 28rpx;
+	padding-right: 28rpx;
+	padding-top: 26rpx;
+}
+
+.paper-name {
+	font-size: 19px;
+	line-height: 30px;
+	color: #2f2f2f;
+	font-weight: 600;
+	text-align: center;
+}
+
+.time-label {
+	margin-top: 28rpx;
+	font-size: 14px;
+	line-height: 20px;
+	color: #737373;
+}
+
+.time-value {
+	margin-top: 10rpx;
+	font-size: 24px;
+	line-height: 34px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.paper-meta {
+	margin-top: 12rpx;
+	font-size: 13px;
+	line-height: 18px;
+	color: #a0a0a0;
+}
+
+.question-box {
+	margin-top: 26rpx;
+}
+
+.question-index {
+	font-size: 16px;
+	line-height: 22px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.question-title {
+	margin-top: 18rpx;
+	font-size: 18px;
+	line-height: 30px;
+	color: #333333;
+}
+
+.option-list {
+	margin-top: 30rpx;
+}
+
+.option-card {
+	min-height: 84rpx;
+	border-radius: 999rpx;
+	background-color: #ffffff;
+	padding-left: 28rpx;
+	padding-right: 28rpx;
+	margin-bottom: 22rpx;
+	flex-direction: row;
+	align-items: center;
+	box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.03);
+}
+
+.option-card-active {
+	border-width: 2rpx;
+	border-style: solid;
+	border-color: #12b368;
+}
+
+.option-key {
+	width: 40rpx;
+	font-size: 16px;
+	line-height: 24px;
+	color: #5b5b5b;
+	font-weight: 600;
+}
+
+.option-text {
+	flex: 1;
+	font-size: 16px;
+	line-height: 24px;
+	color: #2f2f2f;
+}
+
+.fill-box {
+	margin-top: 26rpx;
+}
+
+.fill-input {
+	width: 100%;
+	min-height: 220rpx;
+	background-color: #ffffff;
+	border-radius: 20rpx;
+	padding: 24rpx;
+	font-size: 16px;
+	line-height: 26px;
+	color: #2f2f2f;
+}
+
+.footer {
+	height: 98rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+}
+
+.footer-btn {
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+
+.footer-btn-light {
+	background-color: #efefef;
+}
+
+.footer-btn-primary {
+	background-color: #12b368;
+}
+
+.footer-btn-light-text {
+	font-size: 18px;
+	line-height: 26px;
+	color: #2f2f2f;
+}
+
+.footer-btn-primary-text {
+	font-size: 18px;
+	line-height: 26px;
+	color: #ffffff;
+	font-weight: 600;
+}
+</style>

@@ -19,6 +19,9 @@ if (!Math) {
   "./pages/knowledge/book-detail.js";
   "./pages/consult/index.js";
   "./pages/consult/detail.js";
+  "./pages/exam/index.js";
+  "./pages/exam/paper.js";
+  "./pages/exam/result.js";
 }
 const _sfc_main = common_vendor.defineComponent({
   onLaunch() {

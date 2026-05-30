@@ -60,6 +60,11 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       currentPanel.value = panel;
       drawerVisible.value = true;
     };
+    const goExamPage = () => {
+      common_vendor.index.navigateTo({
+        url: "/pages/exam/index?sourceType=book&sourceId=book-demo&sourceName=" + encodeURIComponent(bookTitle.value)
+      });
+    };
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = common_vendor.e({
@@ -116,7 +121,8 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }),
         z: common_assets._imports_1$6,
         A: common_assets._imports_2$1,
-        B: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        B: common_vendor.o(goExamPage),
+        C: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

@@ -59,7 +59,7 @@
 							</view>
 						</view>
 						<text class="doctor-name">{{ doctor.name }}</text>
-						<text class="doctor-brief">{{ doctor.brief }}</text>
+						<text class="doctor-brief" lines="3">{{ doctor.brief }}</text>
 						<text class="doctor-tag">{{ doctor.tag }}</text>
 					</view>
 				</view>
@@ -71,7 +71,7 @@
 				<image class="tab-icon-image" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">学习</text>
 			</view>
-			<view class="tab-item">
+			<view class="tab-item" @click="goExamPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">考核</text>
 			</view>
@@ -314,6 +314,10 @@ const goDoctorDetail = (doctor : DoctorItem) => {
 
 const goLearningPage = () => {
 	uni.reLaunch({ url: '/pages/index/index' })
+}
+
+const goExamPage = () => {
+	uni.navigateTo({ url: '/pages/exam/index' })
 }
 
 const goKnowledgePage = () => {

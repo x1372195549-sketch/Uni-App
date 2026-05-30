@@ -48,7 +48,7 @@
 				<image class="tab-icon-image" src="/static/tabbar/icon_xuexidianji.png" mode="aspectFit"></image>
 				<text class="tab-label tab-label-active">学习</text>
 			</view>
-			<view class="tab-item">
+			<view class="tab-item" @click="goExamPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">考核</text>
 			</view>
@@ -87,6 +87,10 @@ const goNewsPage = () => {
 
 const goMinePage = () => {
 	uni.navigateTo({ url: '/pages/mine/index' })
+}
+
+const goExamPage = () => {
+	uni.navigateTo({ url: '/pages/exam/index' })
 }
 
 const goKnowledgePage = () => {
