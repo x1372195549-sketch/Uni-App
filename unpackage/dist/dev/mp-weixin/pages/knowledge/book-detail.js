@@ -119,7 +119,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         y: common_vendor.o(($event) => {
           return toggleDrawer("bookmark");
         }),
-        z: common_assets._imports_1$6,
+        z: common_assets._imports_1$5,
         A: common_assets._imports_2$1,
         B: common_vendor.o(goExamPage),
         C: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")

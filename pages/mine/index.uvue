@@ -137,25 +137,25 @@ const handleMenuClick = (label : string) => {
 }
 
 const goLearningHome = () => {
-	uni.reLaunch({
+	uni.redirectTo({
 		url: '/pages/index/index'
 	})
 }
 
 const goExamPage = () => {
-	uni.navigateTo({
+	uni.redirectTo({
 		url: '/pages/exam/index'
 	})
 }
 
 const goConsultPage = () => {
-	uni.navigateTo({
+	uni.redirectTo({
 		url: '/pages/consult/index'
 	})
 }
 
 const goKnowledgePage = () => {
-	uni.navigateTo({
+	uni.redirectTo({
 		url: '/pages/knowledge/index'
 	})
 }

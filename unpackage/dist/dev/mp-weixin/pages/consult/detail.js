@@ -33,7 +33,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const __returned__ = {
         a: common_assets._imports_0$1,
         b: common_vendor.o(goBack),
-        c: common_assets._imports_1$3,
+        c: common_assets._imports_0$3,
         d: common_vendor.t(common_vendor.unref(shortName)),
         e: common_vendor.t(common_vendor.unref(doctorName)),
         f: common_vendor.t(common_vendor.unref(doctorTitle)),

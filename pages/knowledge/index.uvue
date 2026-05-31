@@ -1,10 +1,10 @@
 <template>
 	<view class="page">
-		<view class="header">
-			<view class="header-back" @click="goLearningPage">
-				<image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+		<view class="hero-shell">
+			<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
+			<view class="header">
+				<text class="header-title">知识库</text>
 			</view>
-			<text class="header-title">知识库</text>
 		</view>
 
 		<view class="content-shell">
@@ -117,19 +117,19 @@ const goBookDetail = (book : BookItem) => {
 }
 
 const goLearningPage = () => {
-	uni.reLaunch({ url: '/pages/index/index' })
+	uni.redirectTo({ url: '/pages/index/index' })
 }
 
 const goExamPage = () => {
-	uni.navigateTo({ url: '/pages/exam/index' })
+	uni.redirectTo({ url: '/pages/exam/index' })
 }
 
 const goMinePage = () => {
-	uni.navigateTo({ url: '/pages/mine/index' })
+	uni.redirectTo({ url: '/pages/mine/index' })
 }
 
 const goConsultPage = () => {
-	uni.navigateTo({ url: '/pages/consult/index' })
+	uni.redirectTo({ url: '/pages/consult/index' })
 }
 
 refreshBooks()
@@ -141,35 +141,38 @@ refreshBooks()
 	background-color: #f5f5fb;
 }
 
-.header {
-	height: 96rpx;
-	padding-left: 24rpx;
-	padding-right: 24rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
+
+.hero-shell {
 	position: relative;
+	height: 118rpx;
+	overflow: hidden;
 }
 
-.header-back {
+.hero-bg {
 	position: absolute;
-	left: 20rpx;
-	width: 68rpx;
-	height: 68rpx;
+	top: 0;
+	left: 0;
+	width: 750rpx;
+	height: 236rpx;
+}
+.header {
+	position: relative;
+	z-index: 1;
+	height: 118rpx;
+	padding-top: 34rpx;
 	align-items: center;
 	justify-content: center;
+	background-color: transparent;
 }
 
-.header-back-icon {
-	width: 24rpx;
-	height: 24rpx;
-}
 
 .header-title {
-	font-size: 24px;
-	line-height: 34px;
+	font-size: 20px;
+	line-height: 30px;
 	color: #2f2f2f;
 	font-weight: 600;
+	width: 100%;
+	text-align: center;
 }
 
 .content-shell {

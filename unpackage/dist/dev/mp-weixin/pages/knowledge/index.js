@@ -86,21 +86,23 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       });
     };
     const goLearningPage = () => {
-      common_vendor.index.reLaunch({ url: "/pages/index/index" });
+      common_vendor.index.redirectTo({ url: "/pages/index/index" });
+    };
+    const goExamPage = () => {
+      common_vendor.index.redirectTo({ url: "/pages/exam/index" });
     };
     const goMinePage = () => {
-      common_vendor.index.navigateTo({ url: "/pages/mine/index" });
+      common_vendor.index.redirectTo({ url: "/pages/mine/index" });
     };
     const goConsultPage = () => {
-      common_vendor.index.navigateTo({ url: "/pages/consult/index" });
+      common_vendor.index.redirectTo({ url: "/pages/consult/index" });
     };
     refreshBooks();
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = {
-        a: common_assets._imports_0$1,
-        b: common_vendor.o(goLearningPage),
-        c: common_vendor.f(common_vendor.unref(categories), (item, k0, i0) => {
+        a: common_assets._imports_0$3,
+        b: common_vendor.f(common_vendor.unref(categories), (item, k0, i0) => {
           return common_vendor.e({
             a: common_vendor.unref(currentCategoryId) === item.id
           }, common_vendor.unref(currentCategoryId) === item.id ? {} : {}, {
@@ -113,7 +115,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, item.id)
           });
         }),
-        d: common_vendor.f(common_vendor.unref(currentBooks), (book, k0, i0) => {
+        c: common_vendor.f(common_vendor.unref(currentBooks), (book, k0, i0) => {
           return {
             a: common_vendor.t(book.shortTitle),
             b: book.coverColor,
@@ -124,9 +126,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, book.id)
           };
         }),
-        e: common_assets._imports_1$2,
-        f: common_vendor.o(goLearningPage),
-        g: common_assets._imports_2,
+        d: common_assets._imports_1$2,
+        e: common_vendor.o(goLearningPage),
+        f: common_assets._imports_2,
+        g: common_vendor.o(goExamPage),
         h: common_assets._imports_3,
         i: common_vendor.o(goConsultPage),
         j: common_assets._imports_4$1,

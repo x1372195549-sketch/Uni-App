@@ -45,44 +45,40 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       new ExamPaperItem({ id: "paper-3", title: "实用中医理论基础模拟练习卷", questionCount: 10, durationMinutes: 10 }),
       new ExamPaperItem({ id: "paper-4", title: "实用针灸推拿学模拟练习卷", questionCount: 10, durationMinutes: 10 })
     ]);
-    const goBack = () => {
-      common_vendor.index.navigateBack();
-    };
     const goExamPaper = (paper) => {
       common_vendor.index.navigateTo({
         url: "/pages/exam/paper?id=" + paper.id + "&title=" + encodeURIComponent(paper.title)
       });
     };
     const goLearningHome = () => {
-      common_vendor.index.reLaunch({
+      common_vendor.index.redirectTo({
         url: "/pages/index/index"
       });
     };
     const goConsultPage = () => {
-      common_vendor.index.reLaunch({
+      common_vendor.index.redirectTo({
         url: "/pages/consult/index"
       });
     };
     const goKnowledgePage = () => {
-      common_vendor.index.reLaunch({
+      common_vendor.index.redirectTo({
         url: "/pages/knowledge/index"
       });
     };
     const goMinePage = () => {
-      common_vendor.index.reLaunch({
+      common_vendor.index.redirectTo({
         url: "/pages/mine/index"
       });
     };
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = common_vendor.e({
-        a: common_assets._imports_0$1,
-        b: common_vendor.o(goBack),
-        c: common_vendor.unref(sourceName).length > 0
+        a: common_assets._imports_0$3,
+        b: common_vendor.unref(sourceName).length > 0
       }, common_vendor.unref(sourceName).length > 0 ? {
-        d: common_vendor.t(common_vendor.unref(sourceName))
+        c: common_vendor.t(common_vendor.unref(sourceName))
       } : {}, {
-        e: common_vendor.f(common_vendor.unref(papers), (paper, k0, i0) => {
+        d: common_vendor.f(common_vendor.unref(papers), (paper, k0, i0) => {
           return {
             a: common_vendor.t(paper.title),
             b: common_vendor.t(paper.questionCount),
@@ -93,16 +89,16 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             e: paper.id
           };
         }),
-        f: common_assets._imports_1$7,
-        g: common_vendor.o(goLearningHome),
-        h: common_assets._imports_2,
-        i: common_assets._imports_3,
-        j: common_vendor.o(goConsultPage),
-        k: common_assets._imports_4,
-        l: common_vendor.o(goKnowledgePage),
-        m: common_assets._imports_5,
-        n: common_vendor.o(goMinePage),
-        o: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        e: common_assets._imports_1$2,
+        f: common_vendor.o(goLearningHome),
+        g: common_assets._imports_2$2,
+        h: common_assets._imports_3,
+        i: common_vendor.o(goConsultPage),
+        j: common_assets._imports_4,
+        k: common_vendor.o(goKnowledgePage),
+        l: common_assets._imports_5,
+        m: common_vendor.o(goMinePage),
+        n: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

@@ -113,27 +113,27 @@ const courseItems = ref<CourseItem[]>([
 ])
 
 const goLearningPage = () => {
-	uni.reLaunch({ url: '/pages/index/index' })
+	uni.redirectTo({ url: '/pages/index/index' })
 }
 
 const goAudioPage = () => {
-	uni.navigateTo({ url: '/pages/audio/index' })
+	uni.redirectTo({ url: '/pages/audio/index' })
 }
 
 const goLivePage = () => {
-	uni.navigateTo({ url: '/pages/live/index' })
+	uni.redirectTo({ url: '/pages/live/index' })
 }
 
 const goNewsPage = () => {
-	uni.navigateTo({ url: '/pages/news/index' })
+	uni.redirectTo({ url: '/pages/news/index' })
 }
 
 const goMinePage = () => {
-	uni.navigateTo({ url: '/pages/mine/index' })
+	uni.redirectTo({ url: '/pages/mine/index' })
 }
 
 const goExamPage = () => {
-	uni.navigateTo({ url: '/pages/exam/index' })
+	uni.redirectTo({ url: '/pages/exam/index' })
 }
 
 const goCourseDetail = (id : string) => {
@@ -141,11 +141,11 @@ const goCourseDetail = (id : string) => {
 }
 
 const goKnowledgePage = () => {
-	uni.navigateTo({ url: '/pages/knowledge/index' })
+	uni.redirectTo({ url: '/pages/knowledge/index' })
 }
 
 const goConsultPage = () => {
-	uni.navigateTo({ url: '/pages/consult/index' })
+	uni.redirectTo({ url: '/pages/consult/index' })
 }
 </script>
 

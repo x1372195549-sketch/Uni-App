@@ -5,44 +5,48 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "index",
   setup(__props) {
     const goAudioPage = () => {
-      common_vendor.index.navigateTo({ url: "/pages/audio/index" });
+      common_vendor.index.redirectTo({ url: "/pages/audio/index" });
     };
     const goLivePage = () => {
-      common_vendor.index.navigateTo({ url: "/pages/live/index" });
+      common_vendor.index.redirectTo({ url: "/pages/live/index" });
     };
     const goCoursePage = () => {
-      common_vendor.index.navigateTo({ url: "/pages/course/index" });
+      common_vendor.index.redirectTo({ url: "/pages/course/index" });
     };
     const goNewsPage = () => {
-      common_vendor.index.navigateTo({ url: "/pages/news/index" });
+      common_vendor.index.redirectTo({ url: "/pages/news/index" });
     };
     const goMinePage = () => {
-      common_vendor.index.navigateTo({ url: "/pages/mine/index" });
+      common_vendor.index.redirectTo({ url: "/pages/mine/index" });
+    };
+    const goExamPage = () => {
+      common_vendor.index.redirectTo({ url: "/pages/exam/index" });
     };
     const goKnowledgePage = () => {
-      common_vendor.index.navigateTo({ url: "/pages/knowledge/index" });
+      common_vendor.index.redirectTo({ url: "/pages/knowledge/index" });
     };
     const goConsultPage = () => {
-      common_vendor.index.navigateTo({ url: "/pages/consult/index" });
+      common_vendor.index.redirectTo({ url: "/pages/consult/index" });
     };
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = {
-        a: common_assets._imports_1$3,
+        a: common_assets._imports_0$3,
         b: common_vendor.o(goAudioPage),
         c: common_vendor.o(goLivePage),
         d: common_vendor.o(goCoursePage),
         e: common_vendor.o(goNewsPage),
-        f: common_assets._imports_1$4,
-        g: common_assets._imports_1$5,
+        f: common_assets._imports_1$3,
+        g: common_assets._imports_1$4,
         h: common_assets._imports_2,
-        i: common_assets._imports_3,
-        j: common_vendor.o(goConsultPage),
-        k: common_assets._imports_4,
-        l: common_vendor.o(goKnowledgePage),
-        m: common_assets._imports_5,
-        n: common_vendor.o(goMinePage),
-        o: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        i: common_vendor.o(goExamPage),
+        j: common_assets._imports_3,
+        k: common_vendor.o(goConsultPage),
+        l: common_assets._imports_4,
+        m: common_vendor.o(goKnowledgePage),
+        n: common_assets._imports_5,
+        o: common_vendor.o(goMinePage),
+        p: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       };
       return __returned__;
     };

@@ -1,36 +1,38 @@
+@import "../../uvue.wxss";
 :host{display:flex;flex-direction:column}
 
 .page {
 	flex: 1;
 	background-color: #f7f4ee;
 }
-.header {
-	height: 96rpx;
-	padding-left: 24rpx;
-	padding-right: 24rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
+.hero-shell {
 	position: relative;
-	background-color: #f7f4ee;
+	height: 118rpx;
+	overflow: hidden;
 }
-.header-back {
+.hero-bg {
 	position: absolute;
-	left: 20rpx;
-	width: 68rpx;
-	height: 68rpx;
+	top: 0;
+	left: 0;
+	width: 750rpx;
+	height: 236rpx;
+}
+.header {
+	position: relative;
+	z-index: 1;
+	height: 118rpx;
+	padding-top: 34rpx;
 	align-items: center;
 	justify-content: center;
-}
-.header-back-icon {
-	width: 24rpx;
-	height: 24rpx;
+	background-color: transparent;
 }
 .header-title {
 	font-size: 18px;
 	line-height: 28px;
 	color: #2f2f2f;
 	font-weight: 600;
+	width: 100%;
+	text-align: center;
 }
 .content {
 	flex: 1;
