@@ -1,142 +1,288 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
-class CategoryItem extends UTS.UTSType {
+const utils_auth = require("../../utils/auth.js");
+class CategoryDisplayItem extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
       kind: 2,
       get fields() {
         return {
-          id: { type: String, optional: false },
-          name: { type: String, optional: false }
+          id: { type: Number, optional: false },
+          displayName: { type: String, optional: false }
         };
       },
-      name: "CategoryItem"
+      name: "CategoryDisplayItem"
     };
   }
-  constructor(options, metadata = CategoryItem.get$UTSMetadata$(), isJSONParse = false) {
+  constructor(options, metadata = CategoryDisplayItem.get$UTSMetadata$(), isJSONParse = false) {
     super();
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
-    this.name = this.__props__.name;
+    this.displayName = this.__props__.displayName;
     delete this.__props__;
   }
 }
-class BookItem extends UTS.UTSType {
+class KnowledgeDisplayItem extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
       kind: 2,
       get fields() {
         return {
-          id: { type: String, optional: false },
-          categoryId: { type: String, optional: false },
-          name: { type: String, optional: false },
-          shortTitle: { type: String, optional: false },
+          id: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
           author: { type: String, optional: false },
-          coverColor: { type: String, optional: false }
+          categoryName: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          viewCount: { type: String, optional: false },
+          publishedAt: { type: String, optional: false },
+          shortTitle: { type: String, optional: false }
         };
       },
-      name: "BookItem"
+      name: "KnowledgeDisplayItem"
     };
   }
-  constructor(options, metadata = BookItem.get$UTSMetadata$(), isJSONParse = false) {
+  constructor(options, metadata = KnowledgeDisplayItem.get$UTSMetadata$(), isJSONParse = false) {
     super();
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
-    this.categoryId = this.__props__.categoryId;
-    this.name = this.__props__.name;
-    this.shortTitle = this.__props__.shortTitle;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
     this.author = this.__props__.author;
-    this.coverColor = this.__props__.coverColor;
+    this.categoryName = this.__props__.categoryName;
+    this.coverUrl = this.__props__.coverUrl;
+    this.viewCount = this.__props__.viewCount;
+    this.publishedAt = this.__props__.publishedAt;
+    this.shortTitle = this.__props__.shortTitle;
     delete this.__props__;
   }
 }
+const PAGE_SIZE = 10;
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "index",
   setup(__props) {
-    const categories = common_vendor.ref([
-      new CategoryItem({ id: "theory", name: "中医基础理论" }),
-      new CategoryItem({ id: "diagnosis", name: "中医诊断学" }),
-      new CategoryItem({ id: "herbs", name: "中药学" }),
-      new CategoryItem({ id: "formula", name: "方剂学" }),
-      new CategoryItem({ id: "internal", name: "中医内科" }),
-      new CategoryItem({ id: "surgery", name: "中医外科" }),
-      new CategoryItem({ id: "classic", name: "四大经典" })
-    ]);
-    const books = common_vendor.ref([
-      new BookItem({ id: "b1", categoryId: "theory", name: "中医基础理论概论", shortTitle: "基础\n理论", author: "王某某", coverColor: "#dfead2" }),
-      new BookItem({ id: "b2", categoryId: "theory", name: "中医阴阳五行导读", shortTitle: "阴阳\n五行", author: "李某某", coverColor: "#f3d88d" }),
-      new BookItem({ id: "b3", categoryId: "theory", name: "脏腑经络入门", shortTitle: "脏腑\n经络", author: "周某某", coverColor: "#d5e1f2" }),
-      new BookItem({ id: "b4", categoryId: "theory", name: "中医诊断学图解", shortTitle: "诊断\n图解", author: "赵某某", coverColor: "#f1ddb9" })
-    ]);
-    const currentCategoryId = common_vendor.ref("theory");
-    const currentBooks = common_vendor.ref([]);
-    const refreshBooks = () => {
-      currentBooks.value = books.value.filter((item) => {
-        return item.categoryId == currentCategoryId.value;
+    const searchKeyword = common_vendor.ref("");
+    const selectedCategoryId = common_vendor.ref(0);
+    const flatCategories = common_vendor.ref([]);
+    const bookList = common_vendor.ref([]);
+    const page = common_vendor.ref(1);
+    const hasMore = common_vendor.ref(true);
+    const isInitialLoading = common_vendor.ref(true);
+    const isListLoading = common_vendor.ref(false);
+    const isRefreshing = common_vendor.ref(false);
+    const errorText = common_vendor.ref("");
+    function safeText(value = null) {
+      return value == null || value.length == 0 ? "" : value;
+    }
+    function toShortTitle(value) {
+      const title = safeText(value);
+      if (title.length == 0) {
+        return "知识";
+      }
+      if (title.length <= 4) {
+        return title;
+      }
+      return title.substring(0, 4);
+    }
+    function flattenCategories(items, level, result) {
+      items.forEach((item) => {
+        const indent = level > 0 ? "· ".repeat(level) : "";
+        result.push(new CategoryDisplayItem({
+          id: item.id,
+          displayName: indent + safeText(item.categoryName)
+        }));
+        if (item.children != null && item.children.length > 0) {
+          flattenCategories(item.children, level + 1, result);
+        }
       });
-    };
-    const selectCategory = (id) => {
-      currentCategoryId.value = id;
-      refreshBooks();
-    };
-    const goBookDetail = (book) => {
+    }
+    function mapKnowledgeItem(item) {
+      return new KnowledgeDisplayItem({
+        id: item.id,
+        title: safeText(item.title),
+        summary: safeText(item.summary),
+        author: safeText(item.author),
+        categoryName: safeText(item.categoryName),
+        coverUrl: safeText(item.coverUrl),
+        viewCount: String(item.viewCount != null ? item.viewCount : 0),
+        publishedAt: safeText(item.publishedAt).replace("T", " "),
+        shortTitle: toShortTitle(item.title)
+      });
+    }
+    function loadCategories() {
+      utils_auth.fetchKnowledgeCategoryTree((categories) => {
+        const nextItems = new Array();
+        flattenCategories(categories, 0, nextItems);
+        flatCategories.value = nextItems;
+        loadKnowledgeList(false);
+      }, (message) => {
+        errorText.value = message.length > 0 ? message : "分类加载失败";
+        isInitialLoading.value = false;
+        isRefreshing.value = false;
+      });
+    }
+    function loadKnowledgeList(loadMore2) {
+      if (!loadMore2) {
+        page.value = 1;
+        hasMore.value = true;
+        if (!isRefreshing.value) {
+          isInitialLoading.value = true;
+        }
+        errorText.value = "";
+      } else {
+        if (!hasMore.value || isListLoading.value) {
+          return null;
+        }
+        isListLoading.value = true;
+      }
+      utils_auth.fetchKnowledgeEntries(page.value, PAGE_SIZE, searchKeyword.value, selectedCategoryId.value, (pageData) => {
+        const mapped = pageData.records != null ? pageData.records.map((item) => {
+          return mapKnowledgeItem(item);
+        }) : [];
+        if (loadMore2) {
+          bookList.value = bookList.value.concat(mapped);
+        } else {
+          bookList.value = mapped;
+        }
+        hasMore.value = mapped.length >= PAGE_SIZE;
+        if (hasMore.value) {
+          page.value += 1;
+        }
+        isInitialLoading.value = false;
+        isListLoading.value = false;
+        isRefreshing.value = false;
+      }, (message) => {
+        errorText.value = message.length > 0 ? message : "内容加载失败";
+        isInitialLoading.value = false;
+        isListLoading.value = false;
+        isRefreshing.value = false;
+      });
+    }
+    function loadInitialData() {
+      loadCategories();
+    }
+    function selectCategory(id) {
+      if (selectedCategoryId.value == id) {
+        return null;
+      }
+      selectedCategoryId.value = id;
+      loadKnowledgeList(false);
+    }
+    function handleSearch() {
+      loadKnowledgeList(false);
+    }
+    function handleRefresh() {
+      isRefreshing.value = true;
+      loadKnowledgeList(false);
+    }
+    function loadMore() {
+      loadKnowledgeList(true);
+    }
+    function goBookDetail(item) {
       common_vendor.index.navigateTo({
-        url: "/pages/knowledge/book-detail?id=" + book.id + "&name=" + encodeURIComponent(book.name) + "&author=" + encodeURIComponent(book.author)
+        url: "/pages/knowledge/book-detail?id=" + String(item.id)
       });
-    };
-    const goLearningPage = () => {
+    }
+    function goLearningPage() {
       common_vendor.index.redirectTo({ url: "/pages/index/index" });
-    };
-    const goExamPage = () => {
+    }
+    function goExamPage() {
       common_vendor.index.redirectTo({ url: "/pages/exam/index" });
-    };
-    const goMinePage = () => {
+    }
+    function goMinePage() {
       common_vendor.index.redirectTo({ url: "/pages/mine/index" });
-    };
-    const goConsultPage = () => {
+    }
+    function goConsultPage() {
       common_vendor.index.redirectTo({ url: "/pages/consult/index" });
-    };
-    refreshBooks();
+    }
+    loadInitialData();
     return (_ctx, _cache) => {
       "raw js";
-      const __returned__ = {
+      const __returned__ = common_vendor.e({
         a: common_assets._imports_0$3,
-        b: common_vendor.f(common_vendor.unref(categories), (item, k0, i0) => {
+        b: common_vendor.o(handleSearch),
+        c: searchKeyword.value,
+        d: common_vendor.o(($event) => {
+          return searchKeyword.value = $event.detail.value;
+        }),
+        e: common_vendor.o(handleSearch),
+        f: selectedCategoryId.value == 0
+      }, selectedCategoryId.value == 0 ? {} : {}, {
+        g: selectedCategoryId.value == 0 ? 1 : "",
+        h: selectedCategoryId.value == 0 ? 1 : "",
+        i: common_vendor.o(($event) => {
+          return selectCategory(0);
+        }),
+        j: common_vendor.f(flatCategories.value, (item, k0, i0) => {
           return common_vendor.e({
-            a: common_vendor.unref(currentCategoryId) === item.id
-          }, common_vendor.unref(currentCategoryId) === item.id ? {} : {}, {
-            b: common_vendor.t(item.name),
-            c: common_vendor.unref(currentCategoryId) === item.id ? 1 : "",
+            a: selectedCategoryId.value == item.id
+          }, selectedCategoryId.value == item.id ? {} : {}, {
+            b: common_vendor.t(item.displayName),
+            c: selectedCategoryId.value == item.id ? 1 : "",
             d: item.id,
-            e: common_vendor.unref(currentCategoryId) === item.id ? 1 : "",
+            e: selectedCategoryId.value == item.id ? 1 : "",
             f: common_vendor.o(($event) => {
               return selectCategory(item.id);
             }, item.id)
           });
         }),
-        c: common_vendor.f(common_vendor.unref(currentBooks), (book, k0, i0) => {
-          return {
-            a: common_vendor.t(book.shortTitle),
-            b: book.coverColor,
-            c: common_vendor.t(book.name),
-            d: book.id,
-            e: common_vendor.o(($event) => {
-              return goBookDetail(book);
-            }, book.id)
-          };
+        k: isInitialLoading.value
+      }, isInitialLoading.value ? {} : errorText.value.length > 0 ? {
+        m: common_vendor.t(errorText.value),
+        n: common_vendor.o(loadInitialData)
+      } : bookList.value.length == 0 ? {} : common_vendor.e({
+        p: common_vendor.f(bookList.value, (item, k0, i0) => {
+          return common_vendor.e({
+            a: item.coverUrl.length > 0
+          }, item.coverUrl.length > 0 ? {
+            b: item.coverUrl
+          } : {
+            c: common_vendor.t(item.shortTitle)
+          }, {
+            d: common_vendor.t(item.title),
+            e: item.summary.length > 0
+          }, item.summary.length > 0 ? {
+            f: common_vendor.t(item.summary)
+          } : {}, {
+            g: item.author.length > 0
+          }, item.author.length > 0 ? {
+            h: common_vendor.t(item.author)
+          } : item.categoryName.length > 0 ? {
+            j: common_vendor.t(item.categoryName)
+          } : {}, {
+            i: item.categoryName.length > 0,
+            k: common_vendor.t(item.viewCount),
+            l: item.publishedAt.length > 0
+          }, item.publishedAt.length > 0 ? {
+            m: common_vendor.t(item.publishedAt)
+          } : {}, {
+            n: item.id,
+            o: common_vendor.o(($event) => {
+              return goBookDetail(item);
+            }, item.id)
+          });
         }),
-        d: common_assets._imports_1$2,
-        e: common_vendor.o(goLearningPage),
-        f: common_assets._imports_2,
-        g: common_vendor.o(goExamPage),
-        h: common_assets._imports_3,
-        i: common_vendor.o(goConsultPage),
-        j: common_assets._imports_4$1,
-        k: common_assets._imports_5,
-        l: common_vendor.o(goMinePage),
-        m: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
-      };
+        q: isListLoading.value
+      }, isListLoading.value ? {} : !hasMore.value ? {} : {}, {
+        r: !hasMore.value
+      }), {
+        l: errorText.value.length > 0,
+        o: bookList.value.length == 0,
+        s: isRefreshing.value,
+        t: common_vendor.o(handleRefresh),
+        v: common_vendor.o(loadMore),
+        w: common_assets._imports_1$2,
+        x: common_vendor.o(goLearningPage),
+        y: common_assets._imports_2,
+        z: common_vendor.o(goExamPage),
+        A: common_assets._imports_3,
+        B: common_vendor.o(goConsultPage),
+        C: common_assets._imports_4$1,
+        D: common_assets._imports_5,
+        E: common_vendor.o(goMinePage),
+        F: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+      });
       return __returned__;
     };
   }

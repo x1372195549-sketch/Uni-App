@@ -15,26 +15,23 @@
       </view>
 
       <view class="detail-tabs">
-        <text
-          class="detail-tab"
-          :class="activeTab == 'intro' ? 'detail-tab-active' : ''"
-          @tap="activeTab = 'intro'"
-        >
-          简介
-        </text>
-        <text
-          class="detail-tab"
-          :class="activeTab == 'catalog' ? 'detail-tab-active' : ''"
-          @tap="activeTab = 'catalog'"
-        >
-          目录
-        </text>
+        <view class="tab-item" @tap="activeTab = 'intro'">
+          <text :class="activeTab == 'intro' ? 'detail-tab detail-tab-active' : 'detail-tab'">简介</text>
+          <view v-if="activeTab == 'intro'" class="tab-line"></view>
+        </view>
+        <view class="tab-item" @tap="activeTab = 'catalog'">
+          <text :class="activeTab == 'catalog' ? 'detail-tab detail-tab-active' : 'detail-tab'">目录</text>
+          <view v-if="activeTab == 'catalog'" class="tab-line"></view>
+        </view>
+        <view class="favorite-tab-btn" @tap="toggleFavorite">
+          <text class="favorite-text" :class="isFavorited ? 'favorite-text-active' : ''">{{ isFavorited ? '已收藏' : '收藏' }}</text>
+        </view>
       </view>
 
       <view v-if="activeTab == 'intro'" class="intro-panel">
         <text class="content-title">{{ audioTitle }}</text>
         <view class="content-stats">
-          <text class="content-stat">浏览 {{ viewCount }}</text>
+          <text class="content-stat">学时 {{ viewCount }}</text>
           <text class="content-stat">收藏 {{ favoriteCount }}</text>
         </view>
 
@@ -60,82 +57,39 @@
 
 <script setup lang="uts">
 import { onMounted, ref } from 'vue'
-
-type ApiResponse<T> = {
-  success: boolean
-  code?: string
-  message?: string
-  data?: T | null
-}
-
-type AppPodcastAudio = {
-  id: number
-  podcastId: number
-  title: string
-  audioUrl: string
-  durationSeconds: number
-  sortOrder: number
-}
-
-type AppPodcast = {
-  id: number
-  title: string
-  summary: string
-  coverUrl: string
-  publishedAt: string
-  progressPercent: number
-  studySeconds: number
-  audios: AppPodcastAudio[]
-}
+import { onShow } from '@dcloudio/uni-app'
+import {
+  checkFavoriteStatus,
+  fetchAudioDetail,
+  updateFavoriteStatus,
+  type AppPodcast,
+  type AppPodcastAudio
+} from '../../utils/auth.uts'
 
 type CatalogItem = {
-  id: string
-  title: string
-  duration: string
+  id : string
+  title : string
+  duration : string
 }
 
-const BASE_URL = 'https://api-test.arez.cc.cd'
-const ACCESS_TOKEN_KEY = 'app_auth_access_token'
-const TOKEN_TYPE_KEY = 'app_auth_token_type'
+const RESOURCE_TYPE = 'AUDIO'
 
 const audioId = ref('')
 const activeTab = ref('intro')
-const hasShownDebug = ref(false)
-const audioTitle = ref('音频标题占位 1')
-const audioSummary = ref(
-  '这里是音频简介占位内容。后续可接入真实的音频简介、讲师说明、学习目标、适用人群与补充说明等文本信息。这里保留为较长段落，用于模拟设计图中的正文排版效果，方便后续直接替换成接口返回内容。'
-)
-const viewCount = ref('1200')
-const favoriteCount = ref('860')
-const currentAudioItemId = ref('1')
-const catalogItems = ref<CatalogItem[]>([
-  { id: '1', title: '音频 1：目录标题占位一', duration: "21'44\"" },
-  { id: '2', title: '音频 2：目录标题占位二', duration: "18'20\"" },
-  { id: '3', title: '音频 3：目录标题占位三', duration: "16'08\"" },
-  { id: '4', title: '音频 4：目录标题占位四', duration: "14'35\"" }
-])
+const audioTitle = ref('音频详情')
+const audioSummary = ref('这里展示音频简介内容。')
+const viewCount = ref('0')
+const favoriteCount = ref('0')
+const currentAudioItemId = ref('')
+const isFavorited = ref(false)
+const isFavoriteLoading = ref(false)
+const catalogItems = ref<CatalogItem[]>([])
 
-function showDebugModal(content: string): void {
-  return
-}
-
-function getAuthorization(): string {
-  const token = uni.getStorageSync(ACCESS_TOKEN_KEY)
-  const tokenType = uni.getStorageSync(TOKEN_TYPE_KEY)
-  if (typeof token === 'string' && token.length > 0) {
-    if (typeof tokenType === 'string' && tokenType.length > 0) {
-      return tokenType + ' ' + token
-    }
-    return 'Bearer ' + token
-  }
-  return ''
-}
-
-function safeText(value: string | null): string {
+function safeText(value : string | null) : string {
   return value == null || value.length == 0 ? '' : value
 }
 
-function formatDuration(seconds: number): string {
+function formatDuration(seconds : number) : string {
   const total = seconds > 0 ? seconds : 0
   const minute = Math.floor(total / 60)
   const second = total % 60
@@ -143,112 +97,135 @@ function formatDuration(seconds: number): string {
   return String(minute) + "'" + secondText + '"'
 }
 
-function selectCatalogItem(id: string): void {
+function selectCatalogItem(id : string) : void {
   currentAudioItemId.value = id
 }
 
-function tryReadRouteParams(): boolean {
+function loadFavoriteStatus() : void {
+  if (audioId.value.length == 0) {
+    return
+  }
+
+  checkFavoriteStatus(
+    RESOURCE_TYPE,
+    Number(audioId.value),
+    (favorited) => {
+      isFavorited.value = favorited
+    },
+    () => {
+      isFavorited.value = false
+    }
+  )
+}
+
+function toggleFavorite() : void {
+  if (audioId.value.length == 0 || isFavoriteLoading.value) {
+    return
+  }
+
+  isFavoriteLoading.value = true
+  updateFavoriteStatus(
+    {
+      resourceType: RESOURCE_TYPE,
+      resourceId: Number(audioId.value),
+      favorited: !isFavorited.value
+    },
+    (result) => {
+      isFavorited.value = result.favorited
+      favoriteCount.value = String(result.favoriteCount != null ? result.favoriteCount : 0)
+      isFavoriteLoading.value = false
+      uni.showToast({
+        title: result.favorited ? '收藏成功' : '已取消收藏',
+        icon: 'success'
+      })
+    },
+    (message) => {
+      isFavoriteLoading.value = false
+      uni.showToast({
+        title: message,
+        icon: 'none'
+      })
+    }
+  )
+}
+
+function applyAudioDetail(detail : AppPodcast) : void {
+  const titleText = safeText(detail.title)
+  const summaryText = safeText(detail.summary)
+
+  if (titleText.length > 0) {
+    audioTitle.value = titleText
+  }
+  if (summaryText.length > 0) {
+    audioSummary.value = summaryText
+  }
+
+  viewCount.value = String(detail.studySeconds != null ? detail.studySeconds : 0)
+
+  if (detail.audios != null && detail.audios.length > 0) {
+    catalogItems.value = detail.audios.map((item : AppPodcastAudio, index : number) : CatalogItem => {
+      return {
+        id: String(item.id),
+        title: safeText(item.title).length > 0 ? item.title : '音频 ' + String(index + 1),
+        duration: formatDuration(item.durationSeconds)
+      }
+    })
+    currentAudioItemId.value = catalogItems.value[0].id
+  } else {
+    catalogItems.value = []
+    currentAudioItemId.value = ''
+  }
+}
+
+function loadParams() : void {
   const pages = getCurrentPages()
   if (pages.length == 0) {
-    showDebugModal('未读取到当前页面栈')
-    return false
+    return
   }
 
   const currentPage = pages[pages.length - 1]
   if (currentPage == null || currentPage.options == null) {
-    showDebugModal('宸茶繘鍏ラ煶棰戣鎯呴〉锛屼絾椤甸潰鍙傛暟灏氭湭灏辩华')
-    return false
+    return
   }
+
   const options = currentPage.options as UTSJSONObject
   const idValue = options['id']
-  if (typeof idValue === 'string' && idValue.length > 0) {
+  if (typeof idValue == 'string' && idValue.length > 0) {
     audioId.value = idValue
-    return true
   }
-
-  showDebugModal('已进入音频详情页，但未读取到音频 id')
-  return false
 }
 
-function fetchAudioDetail(): void {
+function loadAudioDetail() : void {
   if (audioId.value.length == 0) {
-    showDebugModal('无法请求详情：音频 id 为空')
     return
   }
 
-  const headers: UTSJSONObject = {
-    'Content-Type': 'application/json'
-  }
-  const authorization = getAuthorization()
-  if (authorization.length > 0) {
-    headers['Authorization'] = authorization
-  }
-
-  uni.request({
-    url: BASE_URL + '/api/v1/app/learning/podcasts/' + audioId.value,
-    method: 'GET',
-    header: headers,
-    success: (res) => {
-      const data = res.data as ApiResponse<AppPodcast>
-      if (res.statusCode == 200 && data != null && data.success && data.data != null) {
-        const podcast = data.data!
-        const titleText = safeText(podcast.title).length > 0 ? podcast.title : '空'
-        const audioCount = podcast.audios != null ? podcast.audios.length : 0
-        showDebugModal('详情接口返回成功：id=' + audioId.value + '，title=' + titleText + '，目录数量=' + String(audioCount))
-
-        if (safeText(podcast.title).length > 0) {
-          audioTitle.value = podcast.title
-        }
-        if (safeText(podcast.summary).length > 0) {
-          audioSummary.value = podcast.summary
-        }
-        viewCount.value = String(podcast.studySeconds != null ? podcast.studySeconds : 0)
-        favoriteCount.value = String(podcast.audios != null ? podcast.audios.length : 0)
-
-        if (podcast.audios != null && podcast.audios.length > 0) {
-          catalogItems.value = podcast.audios.map((item: AppPodcastAudio, index: number): CatalogItem => {
-            const itemTitle =
-              safeText(item.title).length > 0 ? item.title : '音频 ' + String(index + 1) + '：目录标题占位'
-            return {
-              id: String(item.id),
-              title: itemTitle,
-              duration: formatDuration(item.durationSeconds)
-            }
-          })
-          currentAudioItemId.value = catalogItems.value[0].id
-        }
-      } else {
-        const codeText = data != null && typeof data.code === 'string' ? data.code : '未知错误'
-        const messageText = data != null && typeof data.message === 'string' ? data.message : '无返回说明'
-        showDebugModal('详情接口返回失败：HTTP ' + String(res.statusCode) + '，' + codeText + '，' + messageText)
-      }
+  fetchAudioDetail(
+    audioId.value,
+    (detail) => {
+      applyAudioDetail(detail)
     },
-    fail: (err) => {
-      const errText = typeof err.errMsg === 'string' ? err.errMsg : '请求失败'
-      showDebugModal('详情接口请求失败：' + errText)
+    (message) => {
+      uni.showToast({
+        title: message,
+        icon: 'none'
+      })
     }
-  })
+  )
 }
 
-function initAudioDetail(): void {
-  if (tryReadRouteParams()) {
-    fetchAudioDetail()
-    return
-  }
-
-  setTimeout(() => {
-    if (tryReadRouteParams()) {
-      fetchAudioDetail()
-    }
-  }, 300)
-}
-
-function goBack() {
+function goBack() : void {
   uni.navigateBack()
 }
 
 onMounted(() => {
-  initAudioDetail()
+  loadParams()
+  loadAudioDetail()
+  loadFavoriteStatus()
+})
+
+onShow(() => {
+  loadFavoriteStatus()
 })
 </script>
 
@@ -335,9 +312,13 @@ onMounted(() => {
   background-color: #ffffff;
 }
 
+.tab-item {
+  margin-right: 32rpx;
+  align-items: center;
+  justify-content: center;
+}
+
 .detail-tab {
-  position: relative;
-  margin-right: 28px;
   font-size: 17px;
   color: #a5a5a5;
 }
@@ -347,17 +328,35 @@ onMounted(() => {
   font-weight: 700;
 }
 
-.detail-tab-active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -10px;
-  width: 28px;
-  height: 4px;
-  margin: auto;
-  border-radius: 2px;
+.tab-line {
+  margin-top: 10rpx;
+  width: 56rpx;
+  height: 6rpx;
+  border-radius: 3rpx;
   background-color: #c46b76;
+}
+
+.favorite-tab-btn {
+  margin-left: auto;
+  min-width: 108rpx;
+  height: 56rpx;
+  padding-left: 18rpx;
+  padding-right: 18rpx;
+  border-radius: 28rpx;
+  background-color: #f4efe7;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.favorite-text {
+  font-size: 24rpx;
+  color: #8f8f8f;
+}
+
+.favorite-text-active {
+  color: #c46b76;
+  font-weight: 600;
 }
 
 .intro-panel {
@@ -413,6 +412,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   border-bottom-width: 1px;
+  border-bottom-style: solid;
   border-bottom-color: #f0f0f0;
 }
 

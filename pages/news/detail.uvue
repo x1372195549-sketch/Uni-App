@@ -1,381 +1,437 @@
 <template>
-	<view class="page">
-		<view class="header">
-			<view class="back-btn" @click="goBack">
-				<image class="back-icon-image" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
-			</view>
-			<text class="header-title">详情</text>
-		</view>
+  <view class="page">
+    <view class="header">
+      <view class="back-btn" @click="goBack">
+        <image class="back-icon-image" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+      </view>
+      <text class="header-title">详情</text>
+    </view>
 
-		<scroll-view class="content" scroll-y="true">
-			<view class="hero">
-				<view class="hero-mask"></view>
-				<view class="paper-outer">
-					<view class="paper-line"></view>
-					<view class="paper-line"></view>
-					<view class="paper-line"></view>
-				</view>
-			</view>
+    <scroll-view class="content" scroll-y="true">
+      <view class="hero">
+        <view class="hero-mask"></view>
+        <view class="paper-outer">
+          <view class="paper-line"></view>
+          <view class="paper-line"></view>
+          <view class="paper-line"></view>
+        </view>
+      </view>
 
-			<view class="tabs">
-				<view class="tab-item" @click="activeTab = 'intro'">
-					<text :class="activeTab == 'intro' ? 'tab-text tab-text-active' : 'tab-text'">简介</text>
-					<view v-if="activeTab == 'intro'" class="tab-line"></view>
-				</view>
-				<view class="tab-item" @click="activeTab = 'catalog'">
-					<text :class="activeTab == 'catalog' ? 'tab-text tab-text-active' : 'tab-text'">目录</text>
-					<view v-if="activeTab == 'catalog'" class="tab-line"></view>
-				</view>
-			</view>
+      <view class="tabs">
+        <view class="tab-item" @click="activeTab = 'intro'">
+          <text :class="activeTab == 'intro' ? 'tab-text tab-text-active' : 'tab-text'">简介</text>
+          <view v-if="activeTab == 'intro'" class="tab-line"></view>
+        </view>
+        <view class="tab-item" @click="activeTab = 'catalog'">
+          <text :class="activeTab == 'catalog' ? 'tab-text tab-text-active' : 'tab-text'">目录</text>
+          <view v-if="activeTab == 'catalog'" class="tab-line"></view>
+        </view>
+        <view class="favorite-tab-btn" @click="toggleFavorite">
+          <text class="favorite-text" :class="isFavorited ? 'favorite-text-active' : ''">{{ isFavorited ? '已收藏' : '收藏' }}</text>
+        </view>
+      </view>
 
-			<view v-if="activeTab == 'intro'" class="intro-panel">
-				<text class="media-title">{{ topicTitle }}</text>
+      <view v-if="activeTab == 'intro'" class="intro-panel">
+        <text class="media-title">{{ topicTitle }}</text>
 
-				<view class="stats-row">
-					<text class="stats-text">浏览 {{ topicViews }}</text>
-					<text class="stats-text">目录 {{ topicCatalogCount }}</text>
-				</view>
+        <view class="stats-row">
+          <text class="stats-text">浏览 {{ topicViews }}</text>
+          <text class="stats-text">收藏 {{ topicFavoriteCount }}</text>
+        </view>
 
-				<text class="section-title">专题介绍</text>
-				<text class="intro-text">{{ topicIntro }}</text>
-			</view>
+        <text class="section-title">资讯介绍</text>
+        <text class="intro-text">{{ topicIntro }}</text>
+      </view>
 
-			<view v-else class="catalog-panel">
-				<view class="catalog-row catalog-row-active" v-for="item in catalogItems" :key="item.id">
-					<text class="catalog-title">{{ item.title }}</text>
-					<text class="catalog-duration">{{ item.duration }}</text>
-				</view>
-
-				<view class="exam-wrap">
-					<button class="exam-btn" hover-class="exam-btn-hover">进入考核</button>
-				</view>
-			</view>
-		</scroll-view>
-	</view>
+      <view v-else class="catalog-panel">
+        <view v-for="item in catalogItems" :key="item.id" class="catalog-row catalog-row-active">
+          <text class="catalog-title">{{ item.title }}</text>
+          <text class="catalog-duration">{{ item.duration }}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
 </template>
 
 <script setup lang="uts">
 import { ref, onMounted } from 'vue'
-import { fetchTopicDetail } from '../../utils/auth.uts'
-
-type TopicItem = {
-	id : number
-	topicId : number
-	itemType : string
-	itemId : number
-	sortOrder : number
-	resource : UTSJSONObject | null
-}
-
-type Topic = {
-	id : number
-	title : string
-	summary : string
-	learningRequirements : string
-	coverUrl : string
-	viewCount : number
-	publishedAt : string
-	items : TopicItem[]
-}
+import { onShow } from '@dcloudio/uni-app'
+import {
+  checkFavoriteStatus,
+  fetchTopicDetail,
+  updateFavoriteStatus,
+  type Topic,
+  type TopicItem
+} from '../../utils/auth.uts'
 
 type CatalogItem = {
-	id : string
-	title : string
-	duration : string
+  id : string
+  title : string
+  duration : string
 }
+
+const RESOURCE_TYPE = 'INFO'
 
 const topicId = ref('')
 const activeTab = ref('intro')
 const topicTitle = ref('资讯详情')
 const topicViews = ref('0')
-const topicCatalogCount = ref('0')
-const topicIntro = ref('这里展示专题简介、学习要求和补充说明。接口返回真实专题内容时，将优先显示后端数据。')
+const topicFavoriteCount = ref('0')
+const topicIntro = ref('这里展示专题简介、学习要求和补充说明。')
+const isFavorited = ref(false)
+const isFavoriteLoading = ref(false)
+const catalogItems = ref<CatalogItem[]>([])
 
-const catalogItems = ref<CatalogItem[]>([
-	{ id: '1', title: '专题1：目录标题占位一', duration: '10\'20"' },
-	{ id: '2', title: '专题2：目录标题占位二', duration: '10\'20"' },
-	{ id: '3', title: '专题3：目录标题占位三', duration: '10\'20"' },
-	{ id: '4', title: '专题4：目录标题占位四', duration: '10\'20"' }
-])
-
-const safeText = (value : string | null) : string => {
-	return value == null || value.length == 0 ? '' : value
+function safeText(value : string | null) : string {
+  return value == null || value.length == 0 ? '' : value
 }
 
-const applyTopicDetail = (detail : Topic) => {
-	const titleText = safeText(detail.title)
-	if (titleText.length > 0) {
-		topicTitle.value = titleText
-	}
+function loadFavoriteStatus() : void {
+  if (topicId.value.length == 0) {
+    return
+  }
 
-	const introText = safeText(detail.learningRequirements).length > 0
-		? safeText(detail.learningRequirements)
-		: safeText(detail.summary)
-	if (introText.length > 0) {
-		topicIntro.value = introText
-	}
-
-	topicViews.value = String(detail.viewCount != null ? detail.viewCount : 0)
-	topicCatalogCount.value = String(detail.items != null ? detail.items.length : 0)
-
-	if (detail.items != null && detail.items.length > 0) {
-		catalogItems.value = detail.items.map((item : TopicItem, index : number) : CatalogItem => {
-			const itemType = safeText(item.itemType)
-			return {
-				id: String(item.id),
-				title: '专题' + String(index + 1) + '：' + (itemType.length > 0 ? itemType : '目录项'),
-				duration: '10\'20"'
-			}
-		})
-	}
+  checkFavoriteStatus(
+    RESOURCE_TYPE,
+    Number(topicId.value),
+    (favorited) => {
+      isFavorited.value = favorited
+    },
+    () => {
+      isFavorited.value = false
+    }
+  )
 }
 
-const goBack = () => {
-	uni.navigateBack()
+function toggleFavorite() : void {
+  if (topicId.value.length == 0 || isFavoriteLoading.value) {
+    return
+  }
+
+  isFavoriteLoading.value = true
+  updateFavoriteStatus(
+    {
+      resourceType: RESOURCE_TYPE,
+      resourceId: Number(topicId.value),
+      favorited: !isFavorited.value
+    },
+    (result) => {
+      isFavorited.value = result.favorited
+      topicFavoriteCount.value = String(result.favoriteCount != null ? result.favoriteCount : 0)
+      isFavoriteLoading.value = false
+      uni.showToast({
+        title: result.favorited ? '收藏成功' : '已取消收藏',
+        icon: 'success'
+      })
+    },
+    (message) => {
+      isFavoriteLoading.value = false
+      uni.showToast({
+        title: message,
+        icon: 'none'
+      })
+    }
+  )
 }
 
-const loadParams = () => {
-	const pages = getCurrentPages()
-	if (pages.length > 0) {
-		const current = pages[pages.length - 1]
-		if (current != null && current.options != null) {
-			if (current.options['id'] != null) {
-				topicId.value = current.options['id'] as string
-			}
-			if (current.options['tab'] != null) {
-				activeTab.value = current.options['tab'] as string
-			}
-		}
-	}
+function applyTopicDetail(detail : Topic) : void {
+  const titleText = safeText(detail.title)
+  if (titleText.length > 0) {
+    topicTitle.value = titleText
+  }
 
-	if (topicId.value.length > 0) {
-		fetchTopicDetail(
-			topicId.value,
-			(detail) => {
-				applyTopicDetail(detail)
-			},
-			() => {}
-		)
-	}
+  const introText = safeText(detail.learningRequirements).length > 0
+    ? safeText(detail.learningRequirements)
+    : safeText(detail.summary)
+  if (introText.length > 0) {
+    topicIntro.value = introText
+  }
+
+  topicViews.value = String(detail.viewCount != null ? detail.viewCount : 0)
+
+  if (detail.items != null && detail.items.length > 0) {
+    catalogItems.value = detail.items.map((item : TopicItem, index : number) : CatalogItem => {
+      const itemType = safeText(item.itemType)
+      return {
+        id: String(item.id),
+        title: itemType.length > 0 ? itemType + ' ' + String(index + 1) : '条目 ' + String(index + 1),
+        duration: ''
+      }
+    })
+  } else {
+    catalogItems.value = []
+  }
+}
+
+function goBack() : void {
+  uni.navigateBack()
+}
+
+function loadParams() : void {
+  const pages = getCurrentPages()
+  if (pages.length == 0) {
+    return
+  }
+
+  const current = pages[pages.length - 1]
+  if (current == null || current.options == null) {
+    return
+  }
+
+  const options = current.options as UTSJSONObject
+  const idValue = options['id']
+  const tabValue = options['tab']
+  if (typeof idValue == 'string' && idValue.length > 0) {
+    topicId.value = idValue
+  }
+  if (typeof tabValue == 'string' && tabValue.length > 0) {
+    activeTab.value = tabValue
+  }
+}
+
+function loadTopicDetail() : void {
+  if (topicId.value.length == 0) {
+    return
+  }
+
+  fetchTopicDetail(
+    topicId.value,
+    (detail) => {
+      applyTopicDetail(detail)
+    },
+    (message) => {
+      uni.showToast({
+        title: message,
+        icon: 'none'
+      })
+    }
+  )
 }
 
 onMounted(() => {
-	loadParams()
+  loadParams()
+  loadTopicDetail()
+  loadFavoriteStatus()
+})
+
+onShow(() => {
+  loadFavoriteStatus()
 })
 </script>
 
 <style>
 .page {
-	flex: 1;
-	background-color: #f7f7f2;
+  flex: 1;
+  background-color: #f7f7f2;
 }
 
 .header {
-	height: 88rpx;
-	padding-left: 20rpx;
-	padding-right: 20rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	background-color: #f7f7f2;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-	border-bottom-color: #ece9e1;
-	position: relative;
+  height: 88rpx;
+  padding-left: 20rpx;
+  padding-right: 20rpx;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background-color: #f7f7f2;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #ece9e1;
+  position: relative;
 }
 
 .back-btn {
-	position: absolute;
-	left: 16rpx;
-	top: 0;
-	bottom: 0;
-	width: 56rpx;
-	align-items: center;
-	justify-content: center;
+  position: absolute;
+  left: 16rpx;
+  top: 0;
+  bottom: 0;
+  width: 56rpx;
+  align-items: center;
+  justify-content: center;
 }
 
 .back-icon-image {
-	width: 24rpx;
-	height: 24rpx;
+  width: 24rpx;
+  height: 24rpx;
 }
 
 .header-title {
-	font-size: 20px;
-	line-height: 30px;
-	color: #2f2f2f;
-	font-weight: 600;
+  font-size: 20px;
+  line-height: 30px;
+  color: #2f2f2f;
+  font-weight: 600;
 }
 
 .content {
-	flex: 1;
+  flex: 1;
 }
 
 .hero {
-	height: 420rpx;
-	position: relative;
-	background-color: #d8c9b5;
-	align-items: center;
-	justify-content: center;
+  height: 420rpx;
+  position: relative;
+  background-color: #d8c9b5;
+  align-items: center;
+  justify-content: center;
 }
 
 .hero-mask {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: rgba(60, 54, 44, 0.2);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(60, 54, 44, 0.2);
 }
 
 .paper-outer {
-	width: 220rpx;
-	height: 220rpx;
-	border-radius: 20rpx;
-	background-color: rgba(255, 255, 255, 0.88);
-	padding-left: 30rpx;
-	padding-right: 30rpx;
-	padding-top: 44rpx;
-	z-index: 1;
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 20rpx;
+  background-color: rgba(255, 255, 255, 0.88);
+  padding-left: 30rpx;
+  padding-right: 30rpx;
+  padding-top: 44rpx;
+  z-index: 1;
 }
 
 .paper-line {
-	height: 14rpx;
-	border-radius: 8rpx;
-	background-color: rgba(185, 112, 47, 0.28);
-	margin-bottom: 22rpx;
+  height: 14rpx;
+  border-radius: 8rpx;
+  background-color: rgba(185, 112, 47, 0.28);
+  margin-bottom: 22rpx;
 }
 
 .tabs {
-	height: 108rpx;
-	padding-left: 44rpx;
-	padding-right: 44rpx;
-	background-color: #ffffff;
-	flex-direction: row;
-	align-items: center;
+  height: 108rpx;
+  padding-left: 44rpx;
+  padding-right: 44rpx;
+  background-color: #ffffff;
+  flex-direction: row;
+  align-items: center;
 }
 
 .tab-item {
-	margin-right: 74rpx;
-	align-items: center;
-	justify-content: center;
-	position: relative;
+  margin-right: 74rpx;
+  align-items: center;
+  justify-content: center;
 }
 
 .tab-text {
-	font-size: 16px;
-	line-height: 24px;
-	color: #9f9f9f;
+  font-size: 16px;
+  line-height: 24px;
+  color: #9f9f9f;
 }
 
 .tab-text-active {
-	color: #262626;
-	font-weight: 600;
+  color: #262626;
+  font-weight: 600;
 }
 
 .tab-line {
-	margin-top: 10rpx;
-	width: 58rpx;
-	height: 6rpx;
-	border-radius: 4rpx;
-	background-color: #b85d69;
+  margin-top: 10rpx;
+  width: 58rpx;
+  height: 6rpx;
+  border-radius: 4rpx;
+  background-color: #b85d69;
+}
+
+.favorite-tab-btn {
+  margin-left: auto;
+  min-width: 108rpx;
+  height: 56rpx;
+  padding-left: 18rpx;
+  padding-right: 18rpx;
+  border-radius: 28rpx;
+  background-color: #f4efe7;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.favorite-text {
+  font-size: 24rpx;
+  color: #8f8f8f;
+}
+
+.favorite-text-active {
+  color: #c46b76;
+  font-weight: 600;
 }
 
 .intro-panel {
-	padding-left: 46rpx;
-	padding-right: 46rpx;
-	padding-top: 34rpx;
-	padding-bottom: 48rpx;
-	background-color: #ffffff;
+  padding-left: 46rpx;
+  padding-right: 46rpx;
+  padding-top: 34rpx;
+  padding-bottom: 48rpx;
+  background-color: #ffffff;
 }
 
 .media-title {
-	font-size: 18px;
-	line-height: 28px;
-	color: #242424;
-	font-weight: 600;
-	text-align: center;
+  font-size: 18px;
+  line-height: 28px;
+  color: #242424;
+  font-weight: 600;
+  text-align: center;
 }
 
 .stats-row {
-	margin-top: 34rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: flex-end;
+  margin-top: 34rpx;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .stats-text {
-	font-size: 12px;
-	line-height: 18px;
-	color: #9e9e9e;
-	margin-left: 28rpx;
+  font-size: 12px;
+  line-height: 18px;
+  color: #9e9e9e;
+  margin-left: 28rpx;
 }
 
 .section-title {
-	margin-top: 38rpx;
-	font-size: 15px;
-	line-height: 22px;
-	color: #2b2b2b;
+  margin-top: 38rpx;
+  font-size: 15px;
+  line-height: 22px;
+  color: #2b2b2b;
 }
 
 .intro-text {
-	margin-top: 28rpx;
-	font-size: 12px;
-	line-height: 24px;
-	color: #8f8f8f;
+  margin-top: 28rpx;
+  font-size: 12px;
+  line-height: 24px;
+  color: #8f8f8f;
 }
 
 .catalog-panel {
-	padding-top: 6rpx;
-	padding-bottom: 60rpx;
-	background-color: #ffffff;
-	min-height: 860rpx;
+  padding-top: 6rpx;
+  padding-bottom: 60rpx;
+  background-color: #ffffff;
+  min-height: 860rpx;
 }
 
 .catalog-row {
-	min-height: 106rpx;
-	padding-left: 28rpx;
-	padding-right: 28rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
+  min-height: 106rpx;
+  padding-left: 28rpx;
+  padding-right: 28rpx;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .catalog-row-active {
-	background-color: #f3f3f3;
+  background-color: #f3f3f3;
 }
 
 .catalog-title {
-	flex: 1;
-	font-size: 14px;
-	line-height: 22px;
-	color: #353535;
-	padding-right: 20rpx;
+  flex: 1;
+  font-size: 14px;
+  line-height: 22px;
+  color: #353535;
+  padding-right: 20rpx;
 }
 
 .catalog-duration {
-	font-size: 12px;
-	line-height: 18px;
-	color: #a9a9a9;
-}
-
-.exam-wrap {
-	margin-top: 150rpx;
-	align-items: center;
-}
-
-.exam-btn {
-	width: 300rpx;
-	height: 84rpx;
-	line-height: 84rpx;
-	border-radius: 18rpx;
-	background-color: #b66572;
-	color: #ffffff;
-	font-size: 18px;
-	font-weight: 600;
-	border-width: 0;
-}
-
-.exam-btn-hover {
-	opacity: 0.92;
+  font-size: 12px;
+  line-height: 18px;
+  color: #a9a9a9;
 }
 </style>

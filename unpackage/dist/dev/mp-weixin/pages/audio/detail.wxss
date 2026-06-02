@@ -71,9 +71,12 @@
   align-items: center;
   background-color: #ffffff;
 }
+.tab-item {
+  margin-right: 32rpx;
+  align-items: center;
+  justify-content: center;
+}
 .detail-tab {
-  position: relative;
-  margin-right: 28px;
   font-size: 17px;
   color: #a5a5a5;
 }
@@ -81,17 +84,32 @@
   color: #222222;
   font-weight: 700;
 }
-.detail-tab-active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -10px;
-  width: 28px;
-  height: 4px;
-  margin: auto;
-  border-radius: 2px;
+.tab-line {
+  margin-top: 10rpx;
+  width: 56rpx;
+  height: 6rpx;
+  border-radius: 3rpx;
   background-color: #c46b76;
+}
+.favorite-tab-btn {
+  margin-left: auto;
+  min-width: 108rpx;
+  height: 56rpx;
+  padding-left: 18rpx;
+  padding-right: 18rpx;
+  border-radius: 28rpx;
+  background-color: #f4efe7;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.favorite-text {
+  font-size: 24rpx;
+  color: #8f8f8f;
+}
+.favorite-text-active {
+  color: #c46b76;
+  font-weight: 600;
 }
 .intro-panel {
   padding: 28px 22px 32px;
@@ -139,6 +157,7 @@
   align-items: center;
   justify-content: space-between;
   border-bottom-width: 1px;
+  border-bottom-style: solid;
   border-bottom-color: #f0f0f0;
 }
 .catalog-item-active {

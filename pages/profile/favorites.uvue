@@ -70,6 +70,7 @@
 
 <script setup lang="uts">
 import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import {
 	fetchAudioDetail,
 	fetchCourseDetail,
@@ -106,6 +107,7 @@ const TYPE_LIVE = 'LIVE'
 const TYPE_COURSE = 'COURSE'
 const TYPE_TOPIC = 'TOPIC'
 const TYPE_INFO = 'INFO'
+const TYPE_ARTICLE = 'ARTICLE'
 
 const tabs : FavoriteTab[] = [
 	{ key: TYPE_ALL, label: '全部' },
@@ -128,10 +130,29 @@ const filteredItems = computed(() : FavoriteDisplayItem[] => {
 })
 
 const normalizeFavoriteType = (resourceType : string) : string => {
-	if (resourceType == TYPE_INFO) {
+	const normalizedType = resourceType.toLowerCase()
+	if (normalizedType == TYPE_INFO || normalizedType == TYPE_ARTICLE) {
 		return TYPE_TOPIC
 	}
-	return resourceType
+	if (normalizedType == 'audio') {
+		return TYPE_AUDIO
+	}
+	if (normalizedType == 'podcast') {
+		return TYPE_AUDIO
+	}
+	if (normalizedType == 'live') {
+		return TYPE_LIVE
+	}
+	if (normalizedType == 'course') {
+		return TYPE_COURSE
+	}
+	if (normalizedType == 'topic') {
+		return TYPE_TOPIC
+	}
+	if (normalizedType == 'info') {
+		return TYPE_TOPIC
+	}
+	return resourceType.toUpperCase()
 }
 
 const getTypeLabel = (resourceType : string) : string => {
@@ -392,6 +413,10 @@ const handleBack = () => {
 }
 
 loadFavorites()
+
+onShow(() => {
+	loadFavorites()
+})
 </script>
 
 <style>

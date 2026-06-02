@@ -185,6 +185,35 @@ export type Topic = {
 	items : TopicItem[]
 }
 
+export type KnowledgeCategory = {
+	id : number
+	parentId : number
+	categoryName : string
+	categoryCode : string
+	description : string
+	sortOrder : number
+	children : KnowledgeCategory[]
+}
+
+export type KnowledgeEntry = {
+	id : number
+	categoryId : number
+	title : string
+	summary : string
+	categoryName : string
+	categoryCode : string
+	coverUrl : string
+	content : string
+	keywords? : string
+	source? : string
+	author? : string
+	publisher? : string
+	totalPages? : number
+	publishedAt? : string
+	viewCount? : number
+	sortOrder? : number
+}
+
 export type PageResponse<T> = {
 	records : T[]
 	total : number
@@ -199,6 +228,20 @@ export type AppResourceRecord = {
 	source : string
 	viewCount : number
 	occurredAt : string
+}
+
+export type AppFavoriteRequest = {
+	resourceType : string
+	resourceId : number
+	favorited : boolean
+}
+
+export type AppResourceInteraction = {
+	resourceType : string
+	resourceId : number
+	browseCount : number
+	favoriteCount : number
+	favorited : boolean
 }
 
 export type HomeCategory = {
@@ -670,6 +713,127 @@ export function fetchTopics(
 	)
 }
 
+function normalizeKnowledgeCategory(category : KnowledgeCategory) : KnowledgeCategory {
+	const rawChildren = category.children
+	const children = rawChildren != null && rawChildren instanceof Array ? rawChildren.map((item : KnowledgeCategory) : KnowledgeCategory => {
+		return normalizeKnowledgeCategory(item)
+	}) : []
+
+	return {
+		id: category.id,
+		parentId: category.parentId,
+		categoryName: category.categoryName != null ? category.categoryName : '',
+		categoryCode: category.categoryCode != null ? category.categoryCode : '',
+		description: category.description != null ? category.description : '',
+		sortOrder: category.sortOrder != null ? category.sortOrder : 0,
+		children
+	} as KnowledgeCategory
+}
+
+function normalizeKnowledgeEntry(entry : KnowledgeEntry) : KnowledgeEntry {
+	return {
+		id: entry.id,
+		categoryId: entry.categoryId != null ? entry.categoryId : 0,
+		title: entry.title != null ? entry.title : '',
+		summary: entry.summary != null ? entry.summary : '',
+		categoryName: entry.categoryName != null ? entry.categoryName : '',
+		categoryCode: entry.categoryCode != null ? entry.categoryCode : '',
+		coverUrl: normalizeAppUrl(entry.coverUrl != null ? entry.coverUrl : ''),
+		content: entry.content != null ? entry.content : '',
+		keywords: entry.keywords != null ? entry.keywords : '',
+		source: entry.source != null ? entry.source : '',
+		author: entry.author != null ? entry.author : '',
+		publisher: entry.publisher != null ? entry.publisher : '',
+		totalPages: entry.totalPages != null ? entry.totalPages : 0,
+		publishedAt: entry.publishedAt != null ? entry.publishedAt : '',
+		viewCount: entry.viewCount != null ? entry.viewCount : 0,
+		sortOrder: entry.sortOrder != null ? entry.sortOrder : 0
+	} as KnowledgeEntry
+}
+
+export function fetchKnowledgeCategoryTree(
+	success : (categories : KnowledgeCategory[]) => void,
+	fail : (message : string) => void
+) {
+	request<KnowledgeCategory[]>(
+		'/api/v1/app/knowledge/categories/tree',
+		'GET',
+		null,
+		true,
+		false,
+		(categories) => {
+			const categoryList = categories != null && categories instanceof Array ? categories : []
+			const normalized = categoryList.map((item : KnowledgeCategory) : KnowledgeCategory => {
+				return normalizeKnowledgeCategory(item)
+			})
+			success(normalized)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchKnowledgeEntries(
+	page : number,
+	size : number,
+	keyword : string,
+	categoryId : number,
+	success : (pageData : PageResponse<KnowledgeEntry>) => void,
+	fail : (message : string) => void
+) {
+	let path = '/api/v1/app/knowledge/entries?page=' + String(page) + '&size=' + String(size)
+	if (keyword != null && keyword.length > 0) {
+		path += '&keyword=' + encodeURIComponent(keyword)
+	}
+	if (categoryId > 0) {
+		path += '&categoryId=' + String(categoryId)
+	}
+
+	request<PageResponse<KnowledgeEntry>>(
+		path,
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			const records = pageData.records != null && pageData.records instanceof Array ? pageData.records : []
+			const normalizedRecords = records.map((item : KnowledgeEntry) : KnowledgeEntry => {
+				return normalizeKnowledgeEntry(item)
+			})
+			success({
+				records: normalizedRecords,
+				total: pageData.total != null ? pageData.total : normalizedRecords.length,
+				page: pageData.page != null ? pageData.page : page,
+				size: pageData.size != null ? pageData.size : size
+			} as PageResponse<KnowledgeEntry>)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchKnowledgeEntryDetail(
+	id : string,
+	success : (detail : KnowledgeEntry) => void,
+	fail : (message : string) => void
+) {
+	request<KnowledgeEntry>(
+		'/api/v1/app/knowledge/entries/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(normalizeKnowledgeEntry(detail))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
 export function fetchHomeCategories(
 	success : (pageData : PageResponse<HomeCategory>) => void,
 	fail : (message : string) => void
@@ -742,6 +906,76 @@ export function fetchProfileFavorites(
 		false,
 		(pageData) => {
 			success(pageData)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+function normalizeFavoriteResourceType(resourceType : string) : string {
+	if (resourceType == null || resourceType.length == 0) {
+		return ''
+	}
+
+	const normalized = resourceType.toLowerCase()
+	if (normalized == 'audio' || normalized == 'podcast') {
+		return 'AUDIO'
+	}
+	if (normalized == 'course') {
+		return 'COURSE'
+	}
+	if (normalized == 'live') {
+		return 'LIVE'
+	}
+	if (normalized == 'info' || normalized == 'topic' || normalized == 'article') {
+		return 'INFO'
+	}
+	if (normalized == 'knowledge') {
+		return 'KNOWLEDGE'
+	}
+	return resourceType.toUpperCase()
+}
+
+function isFavoriteResourceTypeMatched(left : string, right : string) : boolean {
+	return normalizeFavoriteResourceType(left) == normalizeFavoriteResourceType(right)
+}
+
+export function checkFavoriteStatus(
+	resourceType : string,
+	resourceId : number,
+	success : (favorited : boolean) => void,
+	fail : (message : string) => void
+) {
+	fetchProfileFavorites(
+		1,
+		100,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			const matched = records.some((item : AppResourceRecord) : boolean => {
+				return isFavoriteResourceTypeMatched(item.resourceType, resourceType) && item.resourceId == resourceId
+			})
+			success(matched)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function updateFavoriteStatus(
+	data : AppFavoriteRequest,
+	success : (result : AppResourceInteraction) => void,
+	fail : (message : string) => void
+) {
+	request<AppResourceInteraction>(
+		'/api/v1/app/interaction/favorites',
+		'POST',
+		data as UTSJSONObject,
+		true,
+		false,
+		(result) => {
+			success(result)
 		},
 		(message) => {
 			fail(message)

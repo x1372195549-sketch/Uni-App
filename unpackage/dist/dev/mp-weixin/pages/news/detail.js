@@ -2,68 +2,6 @@
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
-class TopicItem extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          id: { type: Number, optional: false },
-          topicId: { type: Number, optional: false },
-          itemType: { type: String, optional: false },
-          itemId: { type: Number, optional: false },
-          sortOrder: { type: Number, optional: false },
-          resource: { type: "Unknown", optional: true }
-        };
-      },
-      name: "TopicItem"
-    };
-  }
-  constructor(options, metadata = TopicItem.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
-    this.topicId = this.__props__.topicId;
-    this.itemType = this.__props__.itemType;
-    this.itemId = this.__props__.itemId;
-    this.sortOrder = this.__props__.sortOrder;
-    this.resource = this.__props__.resource;
-    delete this.__props__;
-  }
-}
-class Topic extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          id: { type: Number, optional: false },
-          title: { type: String, optional: false },
-          summary: { type: String, optional: false },
-          learningRequirements: { type: String, optional: false },
-          coverUrl: { type: String, optional: false },
-          viewCount: { type: Number, optional: false },
-          publishedAt: { type: String, optional: false },
-          items: { type: UTS.UTSType.withGenerics(Array, [TopicItem]), optional: false }
-        };
-      },
-      name: "Topic"
-    };
-  }
-  constructor(options, metadata = Topic.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
-    this.title = this.__props__.title;
-    this.summary = this.__props__.summary;
-    this.learningRequirements = this.__props__.learningRequirements;
-    this.coverUrl = this.__props__.coverUrl;
-    this.viewCount = this.__props__.viewCount;
-    this.publishedAt = this.__props__.publishedAt;
-    this.items = this.__props__.items;
-    delete this.__props__;
-  }
-}
 class CatalogItem extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -87,6 +25,7 @@ class CatalogItem extends UTS.UTSType {
     delete this.__props__;
   }
 }
+const RESOURCE_TYPE = "INFO";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "detail",
   setup(__props) {
@@ -94,18 +33,50 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const activeTab = common_vendor.ref("intro");
     const topicTitle = common_vendor.ref("资讯详情");
     const topicViews = common_vendor.ref("0");
-    const topicCatalogCount = common_vendor.ref("0");
-    const topicIntro = common_vendor.ref("这里展示专题简介、学习要求和补充说明。接口返回真实专题内容时，将优先显示后端数据。");
-    const catalogItems = common_vendor.ref([
-      new CatalogItem({ id: "1", title: "专题1：目录标题占位一", duration: `10'20"` }),
-      new CatalogItem({ id: "2", title: "专题2：目录标题占位二", duration: `10'20"` }),
-      new CatalogItem({ id: "3", title: "专题3：目录标题占位三", duration: `10'20"` }),
-      new CatalogItem({ id: "4", title: "专题4：目录标题占位四", duration: `10'20"` })
-    ]);
-    const safeText = (value = null) => {
+    const topicFavoriteCount = common_vendor.ref("0");
+    const topicIntro = common_vendor.ref("这里展示专题简介、学习要求和补充说明。");
+    const isFavorited = common_vendor.ref(false);
+    const isFavoriteLoading = common_vendor.ref(false);
+    const catalogItems = common_vendor.ref([]);
+    function safeText(value = null) {
       return value == null || value.length == 0 ? "" : value;
-    };
-    const applyTopicDetail = (detail) => {
+    }
+    function loadFavoriteStatus() {
+      if (topicId.value.length == 0) {
+        return null;
+      }
+      utils_auth.checkFavoriteStatus(RESOURCE_TYPE, Number(topicId.value), (favorited) => {
+        isFavorited.value = favorited;
+      }, () => {
+        isFavorited.value = false;
+      });
+    }
+    function toggleFavorite() {
+      if (topicId.value.length == 0 || isFavoriteLoading.value) {
+        return null;
+      }
+      isFavoriteLoading.value = true;
+      utils_auth.updateFavoriteStatus(new utils_auth.AppFavoriteRequest({
+        resourceType: RESOURCE_TYPE,
+        resourceId: Number(topicId.value),
+        favorited: !isFavorited.value
+      }), (result) => {
+        isFavorited.value = result.favorited;
+        topicFavoriteCount.value = String(result.favoriteCount != null ? result.favoriteCount : 0);
+        isFavoriteLoading.value = false;
+        common_vendor.index.showToast({
+          title: result.favorited ? "收藏成功" : "已取消收藏",
+          icon: "success"
+        });
+      }, (message) => {
+        isFavoriteLoading.value = false;
+        common_vendor.index.showToast({
+          title: message,
+          icon: "none"
+        });
+      });
+    }
+    function applyTopicDetail(detail) {
       const titleText = safeText(detail.title);
       if (titleText.length > 0) {
         topicTitle.value = titleText;
@@ -115,43 +86,61 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         topicIntro.value = introText;
       }
       topicViews.value = String(detail.viewCount != null ? detail.viewCount : 0);
-      topicCatalogCount.value = String(detail.items != null ? detail.items.length : 0);
       if (detail.items != null && detail.items.length > 0) {
         catalogItems.value = detail.items.map((item, index) => {
           const itemType = safeText(item.itemType);
           return new CatalogItem({
             id: String(item.id),
-            title: "专题" + String(index + 1) + "：" + (itemType.length > 0 ? itemType : "目录项"),
-            duration: `10'20"`
+            title: itemType.length > 0 ? itemType + " " + String(index + 1) : "条目 " + String(index + 1),
+            duration: ""
           });
         });
+      } else {
+        catalogItems.value = [];
       }
-    };
-    const goBack = () => {
+    }
+    function goBack() {
       common_vendor.index.navigateBack();
-    };
-    const loadParams = () => {
+    }
+    function loadParams() {
       const pages = getCurrentPages();
-      if (pages.length > 0) {
-        const current = pages[pages.length - 1];
-        if (current != null && current.options != null) {
-          if (current.options["id"] != null) {
-            topicId.value = current.options["id"];
-          }
-          if (current.options["tab"] != null) {
-            activeTab.value = current.options["tab"];
-          }
-        }
+      if (pages.length == 0) {
+        return null;
       }
-      if (topicId.value.length > 0) {
-        utils_auth.fetchTopicDetail(topicId.value, (detail) => {
-          applyTopicDetail(detail);
-        }, () => {
+      const current = pages[pages.length - 1];
+      if (current == null || current.options == null) {
+        return null;
+      }
+      const options = current.options;
+      const idValue = options["id"];
+      const tabValue = options["tab"];
+      if (typeof idValue == "string" && idValue.length > 0) {
+        topicId.value = idValue;
+      }
+      if (typeof tabValue == "string" && tabValue.length > 0) {
+        activeTab.value = tabValue;
+      }
+    }
+    function loadTopicDetail() {
+      if (topicId.value.length == 0) {
+        return null;
+      }
+      utils_auth.fetchTopicDetail(topicId.value, (detail) => {
+        applyTopicDetail(detail);
+      }, (message) => {
+        common_vendor.index.showToast({
+          title: message,
+          icon: "none"
         });
-      }
-    };
+      });
+    }
     common_vendor.onMounted(() => {
       loadParams();
+      loadTopicDetail();
+      loadFavoriteStatus();
+    });
+    common_vendor.onShow(() => {
+      loadFavoriteStatus();
     });
     return (_ctx, _cache) => {
       "raw js";
@@ -170,14 +159,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         h: common_vendor.o(($event) => {
           return activeTab.value = "catalog";
         }),
-        i: activeTab.value == "intro"
+        i: common_vendor.t(isFavorited.value ? "已收藏" : "收藏"),
+        j: common_vendor.n(isFavorited.value ? "favorite-text-active" : ""),
+        k: common_vendor.o(toggleFavorite),
+        l: activeTab.value == "intro"
       }, activeTab.value == "intro" ? {
-        j: common_vendor.t(topicTitle.value),
-        k: common_vendor.t(topicViews.value),
-        l: common_vendor.t(topicCatalogCount.value),
-        m: common_vendor.t(topicIntro.value)
+        m: common_vendor.t(topicTitle.value),
+        n: common_vendor.t(topicViews.value),
+        o: common_vendor.t(topicFavoriteCount.value),
+        p: common_vendor.t(topicIntro.value)
       } : {
-        n: common_vendor.f(catalogItems.value, (item, k0, i0) => {
+        q: common_vendor.f(catalogItems.value, (item, k0, i0) => {
           return {
             a: common_vendor.t(item.title),
             b: common_vendor.t(item.duration),
@@ -185,7 +177,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           };
         })
       }, {
-        o: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        r: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

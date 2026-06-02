@@ -558,6 +558,86 @@ let Topic$1 = class Topic extends UTS.UTSType {
     delete this.__props__;
   }
 };
+let KnowledgeCategory$1 = class KnowledgeCategory extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          parentId: { type: Number, optional: false },
+          categoryName: { type: String, optional: false },
+          categoryCode: { type: String, optional: false },
+          description: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false },
+          children: { type: UTS.UTSType.withGenerics(Array, [KnowledgeCategory]), optional: false }
+        };
+      },
+      name: "KnowledgeCategory"
+    };
+  }
+  constructor(options, metadata = KnowledgeCategory.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.parentId = this.__props__.parentId;
+    this.categoryName = this.__props__.categoryName;
+    this.categoryCode = this.__props__.categoryCode;
+    this.description = this.__props__.description;
+    this.sortOrder = this.__props__.sortOrder;
+    this.children = this.__props__.children;
+    delete this.__props__;
+  }
+};
+let KnowledgeEntry$1 = class KnowledgeEntry extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          categoryId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          categoryName: { type: String, optional: false },
+          categoryCode: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          content: { type: String, optional: false },
+          keywords: { type: String, optional: true },
+          source: { type: String, optional: true },
+          author: { type: String, optional: true },
+          publisher: { type: String, optional: true },
+          totalPages: { type: Number, optional: true },
+          publishedAt: { type: String, optional: true },
+          viewCount: { type: Number, optional: true },
+          sortOrder: { type: Number, optional: true }
+        };
+      },
+      name: "KnowledgeEntry"
+    };
+  }
+  constructor(options, metadata = KnowledgeEntry.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.categoryId = this.__props__.categoryId;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.categoryName = this.__props__.categoryName;
+    this.categoryCode = this.__props__.categoryCode;
+    this.coverUrl = this.__props__.coverUrl;
+    this.content = this.__props__.content;
+    this.keywords = this.__props__.keywords;
+    this.source = this.__props__.source;
+    this.author = this.__props__.author;
+    this.publisher = this.__props__.publisher;
+    this.totalPages = this.__props__.totalPages;
+    this.publishedAt = this.__props__.publishedAt;
+    this.viewCount = this.__props__.viewCount;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+};
 let PageResponse$1 = class PageResponse extends UTS.UTSType {
   static get$UTSMetadata$(T) {
     return {
@@ -609,6 +689,56 @@ let AppResourceRecord$1 = class AppResourceRecord extends UTS.UTSType {
     this.source = this.__props__.source;
     this.viewCount = this.__props__.viewCount;
     this.occurredAt = this.__props__.occurredAt;
+    delete this.__props__;
+  }
+};
+let AppFavoriteRequest$1 = class AppFavoriteRequest extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false }
+        };
+      },
+      name: "AppFavoriteRequest"
+    };
+  }
+  constructor(options, metadata = AppFavoriteRequest.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.favorited = this.__props__.favorited;
+    delete this.__props__;
+  }
+};
+let AppResourceInteraction$1 = class AppResourceInteraction extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          browseCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false }
+        };
+      },
+      name: "AppResourceInteraction"
+    };
+  }
+  constructor(options, metadata = AppResourceInteraction.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.browseCount = this.__props__.browseCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
     delete this.__props__;
   }
 };
@@ -1048,6 +1178,82 @@ function fetchTopics(success, fail) {
     fail(message);
   });
 }
+function normalizeKnowledgeCategory(category) {
+  const rawChildren = category.children;
+  const children = rawChildren != null && UTS.isInstanceOf(rawChildren, Array) ? rawChildren.map((item) => {
+    return normalizeKnowledgeCategory(item);
+  }) : [];
+  return new KnowledgeCategory$1({
+    id: category.id,
+    parentId: category.parentId,
+    categoryName: category.categoryName != null ? category.categoryName : "",
+    categoryCode: category.categoryCode != null ? category.categoryCode : "",
+    description: category.description != null ? category.description : "",
+    sortOrder: category.sortOrder != null ? category.sortOrder : 0,
+    children
+  });
+}
+function normalizeKnowledgeEntry(entry) {
+  return new KnowledgeEntry$1({
+    id: entry.id,
+    categoryId: entry.categoryId != null ? entry.categoryId : 0,
+    title: entry.title != null ? entry.title : "",
+    summary: entry.summary != null ? entry.summary : "",
+    categoryName: entry.categoryName != null ? entry.categoryName : "",
+    categoryCode: entry.categoryCode != null ? entry.categoryCode : "",
+    coverUrl: normalizeAppUrl(entry.coverUrl != null ? entry.coverUrl : ""),
+    content: entry.content != null ? entry.content : "",
+    keywords: entry.keywords != null ? entry.keywords : "",
+    source: entry.source != null ? entry.source : "",
+    author: entry.author != null ? entry.author : "",
+    publisher: entry.publisher != null ? entry.publisher : "",
+    totalPages: entry.totalPages != null ? entry.totalPages : 0,
+    publishedAt: entry.publishedAt != null ? entry.publishedAt : "",
+    viewCount: entry.viewCount != null ? entry.viewCount : 0,
+    sortOrder: entry.sortOrder != null ? entry.sortOrder : 0
+  });
+}
+function fetchKnowledgeCategoryTree(success, fail) {
+  request("/api/v1/app/knowledge/categories/tree", "GET", null, true, false, (categories) => {
+    const categoryList = categories != null && UTS.isInstanceOf(categories, Array) ? categories : [];
+    const normalized = categoryList.map((item) => {
+      return normalizeKnowledgeCategory(item);
+    });
+    success(normalized);
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchKnowledgeEntries(page, size, keyword, categoryId, success, fail) {
+  let path = "/api/v1/app/knowledge/entries?page=" + String(page) + "&size=" + String(size);
+  if (keyword != null && keyword.length > 0) {
+    path += "&keyword=" + encodeURIComponent(keyword);
+  }
+  if (categoryId > 0) {
+    path += "&categoryId=" + String(categoryId);
+  }
+  request(path, "GET", null, true, false, (pageData) => {
+    const records = pageData.records != null && UTS.isInstanceOf(pageData.records, Array) ? pageData.records : [];
+    const normalizedRecords = records.map((item) => {
+      return normalizeKnowledgeEntry(item);
+    });
+    success(new PageResponse$1({
+      records: normalizedRecords,
+      total: pageData.total != null ? pageData.total : normalizedRecords.length,
+      page: pageData.page != null ? pageData.page : page,
+      size: pageData.size != null ? pageData.size : size
+    }));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchKnowledgeEntryDetail(id, success, fail) {
+  request("/api/v1/app/knowledge/entries/" + id, "GET", null, true, false, (detail) => {
+    success(normalizeKnowledgeEntry(detail));
+  }, (message) => {
+    fail(message);
+  });
+}
 function fetchHomeCategories(success, fail) {
   request("/api/v1/admin/content/home/categories?page=1&size=50", "GET", null, true, false, (pageData) => {
     success(pageData);
@@ -1072,6 +1278,49 @@ function fetchTopicDetail(id, success, fail) {
 function fetchProfileFavorites(page, size, success, fail) {
   request("/api/v1/app/profile/favorites?page=" + String(page) + "&size=" + String(size), "GET", null, true, false, (pageData) => {
     success(pageData);
+  }, (message) => {
+    fail(message);
+  });
+}
+function normalizeFavoriteResourceType(resourceType) {
+  if (resourceType == null || resourceType.length == 0) {
+    return "";
+  }
+  const normalized = resourceType.toLowerCase();
+  if (normalized == "audio" || normalized == "podcast") {
+    return "AUDIO";
+  }
+  if (normalized == "course") {
+    return "COURSE";
+  }
+  if (normalized == "live") {
+    return "LIVE";
+  }
+  if (normalized == "info" || normalized == "topic" || normalized == "article") {
+    return "INFO";
+  }
+  if (normalized == "knowledge") {
+    return "KNOWLEDGE";
+  }
+  return resourceType.toUpperCase();
+}
+function isFavoriteResourceTypeMatched(left, right) {
+  return normalizeFavoriteResourceType(left) == normalizeFavoriteResourceType(right);
+}
+function checkFavoriteStatus(resourceType, resourceId, success, fail) {
+  fetchProfileFavorites(1, 100, (pageData) => {
+    const records = pageData.records != null ? pageData.records : [];
+    const matched = records.some((item) => {
+      return isFavoriteResourceTypeMatched(item.resourceType, resourceType) && item.resourceId == resourceId;
+    });
+    success(matched);
+  }, (message) => {
+    fail(message);
+  });
+}
+function updateFavoriteStatus(data, success, fail) {
+  request("/api/v1/app/interaction/favorites", "POST", data, true, false, (result) => {
+    success(result);
   }, (message) => {
     fail(message);
   });
@@ -1897,6 +2146,86 @@ class Topic2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+class KnowledgeCategory2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          parentId: { type: Number, optional: false },
+          categoryName: { type: String, optional: false },
+          categoryCode: { type: String, optional: false },
+          description: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false },
+          children: { type: UTS.UTSType.withGenerics(Array, [KnowledgeCategory2]), optional: false }
+        };
+      },
+      name: "KnowledgeCategory"
+    };
+  }
+  constructor(options, metadata = KnowledgeCategory2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.parentId = this.__props__.parentId;
+    this.categoryName = this.__props__.categoryName;
+    this.categoryCode = this.__props__.categoryCode;
+    this.description = this.__props__.description;
+    this.sortOrder = this.__props__.sortOrder;
+    this.children = this.__props__.children;
+    delete this.__props__;
+  }
+}
+class KnowledgeEntry2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          categoryId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          categoryName: { type: String, optional: false },
+          categoryCode: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          content: { type: String, optional: false },
+          keywords: { type: String, optional: true },
+          source: { type: String, optional: true },
+          author: { type: String, optional: true },
+          publisher: { type: String, optional: true },
+          totalPages: { type: Number, optional: true },
+          publishedAt: { type: String, optional: true },
+          viewCount: { type: Number, optional: true },
+          sortOrder: { type: Number, optional: true }
+        };
+      },
+      name: "KnowledgeEntry"
+    };
+  }
+  constructor(options, metadata = KnowledgeEntry2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.categoryId = this.__props__.categoryId;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.categoryName = this.__props__.categoryName;
+    this.categoryCode = this.__props__.categoryCode;
+    this.coverUrl = this.__props__.coverUrl;
+    this.content = this.__props__.content;
+    this.keywords = this.__props__.keywords;
+    this.source = this.__props__.source;
+    this.author = this.__props__.author;
+    this.publisher = this.__props__.publisher;
+    this.totalPages = this.__props__.totalPages;
+    this.publishedAt = this.__props__.publishedAt;
+    this.viewCount = this.__props__.viewCount;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+}
 class PageResponse2 extends UTS.UTSType {
   static get$UTSMetadata$(T) {
     return {
@@ -1948,6 +2277,56 @@ class AppResourceRecord2 extends UTS.UTSType {
     this.source = this.__props__.source;
     this.viewCount = this.__props__.viewCount;
     this.occurredAt = this.__props__.occurredAt;
+    delete this.__props__;
+  }
+}
+class AppFavoriteRequest2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false }
+        };
+      },
+      name: "AppFavoriteRequest"
+    };
+  }
+  constructor(options, metadata = AppFavoriteRequest2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.favorited = this.__props__.favorited;
+    delete this.__props__;
+  }
+}
+class AppResourceInteraction2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          browseCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false }
+        };
+      },
+      name: "AppResourceInteraction"
+    };
+  }
+  constructor(options, metadata = AppResourceInteraction2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.browseCount = this.__props__.browseCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
     delete this.__props__;
   }
 }
@@ -2187,10 +2566,12 @@ class ExpertDetail2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+exports.AppFavoriteRequest = AppFavoriteRequest2;
 exports.AppStudentCertificationRequest = AppStudentCertificationRequest2;
 exports.AvatarBinaryUploadConfig = AvatarBinaryUploadConfig2;
 exports.AvatarConfirmRequest = AvatarConfirmRequest2;
 exports.AvatarUploadUrlRequest = AvatarUploadUrlRequest2;
+exports.checkFavoriteStatus = checkFavoriteStatus;
 exports.clearBindToken = clearBindToken;
 exports.confirmAvatarUpload = confirmAvatarUpload;
 exports.fetchAudioDetail = fetchAudioDetail;
@@ -2200,6 +2581,9 @@ exports.fetchCourses = fetchCourses;
 exports.fetchExpertDetail = fetchExpertDetail;
 exports.fetchHomeCategories = fetchHomeCategories;
 exports.fetchHomeContents = fetchHomeContents;
+exports.fetchKnowledgeCategoryTree = fetchKnowledgeCategoryTree;
+exports.fetchKnowledgeEntries = fetchKnowledgeEntries;
+exports.fetchKnowledgeEntryDetail = fetchKnowledgeEntryDetail;
 exports.fetchLiveSessionDetail = fetchLiveSessionDetail;
 exports.fetchLiveSessions = fetchLiveSessions;
 exports.fetchProfile = fetchProfile;
@@ -2218,6 +2602,7 @@ exports.requestAvatarUploadUrl = requestAvatarUploadUrl;
 exports.saveLogin = saveLogin;
 exports.sendSmsCode = sendSmsCode;
 exports.submitCertification = submitCertification;
+exports.updateFavoriteStatus = updateFavoriteStatus;
 exports.updateProfile = updateProfile;
 exports.uploadAvatarBinaryFile = uploadAvatarBinaryFile;
 exports.wechatBindMobile = wechatBindMobile;

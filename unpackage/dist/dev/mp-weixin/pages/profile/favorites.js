@@ -64,6 +64,7 @@ const TYPE_LIVE = "LIVE";
 const TYPE_COURSE = "COURSE";
 const TYPE_TOPIC = "TOPIC";
 const TYPE_INFO = "INFO";
+const TYPE_ARTICLE = "ARTICLE";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "favorites",
   setup(__props) {
@@ -87,10 +88,29 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       });
     });
     const normalizeFavoriteType = (resourceType) => {
-      if (resourceType == TYPE_INFO) {
+      const normalizedType = resourceType.toLowerCase();
+      if (normalizedType == TYPE_INFO || normalizedType == TYPE_ARTICLE) {
         return TYPE_TOPIC;
       }
-      return resourceType;
+      if (normalizedType == "audio") {
+        return TYPE_AUDIO;
+      }
+      if (normalizedType == "podcast") {
+        return TYPE_AUDIO;
+      }
+      if (normalizedType == "live") {
+        return TYPE_LIVE;
+      }
+      if (normalizedType == "course") {
+        return TYPE_COURSE;
+      }
+      if (normalizedType == "topic") {
+        return TYPE_TOPIC;
+      }
+      if (normalizedType == "info") {
+        return TYPE_TOPIC;
+      }
+      return resourceType.toUpperCase();
     };
     const getTypeLabel = (resourceType) => {
       const normalizedType = normalizeFavoriteType(resourceType);
@@ -303,6 +323,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       });
     };
     loadFavorites();
+    common_vendor.onShow(() => {
+      loadFavorites();
+    });
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = common_vendor.e({

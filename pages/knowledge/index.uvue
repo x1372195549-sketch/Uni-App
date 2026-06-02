@@ -7,35 +7,107 @@
 			</view>
 		</view>
 
+		<view class="search-bar">
+			<input
+				v-model="searchKeyword"
+				class="search-input"
+				placeholder="搜索知识条目"
+				confirm-type="search"
+				@confirm="handleSearch"
+			/>
+			<view class="search-btn" @click="handleSearch">
+				<text class="search-btn-text">搜索</text>
+			</view>
+		</view>
+
 		<view class="content-shell">
-			<view class="category-panel">
+			<scroll-view class="category-panel" scroll-y="true">
 				<view
-					v-for="item in categories"
-					:key="item.id"
 					class="category-item"
-					:class="{ 'category-item-active': currentCategoryId === item.id }"
-					@click="selectCategory(item.id)"
+					:class="{ 'category-item-active': selectedCategoryId == 0 }"
+					@click="selectCategory(0)"
 				>
-					<view v-if="currentCategoryId === item.id" class="category-line"></view>
+					<view v-if="selectedCategoryId == 0" class="category-line"></view>
 					<text
 						class="category-text"
-						:class="{ 'category-text-active': currentCategoryId === item.id }"
-					>{{ item.name }}</text>
+						:class="{ 'category-text-active': selectedCategoryId == 0 }"
+					>全部</text>
 				</view>
-			</view>
 
-			<scroll-view class="book-panel" scroll-y="true">
-				<view class="book-grid">
+				<view
+					v-for="item in flatCategories"
+					:key="item.id"
+					class="category-item"
+					:class="{ 'category-item-active': selectedCategoryId == item.id }"
+					@click="selectCategory(item.id)"
+				>
+					<view v-if="selectedCategoryId == item.id" class="category-line"></view>
+					<text
+						class="category-text"
+						:class="{ 'category-text-active': selectedCategoryId == item.id }"
+					>{{ item.displayName }}</text>
+				</view>
+			</scroll-view>
+
+			<scroll-view
+				class="list-panel"
+				scroll-y="true"
+				:refresher-enabled="true"
+				:refresher-triggered="isRefreshing"
+				@refresherrefresh="handleRefresh"
+				@scrolltolower="loadMore"
+			>
+				<view v-if="isInitialLoading" class="state-wrap">
+					<text class="state-text">加载中...</text>
+				</view>
+
+				<view v-else-if="errorText.length > 0" class="state-wrap">
+					<text class="state-text">{{ errorText }}</text>
+					<view class="retry-btn" @click="loadInitialData">
+						<text class="retry-btn-text">重新加载</text>
+					</view>
+				</view>
+
+				<view v-else-if="bookList.length == 0" class="state-wrap">
+					<text class="state-text">暂无知识内容</text>
+				</view>
+
+				<view v-else class="book-list">
 					<view
-						v-for="book in currentBooks"
-						:key="book.id"
+						v-for="item in bookList"
+						:key="item.id"
 						class="book-card"
-						@click="goBookDetail(book)"
+						@click="goBookDetail(item)"
 					>
-						<view class="book-cover" :style="{ backgroundColor: book.coverColor }">
-							<text class="book-cover-title">{{ book.shortTitle }}</text>
+						<view class="book-cover-shell">
+							<image
+								v-if="item.coverUrl.length > 0"
+								class="book-cover"
+								:src="item.coverUrl"
+								mode="aspectFill"
+							></image>
+							<view v-else class="book-cover-fallback">
+								<text class="book-cover-fallback-text">{{ item.shortTitle }}</text>
+							</view>
 						</view>
-						<text class="book-name">{{ book.name }}</text>
+
+						<view class="book-main">
+							<text class="book-title">{{ item.title }}</text>
+							<text v-if="item.summary.length > 0" class="book-summary">{{ item.summary }}</text>
+							<text v-if="item.author.length > 0" class="book-meta">作者：{{ item.author }}</text>
+							<text v-else-if="item.categoryName.length > 0" class="book-meta">分类：{{ item.categoryName }}</text>
+							<view class="book-bottom-row">
+								<text class="book-stat">阅读 {{ item.viewCount }}</text>
+								<text v-if="item.publishedAt.length > 0" class="book-stat">{{ item.publishedAt }}</text>
+							</view>
+						</view>
+					</view>
+
+					<view v-if="isListLoading" class="bottom-state">
+						<text class="bottom-state-text">加载更多中...</text>
+					</view>
+					<view v-else-if="!hasMore" class="bottom-state">
+						<text class="bottom-state-text">没有更多内容了</text>
 					</view>
 				</view>
 			</scroll-view>
@@ -67,72 +139,204 @@
 </template>
 
 <script setup lang="uts">
-type CategoryItem = {
-	id : string
-	name : string
+import { ref } from 'vue'
+import {
+	fetchKnowledgeCategoryTree,
+	fetchKnowledgeEntries,
+	type KnowledgeCategory,
+	type KnowledgeEntry
+} from '../../utils/auth.uts'
+
+type CategoryDisplayItem = {
+	id : number
+	displayName : string
 }
 
-type BookItem = {
-	id : string
-	categoryId : string
-	name : string
-	shortTitle : string
+type KnowledgeDisplayItem = {
+	id : number
+	title : string
+	summary : string
 	author : string
-	coverColor : string
+	categoryName : string
+	coverUrl : string
+	viewCount : string
+	publishedAt : string
+	shortTitle : string
 }
 
-const categories = ref<CategoryItem[]>([
-	{ id: 'theory', name: '中医基础理论' },
-	{ id: 'diagnosis', name: '中医诊断学' },
-	{ id: 'herbs', name: '中药学' },
-	{ id: 'formula', name: '方剂学' },
-	{ id: 'internal', name: '中医内科' },
-	{ id: 'surgery', name: '中医外科' },
-	{ id: 'classic', name: '四大经典' }
-])
+const PAGE_SIZE = 10
 
-const books = ref<BookItem[]>([
-	{ id: 'b1', categoryId: 'theory', name: '中医基础理论概论', shortTitle: '基础\n理论', author: '王某某', coverColor: '#dfead2' },
-	{ id: 'b2', categoryId: 'theory', name: '中医阴阳五行导读', shortTitle: '阴阳\n五行', author: '李某某', coverColor: '#f3d88d' },
-	{ id: 'b3', categoryId: 'theory', name: '脏腑经络入门', shortTitle: '脏腑\n经络', author: '周某某', coverColor: '#d5e1f2' },
-	{ id: 'b4', categoryId: 'theory', name: '中医诊断学图解', shortTitle: '诊断\n图解', author: '赵某某', coverColor: '#f1ddb9' }
-])
+const searchKeyword = ref('')
+const selectedCategoryId = ref(0)
+const flatCategories = ref<CategoryDisplayItem[]>([])
+const bookList = ref<KnowledgeDisplayItem[]>([])
+const page = ref(1)
+const hasMore = ref(true)
+const isInitialLoading = ref(true)
+const isListLoading = ref(false)
+const isRefreshing = ref(false)
+const errorText = ref('')
 
-const currentCategoryId = ref('theory')
-const currentBooks = ref<BookItem[]>([])
-
-const refreshBooks = () => {
-	currentBooks.value = books.value.filter((item : BookItem) : boolean => item.categoryId == currentCategoryId.value)
+function safeText(value : string | null) : string {
+	return value == null || value.length == 0 ? '' : value
 }
 
-const selectCategory = (id : string) => {
-	currentCategoryId.value = id
-	refreshBooks()
+function toShortTitle(value : string) : string {
+	const title = safeText(value)
+	if (title.length == 0) {
+		return '知识'
+	}
+	if (title.length <= 4) {
+		return title
+	}
+	return title.substring(0, 4)
 }
 
-const goBookDetail = (book : BookItem) => {
-	uni.navigateTo({
-		url: '/pages/knowledge/book-detail?id=' + book.id + '&name=' + encodeURIComponent(book.name) + '&author=' + encodeURIComponent(book.author)
+function flattenCategories(
+	items : KnowledgeCategory[],
+	level : number,
+	result : CategoryDisplayItem[]
+) : void {
+	items.forEach((item : KnowledgeCategory) => {
+		const indent = level > 0 ? '· '.repeat(level) : ''
+		result.push({
+			id: item.id,
+			displayName: indent + safeText(item.categoryName)
+		} as CategoryDisplayItem)
+
+		if (item.children != null && item.children.length > 0) {
+			flattenCategories(item.children, level + 1, result)
+		}
 	})
 }
 
-const goLearningPage = () => {
+function mapKnowledgeItem(item : KnowledgeEntry) : KnowledgeDisplayItem {
+	return {
+		id: item.id,
+		title: safeText(item.title),
+		summary: safeText(item.summary),
+		author: safeText(item.author),
+		categoryName: safeText(item.categoryName),
+		coverUrl: safeText(item.coverUrl),
+		viewCount: String(item.viewCount != null ? item.viewCount : 0),
+		publishedAt: safeText(item.publishedAt).replace('T', ' '),
+		shortTitle: toShortTitle(item.title)
+	} as KnowledgeDisplayItem
+}
+
+function loadCategories() : void {
+	fetchKnowledgeCategoryTree(
+		(categories) => {
+			const nextItems = new Array<CategoryDisplayItem>()
+			flattenCategories(categories, 0, nextItems)
+			flatCategories.value = nextItems
+			loadKnowledgeList(false)
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : '分类加载失败'
+			isInitialLoading.value = false
+			isRefreshing.value = false
+		}
+	)
+}
+
+function loadKnowledgeList(loadMore : boolean) : void {
+	if (!loadMore) {
+		page.value = 1
+		hasMore.value = true
+		if (!isRefreshing.value) {
+			isInitialLoading.value = true
+		}
+		errorText.value = ''
+	} else {
+		if (!hasMore.value || isListLoading.value) {
+			return
+		}
+		isListLoading.value = true
+	}
+
+	fetchKnowledgeEntries(
+		page.value,
+		PAGE_SIZE,
+		searchKeyword.value,
+		selectedCategoryId.value,
+		(pageData) => {
+			const mapped = pageData.records != null ? pageData.records.map((item : KnowledgeEntry) : KnowledgeDisplayItem => {
+				return mapKnowledgeItem(item)
+			}) : []
+
+			if (loadMore) {
+				bookList.value = bookList.value.concat(mapped)
+			} else {
+				bookList.value = mapped
+			}
+
+			hasMore.value = mapped.length >= PAGE_SIZE
+			if (hasMore.value) {
+				page.value += 1
+			}
+
+			isInitialLoading.value = false
+			isListLoading.value = false
+			isRefreshing.value = false
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : '内容加载失败'
+			isInitialLoading.value = false
+			isListLoading.value = false
+			isRefreshing.value = false
+		}
+	)
+}
+
+function loadInitialData() : void {
+	loadCategories()
+}
+
+function selectCategory(id : number) : void {
+	if (selectedCategoryId.value == id) {
+		return
+	}
+	selectedCategoryId.value = id
+	loadKnowledgeList(false)
+}
+
+function handleSearch() : void {
+	loadKnowledgeList(false)
+}
+
+function handleRefresh() : void {
+	isRefreshing.value = true
+	loadKnowledgeList(false)
+}
+
+function loadMore() : void {
+	loadKnowledgeList(true)
+}
+
+function goBookDetail(item : KnowledgeDisplayItem) : void {
+	uni.navigateTo({
+		url: '/pages/knowledge/book-detail?id=' + String(item.id)
+	})
+}
+
+function goLearningPage() : void {
 	uni.redirectTo({ url: '/pages/index/index' })
 }
 
-const goExamPage = () => {
+function goExamPage() : void {
 	uni.redirectTo({ url: '/pages/exam/index' })
 }
 
-const goMinePage = () => {
+function goMinePage() : void {
 	uni.redirectTo({ url: '/pages/mine/index' })
 }
 
-const goConsultPage = () => {
+function goConsultPage() : void {
 	uni.redirectTo({ url: '/pages/consult/index' })
 }
 
-refreshBooks()
+loadInitialData()
 </script>
 
 <style>
@@ -140,7 +344,6 @@ refreshBooks()
 	flex: 1;
 	background-color: #f5f5fb;
 }
-
 
 .hero-shell {
 	position: relative;
@@ -155,6 +358,7 @@ refreshBooks()
 	width: 750rpx;
 	height: 236rpx;
 }
+
 .header {
 	position: relative;
 	z-index: 1;
@@ -165,7 +369,6 @@ refreshBooks()
 	background-color: transparent;
 }
 
-
 .header-title {
 	font-size: 20px;
 	line-height: 30px;
@@ -175,6 +378,38 @@ refreshBooks()
 	text-align: center;
 }
 
+.search-bar {
+	margin: 16rpx 20rpx 18rpx;
+	height: 78rpx;
+	padding: 0 12rpx 0 24rpx;
+	background-color: #ffffff;
+	border-radius: 18rpx;
+	flex-direction: row;
+	align-items: center;
+}
+
+.search-input {
+	flex: 1;
+	height: 78rpx;
+	font-size: 15px;
+	color: #303030;
+}
+
+.search-btn {
+	width: 108rpx;
+	height: 56rpx;
+	border-radius: 28rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-btn-text {
+	font-size: 13px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
 .content-shell {
 	flex: 1;
 	flex-direction: row;
@@ -182,14 +417,13 @@ refreshBooks()
 }
 
 .category-panel {
-	width: 184rpx;
+	width: 196rpx;
 	background-color: #f1f2f5;
 }
 
 .category-item {
-	height: 118rpx;
-	padding-left: 20rpx;
-	padding-right: 20rpx;
+	min-height: 112rpx;
+	padding: 18rpx 20rpx;
 	background-color: #eef0f3;
 	align-items: center;
 	justify-content: center;
@@ -213,9 +447,9 @@ refreshBooks()
 }
 
 .category-text {
-	font-size: 17px;
-	line-height: 24px;
-	color: #a6a6a6;
+	font-size: 15px;
+	line-height: 22px;
+	color: #8f8f8f;
 	text-align: center;
 }
 
@@ -224,53 +458,130 @@ refreshBooks()
 	font-weight: 600;
 }
 
-.book-panel {
+.list-panel {
 	flex: 1;
 	background-color: #ffffff;
 }
 
-.book-grid {
-	padding-left: 18rpx;
-	padding-right: 18rpx;
-	padding-top: 16rpx;
-	padding-bottom: 24rpx;
-	flex-direction: row;
-	flex-wrap: wrap;
-	justify-content: space-between;
+.state-wrap {
+	padding: 120rpx 40rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 200rpx;
+	height: 68rpx;
+	border-radius: 12rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.book-list {
+	padding: 16rpx 18rpx 24rpx;
 }
 
 .book-card {
-	width: 156rpx;
-	margin-bottom: 28rpx;
+	margin-bottom: 18rpx;
+	padding: 18rpx;
+	border-radius: 16rpx;
+	background-color: #fbfaf7;
+	flex-direction: row;
 	align-items: center;
+}
+
+.book-cover-shell {
+	width: 132rpx;
+	height: 176rpx;
+	margin-right: 18rpx;
+	border-radius: 10rpx;
+	overflow: hidden;
+	background-color: #efe3cc;
 }
 
 .book-cover {
 	width: 132rpx;
-	height: 180rpx;
-	border-radius: 8rpx;
-	padding-left: 12rpx;
-	padding-right: 12rpx;
-	padding-top: 18rpx;
-	align-items: center;
-	justify-content: flex-start;
-	box-shadow: 0 8rpx 18rpx rgba(105, 100, 90, 0.08);
+	height: 176rpx;
 }
 
-.book-cover-title {
+.book-cover-fallback {
+	width: 132rpx;
+	height: 176rpx;
+	padding: 20rpx 14rpx;
+	align-items: center;
+	justify-content: center;
+	background-color: #e8dcc5;
+}
+
+.book-cover-fallback-text {
 	font-size: 18px;
-	line-height: 24px;
-	color: #4f523f;
+	line-height: 26px;
+	color: #6e6049;
 	font-weight: 600;
 	text-align: center;
 }
 
-.book-name {
+.book-main {
+	flex: 1;
+	min-height: 176rpx;
+	justify-content: space-between;
+}
+
+.book-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #2b2b2b;
+	font-weight: 600;
+}
+
+.book-summary {
+	margin-top: 10rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #8c8c8c;
+}
+
+.book-meta {
 	margin-top: 12rpx;
 	font-size: 12px;
 	line-height: 18px;
-	color: #4a4a4a;
-	text-align: center;
+	color: #b45f73;
+}
+
+.book-bottom-row {
+	margin-top: 14rpx;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.book-stat {
+	font-size: 12px;
+	line-height: 18px;
+	color: #b1b1b1;
+}
+
+.bottom-state {
+	padding: 12rpx 0 16rpx;
+	align-items: center;
+}
+
+.bottom-state-text {
+	font-size: 12px;
+	color: #b1b1b1;
 }
 
 .tabbar {

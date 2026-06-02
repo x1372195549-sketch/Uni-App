@@ -1,128 +1,155 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
+const utils_auth = require("../../utils/auth.js");
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "book-detail",
   setup(__props) {
-    const currentPages = getCurrentPages();
-    let bookName = "本草纲目";
-    let authorName = "李时珍撰写 药学著作";
-    if (currentPages.length > 0) {
-      const currentPage = currentPages[currentPages.length - 1];
-      const options = currentPage.options;
-      if (options != null) {
-        if (options["name"] != null) {
-          bookName = decodeURIComponent(options["name"]);
-        }
-        if (options["author"] != null) {
-          authorName = decodeURIComponent(options["author"]);
-        }
-      }
+    const detailId = common_vendor.ref("");
+    const isLoading = common_vendor.ref(true);
+    const errorText = common_vendor.ref("");
+    const title = common_vendor.ref("");
+    const shortTitle = common_vendor.ref("知识");
+    const coverUrl = common_vendor.ref("");
+    const summary = common_vendor.ref("");
+    const content = common_vendor.ref("");
+    const categoryName = common_vendor.ref("");
+    const author = common_vendor.ref("");
+    const publisher = common_vendor.ref("");
+    const keywords = common_vendor.ref("");
+    const source = common_vendor.ref("");
+    const publishedAt = common_vendor.ref("");
+    const totalPages = common_vendor.ref("");
+    const viewCount = common_vendor.ref("0");
+    const isHtmlContent = common_vendor.ref(false);
+    function safeText(value = null) {
+      return value == null || value.length == 0 ? "" : value;
     }
-    const bookTitle = common_vendor.ref(bookName);
-    const bookAuthor = common_vendor.ref(authorName);
-    const drawerVisible = common_vendor.ref(false);
-    const currentPanel = common_vendor.ref("catalog");
-    const catalogItems = common_vendor.ref([
-      new UTSJSONObject({ id: "c1", title: "第 1 节：露水" }),
-      new UTSJSONObject({ id: "c2", title: "第 2 节：露水" }),
-      new UTSJSONObject({ id: "c3", title: "第 3 节：露水" }),
-      new UTSJSONObject({ id: "c4", title: "第 4 节：露水" }),
-      new UTSJSONObject({ id: "c5", title: "第 5 节：露水" }),
-      new UTSJSONObject({ id: "c6", title: "第 6 节：露水" }),
-      new UTSJSONObject({ id: "c7", title: "第 7 节：露水" }),
-      new UTSJSONObject({ id: "c8", title: "第 8 节：露水" }),
-      new UTSJSONObject({ id: "c9", title: "第 9 节：露水" }),
-      new UTSJSONObject({ id: "c10", title: "第 10 节：露水" })
-    ]);
-    const bookmarkItems = common_vendor.ref([
-      new UTSJSONObject({ id: "b1", content: "午刻黄水从小便排出。见效占位内容一…", progress: "12%" }),
-      new UTSJSONObject({ id: "b2", content: "午刻黄水从小表排除。见效占位内容二…", progress: "12%" }),
-      new UTSJSONObject({ id: "b3", content: "午刻黄水从小表排除。见效占位内容三…", progress: "12%" }),
-      new UTSJSONObject({ id: "b4", content: "午刻黄水从小表排除。见效占位内容四…", progress: "12%" }),
-      new UTSJSONObject({ id: "b5", content: "午刻黄水从小表排除。见效占位内容五…", progress: "12%" }),
-      new UTSJSONObject({ id: "b6", content: "午刻黄水从小表排除。见效占位内容六…", progress: "12%" })
-    ]);
-    const goBack = () => {
-      common_vendor.index.navigateBack();
-    };
-    const hideDrawer = () => {
-      drawerVisible.value = false;
-    };
-    const switchPanel = (panel) => {
-      currentPanel.value = panel;
-    };
-    const toggleDrawer = (panel) => {
-      if (drawerVisible.value && currentPanel.value == panel) {
-        drawerVisible.value = false;
+    function buildShortTitle(value) {
+      const text = safeText(value);
+      if (text.length == 0) {
+        return "知识";
+      }
+      if (text.length <= 4) {
+        return text;
+      }
+      return text.substring(0, 4);
+    }
+    function detectHtml(value) {
+      return value.indexOf("<p") >= 0 || value.indexOf("<div") >= 0 || value.indexOf("<br") >= 0;
+    }
+    function applyDetail(detail) {
+      title.value = safeText(detail.title);
+      shortTitle.value = buildShortTitle(detail.title);
+      coverUrl.value = safeText(detail.coverUrl);
+      summary.value = safeText(detail.summary);
+      content.value = safeText(detail.content);
+      categoryName.value = safeText(detail.categoryName);
+      author.value = safeText(detail.author);
+      publisher.value = safeText(detail.publisher);
+      keywords.value = safeText(detail.keywords);
+      source.value = safeText(detail.source);
+      publishedAt.value = safeText(detail.publishedAt).replace("T", " ");
+      totalPages.value = detail.totalPages != null && detail.totalPages > 0 ? "共 " + String(detail.totalPages) + " 页" : "";
+      viewCount.value = String(detail.viewCount != null ? detail.viewCount : 0);
+      isHtmlContent.value = detectHtml(content.value);
+    }
+    function loadParams() {
+      const pages = getCurrentPages();
+      if (pages.length == 0) {
         return null;
       }
-      currentPanel.value = panel;
-      drawerVisible.value = true;
-    };
-    const goExamPage = () => {
-      common_vendor.index.navigateTo({
-        url: "/pages/exam/index?sourceType=book&sourceId=book-demo&sourceName=" + encodeURIComponent(bookTitle.value)
+      const currentPage = pages[pages.length - 1];
+      if (currentPage == null || currentPage.options == null) {
+        return null;
+      }
+      const options = currentPage.options;
+      const idValue = options["id"];
+      if (typeof idValue == "string" && idValue.length > 0) {
+        detailId.value = idValue;
+      }
+    }
+    function loadDetail() {
+      if (detailId.value.length == 0) {
+        errorText.value = "缺少知识条目 ID";
+        isLoading.value = false;
+        return null;
+      }
+      isLoading.value = true;
+      errorText.value = "";
+      utils_auth.fetchKnowledgeEntryDetail(detailId.value, (detail) => {
+        applyDetail(detail);
+        isLoading.value = false;
+      }, (message) => {
+        errorText.value = message.length > 0 ? message : "详情加载失败";
+        isLoading.value = false;
       });
-    };
+    }
+    function goBack() {
+      common_vendor.index.navigateBack();
+    }
+    loadParams();
+    loadDetail();
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = common_vendor.e({
         a: common_assets._imports_0$1,
         b: common_vendor.o(goBack),
-        c: common_vendor.t(common_vendor.unref(bookTitle)),
-        d: common_vendor.o(hideDrawer),
-        e: common_vendor.unref(drawerVisible)
-      }, common_vendor.unref(drawerVisible) ? {
-        f: common_vendor.o(hideDrawer)
-      } : {}, {
-        g: common_vendor.unref(drawerVisible)
-      }, common_vendor.unref(drawerVisible) ? common_vendor.e({
-        h: common_vendor.t(common_vendor.unref(bookTitle)),
-        i: common_vendor.t(common_vendor.unref(bookAuthor)),
-        j: common_vendor.unref(currentPanel) == "catalog" ? 1 : "",
-        k: common_vendor.unref(currentPanel) == "catalog"
-      }, common_vendor.unref(currentPanel) == "catalog" ? {} : {}, {
-        l: common_vendor.o(($event) => {
-          return switchPanel("catalog");
-        }),
-        m: common_vendor.unref(currentPanel) == "bookmark" ? 1 : "",
-        n: common_vendor.unref(currentPanel) == "bookmark"
-      }, common_vendor.unref(currentPanel) == "bookmark" ? {} : {}, {
-        o: common_vendor.o(($event) => {
-          return switchPanel("bookmark");
-        }),
-        p: common_vendor.unref(currentPanel) == "catalog"
-      }, common_vendor.unref(currentPanel) == "catalog" ? {
-        q: common_vendor.f(common_vendor.unref(catalogItems), (item, k0, i0) => {
-          return {
-            a: common_vendor.t(item.title),
-            b: item.id
-          };
-        })
+        c: isLoading.value
+      }, isLoading.value ? {} : errorText.value.length > 0 ? {
+        e: common_vendor.t(errorText.value),
+        f: common_vendor.o(loadDetail)
+      } : common_vendor.e({
+        g: coverUrl.value.length > 0
+      }, coverUrl.value.length > 0 ? {
+        h: coverUrl.value
       } : {
-        r: common_vendor.f(common_vendor.unref(bookmarkItems), (item, k0, i0) => {
-          return {
-            a: common_vendor.t(item.content),
-            b: common_vendor.t(item.progress),
-            c: item.id
-          };
-        })
-      }) : {}, {
-        s: common_vendor.unref(drawerVisible) && common_vendor.unref(currentPanel) == "catalog" ? "/static/reader/icon_mulu_active.png" : "/static/reader/icon_mulu.png",
-        t: common_vendor.unref(drawerVisible) && common_vendor.unref(currentPanel) == "catalog" ? 1 : "",
-        v: common_vendor.o(($event) => {
-          return toggleDrawer("catalog");
-        }),
-        w: common_vendor.unref(drawerVisible) && common_vendor.unref(currentPanel) == "bookmark" ? "/static/reader/icon_shuqiandibu_active.png" : "/static/reader/icon_shuqiandibu.png",
-        x: common_vendor.unref(drawerVisible) && common_vendor.unref(currentPanel) == "bookmark" ? 1 : "",
-        y: common_vendor.o(($event) => {
-          return toggleDrawer("bookmark");
-        }),
-        z: common_assets._imports_1$5,
-        A: common_assets._imports_2$1,
-        B: common_vendor.o(goExamPage),
-        C: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        i: common_vendor.t(shortTitle.value)
+      }, {
+        j: common_vendor.t(title.value),
+        k: author.value.length > 0
+      }, author.value.length > 0 ? {
+        l: common_vendor.t(author.value)
+      } : {}, {
+        m: publisher.value.length > 0
+      }, publisher.value.length > 0 ? {
+        n: common_vendor.t(publisher.value)
+      } : {}, {
+        o: categoryName.value.length > 0
+      }, categoryName.value.length > 0 ? {
+        p: common_vendor.t(categoryName.value)
+      } : {}, {
+        q: publishedAt.value.length > 0
+      }, publishedAt.value.length > 0 ? {
+        r: common_vendor.t(publishedAt.value)
+      } : {}, {
+        s: common_vendor.t(viewCount.value),
+        t: totalPages.value.length > 0
+      }, totalPages.value.length > 0 ? {
+        v: common_vendor.t(totalPages.value)
+      } : {}, {
+        w: summary.value.length > 0
+      }, summary.value.length > 0 ? {
+        x: common_vendor.t(summary.value)
+      } : {}, {
+        y: isHtmlContent.value
+      }, isHtmlContent.value ? {
+        z: content.value
+      } : {
+        A: common_vendor.t(content.value)
+      }, {
+        B: keywords.value.length > 0 || source.value.length > 0
+      }, keywords.value.length > 0 || source.value.length > 0 ? common_vendor.e({
+        C: keywords.value.length > 0
+      }, keywords.value.length > 0 ? {
+        D: common_vendor.t(keywords.value)
+      } : {}, {
+        E: source.value.length > 0
+      }, source.value.length > 0 ? {
+        F: common_vendor.t(source.value)
+      } : {}) : {}), {
+        d: errorText.value.length > 0,
+        G: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

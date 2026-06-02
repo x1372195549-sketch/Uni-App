@@ -91,7 +91,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }),
         e: common_assets._imports_1$2,
         f: common_vendor.o(goLearningHome),
-        g: common_assets._imports_2$2,
+        g: common_assets._imports_2$1,
         h: common_assets._imports_3,
         i: common_vendor.o(goConsultPage),
         j: common_assets._imports_4,
