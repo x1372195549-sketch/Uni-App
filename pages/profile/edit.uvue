@@ -60,6 +60,7 @@ import { ref } from 'vue'
 import {
 	fetchProfile,
 	updateProfile,
+	normalizeAppUrl,
 	requestAvatarUploadUrl,
 	uploadAvatarBinaryFile,
 	confirmAvatarUpload
@@ -82,9 +83,9 @@ type AvatarMeta = {
 const storageKey = 'profile_edit_form'
 const genderOptions = ['Male', 'Female']
 const defaultAvatar = '/static/mine/avatar.png'
-const testAvatarSource = '/static/profile/test-avatar.png'
 const isSaving = ref(false)
-const selectedAvatarMeta = ref<AvatarMeta | null>(null)
+const pendingAvatarPath = ref('')
+const pendingAvatarMeta = ref<AvatarMeta | null>(null)
 
 const form = ref<ProfileForm>({
 	avatarUrl: defaultAvatar,
@@ -104,18 +105,12 @@ const genderReverseMap : UTSJSONObject = {
 	'2': 'Female'
 }
 
-const isRemoteAvatarUrl = (value : string) : boolean => {
-	if (value == null || value == '') {
-		return false
-	}
-	return /^https?:\/\//.test(value)
-}
-
 const getFileNameFromPath = (filePath : string) : string => {
 	if (filePath == null || filePath == '') {
 		return 'avatar.jpg'
 	}
-	const parts = filePath.split('/')
+	const normalizedPath = filePath.replace(/\\/g, '/')
+	const parts = normalizedPath.split('/')
 	if (parts.length > 0) {
 		const last = parts[parts.length - 1]
 		if (last != null && last != '') {
@@ -130,13 +125,16 @@ const getContentTypeFromFileName = (fileName : string) : string => {
 	if (lower.endsWith('.png')) {
 		return 'image/png'
 	}
-	if (lower.endsWith('.gif')) {
-		return 'image/gif'
-	}
 	if (lower.endsWith('.webp')) {
 		return 'image/webp'
 	}
 	return 'image/jpeg'
+}
+
+const isSupportedAvatarContentType = (contentType : string) : boolean => {
+	return contentType == 'image/jpeg'
+		|| contentType == 'image/png'
+		|| contentType == 'image/webp'
 }
 
 const buildAvatarMeta = (filePath : string, fileSize : number) : AvatarMeta => {
@@ -172,13 +170,15 @@ const loadProfile = () => {
 	fetchProfile(
 		(profile) => {
 			form.value.nickname = profile.nickname || form.value.nickname
-			form.value.avatarUrl = profile.avatarUrl || form.value.avatarUrl
+			form.value.avatarUrl = normalizeAppUrl(profile.avatarUrl) || form.value.avatarUrl
 			form.value.email = profile.email || form.value.email
 			form.value.profileSignature = profile.profileSignature || form.value.profileSignature
 			const mappedGender = genderReverseMap[profile.gender] as string
 			if (mappedGender != null && mappedGender != '') {
 				form.value.gender = mappedGender
 			}
+			pendingAvatarPath.value = ''
+			pendingAvatarMeta.value = null
 			saveProfileLocal()
 		},
 		() => {}
@@ -186,30 +186,39 @@ const loadProfile = () => {
 }
 
 const handleChooseAvatar = () => {
-	uni.getImageInfo({
-		src: testAvatarSource,
+	uni.chooseImage({
+		count: 1,
+		sizeType: ['compressed'],
+		sourceType: ['album', 'camera'],
 		success: (res) => {
-			const resolvedPath = res.path != null && res.path != '' ? res.path : testAvatarSource
-			form.value.avatarUrl = resolvedPath
-			selectedAvatarMeta.value = buildAvatarMeta('test-avatar.png', 1024)
-		},
-		fail: () => {
-			uni.chooseImage({
-				count: 1,
-				sizeType: ['compressed'],
-				sourceType: ['album'],
-				success: (res) => {
-					if (res.tempFilePaths != null && res.tempFilePaths.length > 0) {
-						form.value.avatarUrl = res.tempFilePaths[0]
-						if (res.tempFiles != null && res.tempFiles.length > 0) {
-							const tempFile = res.tempFiles[0]
-							selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], tempFile.size)
-							return
-						}
-						selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], 1024)
-					}
-				}
-			})
+			if (res.tempFilePaths == null || res.tempFilePaths.length == 0) {
+				return
+			}
+
+			const filePath = res.tempFilePaths[0]
+			const tempFile = res.tempFiles != null && res.tempFiles.length > 0 ? res.tempFiles[0] : null
+			const fileSize = tempFile != null ? tempFile.size : 0
+			const avatarMeta = buildAvatarMeta(filePath, fileSize)
+
+			if (!isSupportedAvatarContentType(avatarMeta.contentType)) {
+				uni.showToast({
+					title: 'Only JPG, PNG, WEBP',
+					icon: 'none'
+				})
+				return
+			}
+
+			if (avatarMeta.fileSize > 5 * 1024 * 1024) {
+				uni.showToast({
+					title: 'Avatar must be within 5MB',
+					icon: 'none'
+				})
+				return
+			}
+
+			form.value.avatarUrl = filePath
+			pendingAvatarPath.value = filePath
+			pendingAvatarMeta.value = avatarMeta
 		}
 	})
 }
@@ -227,40 +236,45 @@ const uploadAvatarIfNeeded = (
 	success : (remoteAvatarUrl : string, didUploadAvatar : boolean) => void,
 	fail : (message : string) => void
 ) => {
-	const currentAvatar = form.value.avatarUrl || ''
-	if (currentAvatar == '' || currentAvatar == defaultAvatar || isRemoteAvatarUrl(currentAvatar)) {
-		success(currentAvatar, false)
+	if (pendingAvatarPath.value == '') {
+		success(form.value.avatarUrl || '', false)
+		return
+	}
+
+	const meta = pendingAvatarMeta.value
+	if (meta == null) {
+		fail('Avatar file info missing')
 		return
 	}
 
 	requestAvatarUploadUrl(
 		{
-			originalName: selectedAvatarMeta.value != null ? selectedAvatarMeta.value!.originalName : getFileNameFromPath(currentAvatar),
-			contentType: selectedAvatarMeta.value != null ? selectedAvatarMeta.value!.contentType : getContentTypeFromFileName(getFileNameFromPath(currentAvatar)),
-			fileSize: selectedAvatarMeta.value != null ? selectedAvatarMeta.value!.fileSize : 1024
+			originalName: meta.originalName,
+			contentType: meta.contentType,
+			fileSize: meta.fileSize
 		},
 		(uploadConfig) => {
 			uploadAvatarBinaryFile(
-				currentAvatar,
+				pendingAvatarPath.value,
 				uploadConfig,
 				{
-					contentType: selectedAvatarMeta.value != null ? selectedAvatarMeta.value!.contentType : getContentTypeFromFileName(getFileNameFromPath(currentAvatar))
+					contentType: meta.contentType
 				},
 				() => {
-					const originalName = getFileNameFromPath(currentAvatar)
 					confirmAvatarUpload(
 						{
 							objectKey: uploadConfig.objectKey,
-							originalName
+							originalName: meta.originalName
 						},
 						(result) => {
-							const remoteAvatarUrl = result.avatarUrl || uploadConfig.publicUrl
+							const remoteAvatarUrl = normalizeAppUrl(result.avatarUrl || uploadConfig.publicUrl)
 							if (remoteAvatarUrl == '') {
 								fail('Avatar uploaded but no URL returned')
 								return
 							}
 							form.value.avatarUrl = remoteAvatarUrl
-							selectedAvatarMeta.value = null
+							pendingAvatarPath.value = ''
+							pendingAvatarMeta.value = null
 							success(remoteAvatarUrl, true)
 						},
 						(message) => {
@@ -288,7 +302,7 @@ const handleSave = () => {
 
 	uploadAvatarIfNeeded(
 		(remoteAvatarUrl, didUploadAvatar) => {
-			const genderCode = genderMap[form.value.gender] as string
+			const genderCode = (genderMap[form.value.gender] as string) || ''
 			updateProfile(
 				{
 					nickname: form.value.nickname,
@@ -300,9 +314,10 @@ const handleSave = () => {
 					if (didUploadAvatar && remoteAvatarUrl != '') {
 						fetchProfile(
 							(profile) => {
+								form.value.avatarUrl = normalizeAppUrl(profile.avatarUrl) || remoteAvatarUrl
 								saveProfileLocal()
 								isSaving.value = false
-								if (profile.avatarUrl == remoteAvatarUrl) {
+								if (form.value.avatarUrl == remoteAvatarUrl) {
 									uni.showToast({
 										title: 'Avatar saved',
 										icon: 'success'

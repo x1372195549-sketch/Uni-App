@@ -54,13 +54,13 @@ class AvatarMeta extends UTS.UTSType {
 }
 const storageKey = "profile_edit_form";
 const defaultAvatar = "/static/mine/avatar.png";
-const testAvatarSource = "/static/profile/test-avatar.png";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "edit",
   setup(__props) {
     const genderOptions = ["Male", "Female"];
     const isSaving = common_vendor.ref(false);
-    const selectedAvatarMeta = common_vendor.ref(null);
+    const pendingAvatarPath = common_vendor.ref("");
+    const pendingAvatarMeta = common_vendor.ref(null);
     const form = common_vendor.ref(new ProfileForm({
       avatarUrl: defaultAvatar,
       nickname: "",
@@ -76,17 +76,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       "1": "Male",
       "2": "Female"
     });
-    const isRemoteAvatarUrl = (value) => {
-      if (value == null || value == "") {
-        return false;
-      }
-      return /^https?:\/\//.test(value);
-    };
     const getFileNameFromPath = (filePath) => {
       if (filePath == null || filePath == "") {
         return "avatar.jpg";
       }
-      const parts = filePath.split("/");
+      const normalizedPath = filePath.replace(/\\/g, "/");
+      const parts = normalizedPath.split("/");
       if (parts.length > 0) {
         const last = parts[parts.length - 1];
         if (last != null && last != "") {
@@ -100,13 +95,13 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (lower.endsWith(".png")) {
         return "image/png";
       }
-      if (lower.endsWith(".gif")) {
-        return "image/gif";
-      }
       if (lower.endsWith(".webp")) {
         return "image/webp";
       }
       return "image/jpeg";
+    };
+    const isSupportedAvatarContentType = (contentType) => {
+      return contentType == "image/jpeg" || contentType == "image/png" || contentType == "image/webp";
     };
     const buildAvatarMeta = (filePath, fileSize) => {
       const originalName = getFileNameFromPath(filePath);
@@ -136,44 +131,51 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       utils_auth.fetchProfile((profile) => {
         form.value.nickname = profile.nickname || form.value.nickname;
-        form.value.avatarUrl = profile.avatarUrl || form.value.avatarUrl;
+        form.value.avatarUrl = utils_auth.normalizeAppUrl(profile.avatarUrl) || form.value.avatarUrl;
         form.value.email = profile.email || form.value.email;
         form.value.profileSignature = profile.profileSignature || form.value.profileSignature;
         const mappedGender = genderReverseMap[profile.gender];
         if (mappedGender != null && mappedGender != "") {
           form.value.gender = mappedGender;
         }
+        pendingAvatarPath.value = "";
+        pendingAvatarMeta.value = null;
         saveProfileLocal();
       }, () => {
       });
     };
     const handleChooseAvatar = () => {
-      common_vendor.index.getImageInfo({
-        src: testAvatarSource,
+      common_vendor.index.chooseImage(new UTSJSONObject({
+        count: 1,
+        sizeType: ["compressed"],
+        sourceType: ["album", "camera"],
         success: (res) => {
-          const resolvedPath = res.path != null && res.path != "" ? res.path : testAvatarSource;
-          form.value.avatarUrl = resolvedPath;
-          selectedAvatarMeta.value = buildAvatarMeta("test-avatar.png", 1024);
-        },
-        fail: () => {
-          common_vendor.index.chooseImage(new UTSJSONObject({
-            count: 1,
-            sizeType: ["compressed"],
-            sourceType: ["album"],
-            success: (res) => {
-              if (res.tempFilePaths != null && res.tempFilePaths.length > 0) {
-                form.value.avatarUrl = res.tempFilePaths[0];
-                if (res.tempFiles != null && res.tempFiles.length > 0) {
-                  const tempFile = res.tempFiles[0];
-                  selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], tempFile.size);
-                  return null;
-                }
-                selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], 1024);
-              }
-            }
-          }));
+          if (res.tempFilePaths == null || res.tempFilePaths.length == 0) {
+            return null;
+          }
+          const filePath = res.tempFilePaths[0];
+          const tempFile = res.tempFiles != null && res.tempFiles.length > 0 ? res.tempFiles[0] : null;
+          const fileSize = tempFile != null ? tempFile.size : 0;
+          const avatarMeta = buildAvatarMeta(filePath, fileSize);
+          if (!isSupportedAvatarContentType(avatarMeta.contentType)) {
+            common_vendor.index.showToast({
+              title: "Only JPG, PNG, WEBP",
+              icon: "none"
+            });
+            return null;
+          }
+          if (avatarMeta.fileSize > 5 * 1024 * 1024) {
+            common_vendor.index.showToast({
+              title: "Avatar must be within 5MB",
+              icon: "none"
+            });
+            return null;
+          }
+          form.value.avatarUrl = filePath;
+          pendingAvatarPath.value = filePath;
+          pendingAvatarMeta.value = avatarMeta;
         }
-      });
+      }));
     };
     const handleChooseGender = () => {
       common_vendor.index.showActionSheet({
@@ -184,31 +186,35 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       });
     };
     const uploadAvatarIfNeeded = (success, fail) => {
-      const currentAvatar = form.value.avatarUrl || "";
-      if (currentAvatar == "" || currentAvatar == defaultAvatar || isRemoteAvatarUrl(currentAvatar)) {
-        success(currentAvatar, false);
+      if (pendingAvatarPath.value == "") {
+        success(form.value.avatarUrl || "", false);
+        return null;
+      }
+      const meta = pendingAvatarMeta.value;
+      if (meta == null) {
+        fail("Avatar file info missing");
         return null;
       }
       utils_auth.requestAvatarUploadUrl(new utils_auth.AvatarUploadUrlRequest({
-        originalName: selectedAvatarMeta.value != null ? selectedAvatarMeta.value.originalName : getFileNameFromPath(currentAvatar),
-        contentType: selectedAvatarMeta.value != null ? selectedAvatarMeta.value.contentType : getContentTypeFromFileName(getFileNameFromPath(currentAvatar)),
-        fileSize: selectedAvatarMeta.value != null ? selectedAvatarMeta.value.fileSize : 1024
+        originalName: meta.originalName,
+        contentType: meta.contentType,
+        fileSize: meta.fileSize
       }), (uploadConfig) => {
-        utils_auth.uploadAvatarBinaryFile(currentAvatar, uploadConfig, new utils_auth.AvatarBinaryUploadConfig({
-          contentType: selectedAvatarMeta.value != null ? selectedAvatarMeta.value.contentType : getContentTypeFromFileName(getFileNameFromPath(currentAvatar))
+        utils_auth.uploadAvatarBinaryFile(pendingAvatarPath.value, uploadConfig, new utils_auth.AvatarBinaryUploadConfig({
+          contentType: meta.contentType
         }), () => {
-          const originalName = getFileNameFromPath(currentAvatar);
           utils_auth.confirmAvatarUpload(new utils_auth.AvatarConfirmRequest({
             objectKey: uploadConfig.objectKey,
-            originalName
+            originalName: meta.originalName
           }), (result) => {
-            const remoteAvatarUrl = result.avatarUrl || uploadConfig.publicUrl;
+            const remoteAvatarUrl = utils_auth.normalizeAppUrl(result.avatarUrl || uploadConfig.publicUrl);
             if (remoteAvatarUrl == "") {
               fail("Avatar uploaded but no URL returned");
               return null;
             }
             form.value.avatarUrl = remoteAvatarUrl;
-            selectedAvatarMeta.value = null;
+            pendingAvatarPath.value = "";
+            pendingAvatarMeta.value = null;
             success(remoteAvatarUrl, true);
           }, (message) => {
             fail(message || "Confirm avatar upload failed");
@@ -226,7 +232,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       isSaving.value = true;
       uploadAvatarIfNeeded((remoteAvatarUrl, didUploadAvatar) => {
-        const genderCode = genderMap[form.value.gender];
+        const genderCode = genderMap[form.value.gender] || "";
         utils_auth.updateProfile(new UTSJSONObject({
           nickname: form.value.nickname,
           profileSignature: form.value.profileSignature,
@@ -235,9 +241,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }), () => {
           if (didUploadAvatar && remoteAvatarUrl != "") {
             utils_auth.fetchProfile((profile) => {
+              form.value.avatarUrl = utils_auth.normalizeAppUrl(profile.avatarUrl) || remoteAvatarUrl;
               saveProfileLocal();
               isSaving.value = false;
-              if (profile.avatarUrl == remoteAvatarUrl) {
+              if (form.value.avatarUrl == remoteAvatarUrl) {
                 common_vendor.index.showToast({
                   title: "Avatar saved",
                   icon: "success"

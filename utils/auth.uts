@@ -287,6 +287,10 @@ function normalizeExternalUrl(rawUrl : string) : string {
 	return rawUrl
 }
 
+export function normalizeAppUrl(rawUrl : string) : string {
+	return normalizeExternalUrl(rawUrl)
+}
+
 function normalizeUploadUrlResponse(data : UTSJSONObject) : AvatarUploadUrlResponse {
 	const rawUploadUrl =
 		(data['uploadUrl'] as string) ||
@@ -326,11 +330,13 @@ export function saveLogin(data : LoginResponseData) {
 	uni.setStorageSync(ACCESS_TOKEN_KEY, data.accessToken)
 	uni.setStorageSync(TOKEN_TYPE_KEY, data.tokenType)
 	if (data.user != null) {
+		data.user.avatarUrl = normalizeAppUrl(data.user.avatarUrl)
 		uni.setStorageSync(LOGIN_USER_KEY, data.user)
 	}
 }
 
 function saveCurrentUser(user : CurrentUser) {
+	user.avatarUrl = normalizeAppUrl(user.avatarUrl)
 	uni.setStorageSync(CURRENT_USER_KEY, user)
 }
 
@@ -343,7 +349,7 @@ function normalizeCurrentUserData(raw : UTSJSONObject | null) : CurrentUser | nu
 		id: typeof raw['id'] == 'number' ? (raw['id'] as number) : 0,
 		username: typeof raw['username'] == 'string' ? (raw['username'] as string) : '',
 		nickname: typeof raw['nickname'] == 'string' ? (raw['nickname'] as string) : '',
-		avatarUrl: typeof raw['avatarUrl'] == 'string' ? (raw['avatarUrl'] as string) : '',
+		avatarUrl: normalizeAppUrl(typeof raw['avatarUrl'] == 'string' ? (raw['avatarUrl'] as string) : ''),
 		mobile: typeof raw['mobile'] == 'string' ? (raw['mobile'] as string) : '',
 		email: typeof raw['email'] == 'string' ? (raw['email'] as string) : '',
 		profileCompleted: typeof raw['profileCompleted'] == 'boolean' ? (raw['profileCompleted'] as boolean) : false,
@@ -362,7 +368,7 @@ export function patchCurrentUser(partial : CurrentUserPatch) {
 		id: cached.id,
 		username: cached.username,
 		nickname: partial.nickname != null && partial.nickname != '' ? partial.nickname! : cached.nickname,
-		avatarUrl: partial.avatarUrl != null && partial.avatarUrl != '' ? partial.avatarUrl! : cached.avatarUrl,
+		avatarUrl: partial.avatarUrl != null && partial.avatarUrl != '' ? normalizeAppUrl(partial.avatarUrl!) : cached.avatarUrl,
 		mobile: partial.mobile != null && partial.mobile != '' ? partial.mobile! : cached.mobile,
 		email: partial.email != null && partial.email != '' ? partial.email! : cached.email,
 		profileCompleted: partial.profileCompleted != null ? partial.profileCompleted! : cached.profileCompleted,
@@ -374,6 +380,7 @@ export function patchCurrentUser(partial : CurrentUserPatch) {
 }
 
 export function mergeProfileIntoCurrentUser(profile : AppProfile) {
+	profile.avatarUrl = normalizeAppUrl(profile.avatarUrl)
 	const cached = getCurrentUserFromStorage()
 	const nextUser : CurrentUser = {
 		id: cached != null ? cached.id : (profile.id || 0),
@@ -400,6 +407,8 @@ export function fetchProfile(
 		true,
 		false,
 		(profile) => {
+			profile.avatarUrl = normalizeAppUrl(profile.avatarUrl)
+			mergeProfileIntoCurrentUser(profile)
 			success(profile)
 		},
 		(message) => {
@@ -420,6 +429,8 @@ export function updateProfile(
 		true,
 		false,
 		(profile) => {
+			profile.avatarUrl = normalizeAppUrl(profile.avatarUrl)
+			mergeProfileIntoCurrentUser(profile)
 			success(profile)
 		},
 		(message) => {
@@ -991,6 +1002,7 @@ export function fetchCurrentUser(
 		true,
 		false,
 		(user) => {
+			user.avatarUrl = normalizeAppUrl(user.avatarUrl)
 			saveCurrentUser(user)
 			success(user)
 		},

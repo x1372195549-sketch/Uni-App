@@ -738,6 +738,9 @@ function normalizeExternalUrl(rawUrl) {
   }
   return rawUrl;
 }
+function normalizeAppUrl(rawUrl) {
+  return normalizeExternalUrl(rawUrl);
+}
 function normalizeUploadUrlResponse(data) {
   const rawUploadUrl = data["uploadUrl"] || data["signedUrl"] || data["presignedUrl"] || data["url"] || "";
   const uploadUrl = normalizeExternalUrl(rawUploadUrl);
@@ -760,10 +763,12 @@ function saveLogin(data) {
   common_vendor.index.setStorageSync(ACCESS_TOKEN_KEY, data.accessToken);
   common_vendor.index.setStorageSync(TOKEN_TYPE_KEY, data.tokenType);
   if (data.user != null) {
+    data.user.avatarUrl = normalizeAppUrl(data.user.avatarUrl);
     common_vendor.index.setStorageSync(LOGIN_USER_KEY, data.user);
   }
 }
 function saveCurrentUser(user) {
+  user.avatarUrl = normalizeAppUrl(user.avatarUrl);
   common_vendor.index.setStorageSync(CURRENT_USER_KEY, user);
 }
 function normalizeCurrentUserData(raw = null) {
@@ -774,7 +779,7 @@ function normalizeCurrentUserData(raw = null) {
     id: typeof raw["id"] == "number" ? raw["id"] : 0,
     username: typeof raw["username"] == "string" ? raw["username"] : "",
     nickname: typeof raw["nickname"] == "string" ? raw["nickname"] : "",
-    avatarUrl: typeof raw["avatarUrl"] == "string" ? raw["avatarUrl"] : "",
+    avatarUrl: normalizeAppUrl(typeof raw["avatarUrl"] == "string" ? raw["avatarUrl"] : ""),
     mobile: typeof raw["mobile"] == "string" ? raw["mobile"] : "",
     email: typeof raw["email"] == "string" ? raw["email"] : "",
     profileCompleted: typeof raw["profileCompleted"] == "boolean" ? raw["profileCompleted"] : false,
@@ -782,8 +787,26 @@ function normalizeCurrentUserData(raw = null) {
     certificationStatus: typeof raw["certificationStatus"] == "string" ? raw["certificationStatus"] : ""
   });
 }
+function mergeProfileIntoCurrentUser(profile) {
+  profile.avatarUrl = normalizeAppUrl(profile.avatarUrl);
+  const cached = getCurrentUserFromStorage();
+  const nextUser = new CurrentUser$1({
+    id: cached != null ? cached.id : profile.id || 0,
+    username: cached != null ? cached.username : profile.username || "",
+    nickname: profile.nickname || (cached != null ? cached.nickname : ""),
+    avatarUrl: profile.avatarUrl || (cached != null ? cached.avatarUrl : ""),
+    mobile: profile.mobile || (cached != null ? cached.mobile : ""),
+    email: profile.email || (cached != null ? cached.email : ""),
+    profileCompleted: profile.profileCompleted || (cached != null ? cached.profileCompleted : false),
+    studentId: profile.studentId || (cached != null ? cached.studentId : 0),
+    certificationStatus: profile.certificationStatus || (cached != null ? cached.certificationStatus : "")
+  });
+  saveCurrentUser(nextUser);
+}
 function fetchProfile(success, fail) {
   request("/api/v1/app/profile", "GET", null, true, false, (profile) => {
+    profile.avatarUrl = normalizeAppUrl(profile.avatarUrl);
+    mergeProfileIntoCurrentUser(profile);
     success(profile);
   }, (message) => {
     fail(message);
@@ -791,6 +814,8 @@ function fetchProfile(success, fail) {
 }
 function updateProfile(data, success, fail) {
   request("/api/v1/app/profile", "PUT", data, true, false, (profile) => {
+    profile.avatarUrl = normalizeAppUrl(profile.avatarUrl);
+    mergeProfileIntoCurrentUser(profile);
     success(profile);
   }, (message) => {
     fail(message);
@@ -1121,6 +1146,7 @@ function request(path, method, data = null, needAuth, allowEmptyData, success, f
 }
 function fetchCurrentUser(success, fail) {
   request("/api/v1/app/auth/me", "GET", null, true, false, (user) => {
+    user.avatarUrl = normalizeAppUrl(user.avatarUrl);
     saveCurrentUser(user);
     success(user);
   }, (message) => {
@@ -1988,6 +2014,7 @@ exports.hasToken = hasToken;
 exports.loginBySms = loginBySms;
 exports.loginByWechat = loginByWechat;
 exports.logout = logout;
+exports.normalizeAppUrl = normalizeAppUrl;
 exports.requestAvatarUploadUrl = requestAvatarUploadUrl;
 exports.saveLogin = saveLogin;
 exports.sendSmsCode = sendSmsCode;
