@@ -434,6 +434,68 @@ let Course$1 = class Course extends UTS.UTSType {
     delete this.__props__;
   }
 };
+let AppPodcastAudio$1 = class AppPodcastAudio extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          podcastId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          audioUrl: { type: String, optional: false },
+          durationSeconds: { type: Number, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "AppPodcastAudio"
+    };
+  }
+  constructor(options, metadata = AppPodcastAudio.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.podcastId = this.__props__.podcastId;
+    this.title = this.__props__.title;
+    this.audioUrl = this.__props__.audioUrl;
+    this.durationSeconds = this.__props__.durationSeconds;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+};
+let AppPodcast$1 = class AppPodcast extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          publishedAt: { type: String, optional: false },
+          progressPercent: { type: Number, optional: false },
+          studySeconds: { type: Number, optional: false },
+          audios: { type: UTS.UTSType.withGenerics(Array, [AppPodcastAudio$1]), optional: false }
+        };
+      },
+      name: "AppPodcast"
+    };
+  }
+  constructor(options, metadata = AppPodcast.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.coverUrl = this.__props__.coverUrl;
+    this.publishedAt = this.__props__.publishedAt;
+    this.progressPercent = this.__props__.progressPercent;
+    this.studySeconds = this.__props__.studySeconds;
+    this.audios = this.__props__.audios;
+    delete this.__props__;
+  }
+};
 let TopicItem$1 = class TopicItem extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -518,6 +580,35 @@ let PageResponse$1 = class PageResponse extends UTS.UTSType {
     this.total = this.__props__.total;
     this.page = this.__props__.page;
     this.size = this.__props__.size;
+    delete this.__props__;
+  }
+};
+let AppResourceRecord$1 = class AppResourceRecord extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          source: { type: String, optional: false },
+          viewCount: { type: Number, optional: false },
+          occurredAt: { type: String, optional: false }
+        };
+      },
+      name: "AppResourceRecord"
+    };
+  }
+  constructor(options, metadata = AppResourceRecord.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.source = this.__props__.source;
+    this.viewCount = this.__props__.viewCount;
+    this.occurredAt = this.__props__.occurredAt;
     delete this.__props__;
   }
 };
@@ -863,6 +954,14 @@ function fetchCourseDetail(id, success, fail) {
     fail(message);
   });
 }
+function fetchAudioDetail(id, success, fail) {
+  request("/api/v1/app/learning/podcasts/" + id, "GET", null, true, false, (detail) => {
+    detail.coverUrl = normalizeAppUrl(detail.coverUrl);
+    success(detail);
+  }, (message) => {
+    fail(message);
+  });
+}
 let ExpertExperience$1 = class ExpertExperience extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -966,6 +1065,13 @@ function fetchHomeContents(success, fail) {
 function fetchTopicDetail(id, success, fail) {
   request("/api/v1/app/learning/topics/" + id, "GET", null, true, false, (detail) => {
     success(detail);
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchProfileFavorites(page, size, success, fail) {
+  request("/api/v1/app/profile/favorites?page=" + String(page) + "&size=" + String(size), "GET", null, true, false, (pageData) => {
+    success(pageData);
   }, (message) => {
     fail(message);
   });
@@ -1667,6 +1773,68 @@ class Course2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+class AppPodcastAudio2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          podcastId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          audioUrl: { type: String, optional: false },
+          durationSeconds: { type: Number, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "AppPodcastAudio"
+    };
+  }
+  constructor(options, metadata = AppPodcastAudio2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.podcastId = this.__props__.podcastId;
+    this.title = this.__props__.title;
+    this.audioUrl = this.__props__.audioUrl;
+    this.durationSeconds = this.__props__.durationSeconds;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+}
+class AppPodcast2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          publishedAt: { type: String, optional: false },
+          progressPercent: { type: Number, optional: false },
+          studySeconds: { type: Number, optional: false },
+          audios: { type: UTS.UTSType.withGenerics(Array, [AppPodcastAudio2]), optional: false }
+        };
+      },
+      name: "AppPodcast"
+    };
+  }
+  constructor(options, metadata = AppPodcast2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.coverUrl = this.__props__.coverUrl;
+    this.publishedAt = this.__props__.publishedAt;
+    this.progressPercent = this.__props__.progressPercent;
+    this.studySeconds = this.__props__.studySeconds;
+    this.audios = this.__props__.audios;
+    delete this.__props__;
+  }
+}
 class TopicItem2 extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -1751,6 +1919,35 @@ class PageResponse2 extends UTS.UTSType {
     this.total = this.__props__.total;
     this.page = this.__props__.page;
     this.size = this.__props__.size;
+    delete this.__props__;
+  }
+}
+class AppResourceRecord2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          source: { type: String, optional: false },
+          viewCount: { type: Number, optional: false },
+          occurredAt: { type: String, optional: false }
+        };
+      },
+      name: "AppResourceRecord"
+    };
+  }
+  constructor(options, metadata = AppResourceRecord2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.source = this.__props__.source;
+    this.viewCount = this.__props__.viewCount;
+    this.occurredAt = this.__props__.occurredAt;
     delete this.__props__;
   }
 }
@@ -1996,6 +2193,7 @@ exports.AvatarConfirmRequest = AvatarConfirmRequest2;
 exports.AvatarUploadUrlRequest = AvatarUploadUrlRequest2;
 exports.clearBindToken = clearBindToken;
 exports.confirmAvatarUpload = confirmAvatarUpload;
+exports.fetchAudioDetail = fetchAudioDetail;
 exports.fetchCertificationStatus = fetchCertificationStatus;
 exports.fetchCourseDetail = fetchCourseDetail;
 exports.fetchCourses = fetchCourses;
@@ -2005,6 +2203,7 @@ exports.fetchHomeContents = fetchHomeContents;
 exports.fetchLiveSessionDetail = fetchLiveSessionDetail;
 exports.fetchLiveSessions = fetchLiveSessions;
 exports.fetchProfile = fetchProfile;
+exports.fetchProfileFavorites = fetchProfileFavorites;
 exports.fetchTopicDetail = fetchTopicDetail;
 exports.fetchTopics = fetchTopics;
 exports.getBindToken = getBindToken;

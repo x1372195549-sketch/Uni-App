@@ -5,50 +5,50 @@
 		</view>
 
 		<view class="header">
-			<text class="header-title">Profile</text>
+			<text class="header-title">个人资料</text>
 		</view>
 
 		<scroll-view class="form-scroll" scroll-y="true">
 			<view class="form-card">
 				<view class="form-row avatar-row" @click="handleChooseAvatar">
-					<text class="row-label">Avatar</text>
+					<text class="row-label">头像</text>
 					<view class="row-right">
 						<image class="avatar" :src="form.avatarUrl || defaultAvatar" mode="aspectFill"></image>
 					</view>
 				</view>
 
 				<view class="form-row">
-					<text class="row-label">Nickname</text>
+					<text class="row-label">昵称</text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.nickname" placeholder="Enter nickname" />
+						<input class="row-input" v-model="form.nickname" placeholder="请输入昵称" />
 					</view>
 				</view>
 
 				<view class="form-row" @click="handleChooseGender">
-					<text class="row-label">Gender</text>
+					<text class="row-label">性别</text>
 					<view class="row-right">
-						<text class="row-value">{{ form.gender || 'Select gender' }}</text>
+						<text class="row-value">{{ form.gender || '请选择性别' }}</text>
 					</view>
 				</view>
 
 				<view class="form-row">
-					<text class="row-label">Email</text>
+					<text class="row-label">邮箱</text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.email" placeholder="Enter email" />
+						<input class="row-input" v-model="form.email" placeholder="请输入邮箱" />
 					</view>
 				</view>
 
 				<view class="form-row signature-row">
-					<text class="row-label">Signature</text>
+					<text class="row-label">个性签名</text>
 					<view class="row-right row-input-wrap">
-						<textarea class="row-textarea" v-model="form.profileSignature" placeholder="Enter signature"></textarea>
+						<textarea class="row-textarea" v-model="form.profileSignature" placeholder="请输入个性签名"></textarea>
 					</view>
 				</view>
 			</view>
 
 			<view class="actions">
 				<button class="save-btn" hover-class="save-btn-hover" @click="handleSave" :disabled="isSaving">
-					{{ isSaving ? 'Saving...' : 'Save' }}
+					{{ isSaving ? '保存中...' : '保存' }}
 				</button>
 			</view>
 		</scroll-view>
@@ -81,7 +81,7 @@ type AvatarMeta = {
 }
 
 const storageKey = 'profile_edit_form'
-const genderOptions = ['Male', 'Female']
+const genderOptions = ['男', '女']
 const defaultAvatar = '/static/mine/avatar.png'
 const isSaving = ref(false)
 const pendingAvatarPath = ref('')
@@ -96,13 +96,13 @@ const form = ref<ProfileForm>({
 })
 
 const genderMap : UTSJSONObject = {
-	'Male': '1',
-	'Female': '2'
+	'男': '1',
+	'女': '2'
 }
 
 const genderReverseMap : UTSJSONObject = {
-	'1': 'Male',
-	'2': 'Female'
+	'1': '男',
+	'2': '女'
 }
 
 const getFileNameFromPath = (filePath : string) : string => {
@@ -202,7 +202,7 @@ const handleChooseAvatar = () => {
 
 			if (!isSupportedAvatarContentType(avatarMeta.contentType)) {
 				uni.showToast({
-					title: 'Only JPG, PNG, WEBP',
+					title: '仅支持 JPG、PNG、WEBP',
 					icon: 'none'
 				})
 				return
@@ -210,7 +210,7 @@ const handleChooseAvatar = () => {
 
 			if (avatarMeta.fileSize > 5 * 1024 * 1024) {
 				uni.showToast({
-					title: 'Avatar must be within 5MB',
+					title: '头像不能超过 5MB',
 					icon: 'none'
 				})
 				return
@@ -243,7 +243,7 @@ const uploadAvatarIfNeeded = (
 
 	const meta = pendingAvatarMeta.value
 	if (meta == null) {
-		fail('Avatar file info missing')
+		fail('头像文件信息缺失')
 		return
 	}
 
@@ -269,7 +269,7 @@ const uploadAvatarIfNeeded = (
 						(result) => {
 							const remoteAvatarUrl = normalizeAppUrl(result.avatarUrl || uploadConfig.publicUrl)
 							if (remoteAvatarUrl == '') {
-								fail('Avatar uploaded but no URL returned')
+								fail('头像上传成功，但未返回地址')
 								return
 							}
 							form.value.avatarUrl = remoteAvatarUrl
@@ -278,17 +278,17 @@ const uploadAvatarIfNeeded = (
 							success(remoteAvatarUrl, true)
 						},
 						(message) => {
-							fail(message || 'Confirm avatar upload failed')
+							fail(message || '头像上传确认失败')
 						}
 					)
 				},
 				(message) => {
-					fail(message || 'Avatar file upload failed')
+					fail(message || '头像文件上传失败')
 				}
 			)
 		},
 		(message) => {
-			fail(message || 'Request upload url failed')
+			fail(message || '获取头像上传地址失败')
 		}
 	)
 }
@@ -319,13 +319,13 @@ const handleSave = () => {
 								isSaving.value = false
 								if (form.value.avatarUrl == remoteAvatarUrl) {
 									uni.showToast({
-										title: 'Avatar saved',
+										title: '头像保存成功',
 										icon: 'success'
 									})
 									return
 								}
 								uni.showToast({
-									title: 'Avatar uploaded, profile not updated',
+									title: '头像已上传，但资料未同步',
 									icon: 'none'
 								})
 							},
@@ -333,7 +333,7 @@ const handleSave = () => {
 								saveProfileLocal()
 								isSaving.value = false
 								uni.showToast({
-									title: 'Saved, avatar status unknown',
+									title: '已保存，头像状态待确认',
 									icon: 'none'
 								})
 							}
@@ -344,7 +344,7 @@ const handleSave = () => {
 					saveProfileLocal()
 					isSaving.value = false
 					uni.showToast({
-						title: 'Saved',
+						title: '保存成功',
 						icon: 'success'
 					})
 				},

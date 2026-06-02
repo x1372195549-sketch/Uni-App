@@ -57,7 +57,7 @@ const defaultAvatar = "/static/mine/avatar.png";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "edit",
   setup(__props) {
-    const genderOptions = ["Male", "Female"];
+    const genderOptions = ["男", "女"];
     const isSaving = common_vendor.ref(false);
     const pendingAvatarPath = common_vendor.ref("");
     const pendingAvatarMeta = common_vendor.ref(null);
@@ -69,12 +69,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       profileSignature: ""
     }));
     const genderMap = new UTSJSONObject({
-      "Male": "1",
-      "Female": "2"
+      "男": "1",
+      "女": "2"
     });
     const genderReverseMap = new UTSJSONObject({
-      "1": "Male",
-      "2": "Female"
+      "1": "男",
+      "2": "女"
     });
     const getFileNameFromPath = (filePath) => {
       if (filePath == null || filePath == "") {
@@ -159,14 +159,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           const avatarMeta = buildAvatarMeta(filePath, fileSize);
           if (!isSupportedAvatarContentType(avatarMeta.contentType)) {
             common_vendor.index.showToast({
-              title: "Only JPG, PNG, WEBP",
+              title: "仅支持 JPG、PNG、WEBP",
               icon: "none"
             });
             return null;
           }
           if (avatarMeta.fileSize > 5 * 1024 * 1024) {
             common_vendor.index.showToast({
-              title: "Avatar must be within 5MB",
+              title: "头像不能超过 5MB",
               icon: "none"
             });
             return null;
@@ -192,7 +192,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       const meta = pendingAvatarMeta.value;
       if (meta == null) {
-        fail("Avatar file info missing");
+        fail("头像文件信息缺失");
         return null;
       }
       utils_auth.requestAvatarUploadUrl(new utils_auth.AvatarUploadUrlRequest({
@@ -209,7 +209,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           }), (result) => {
             const remoteAvatarUrl = utils_auth.normalizeAppUrl(result.avatarUrl || uploadConfig.publicUrl);
             if (remoteAvatarUrl == "") {
-              fail("Avatar uploaded but no URL returned");
+              fail("头像上传成功，但未返回地址");
               return null;
             }
             form.value.avatarUrl = remoteAvatarUrl;
@@ -217,13 +217,13 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             pendingAvatarMeta.value = null;
             success(remoteAvatarUrl, true);
           }, (message) => {
-            fail(message || "Confirm avatar upload failed");
+            fail(message || "头像上传确认失败");
           });
         }, (message) => {
-          fail(message || "Avatar file upload failed");
+          fail(message || "头像文件上传失败");
         });
       }, (message) => {
-        fail(message || "Request upload url failed");
+        fail(message || "获取头像上传地址失败");
       });
     };
     const handleSave = () => {
@@ -246,20 +246,20 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
               isSaving.value = false;
               if (form.value.avatarUrl == remoteAvatarUrl) {
                 common_vendor.index.showToast({
-                  title: "Avatar saved",
+                  title: "头像保存成功",
                   icon: "success"
                 });
                 return null;
               }
               common_vendor.index.showToast({
-                title: "Avatar uploaded, profile not updated",
+                title: "头像已上传，但资料未同步",
                 icon: "none"
               });
             }, () => {
               saveProfileLocal();
               isSaving.value = false;
               common_vendor.index.showToast({
-                title: "Saved, avatar status unknown",
+                title: "已保存，头像状态待确认",
                 icon: "none"
               });
             });
@@ -268,7 +268,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           saveProfileLocal();
           isSaving.value = false;
           common_vendor.index.showToast({
-            title: "Saved",
+            title: "保存成功",
             icon: "success"
           });
         }, (message) => {
@@ -298,7 +298,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         f: common_vendor.o(($event) => {
           return form.value.nickname = $event.detail.value;
         }),
-        g: common_vendor.t(form.value.gender || "Select gender"),
+        g: common_vendor.t(form.value.gender || "请选择性别"),
         h: common_vendor.o(handleChooseGender),
         i: form.value.email,
         j: common_vendor.o(($event) => {
@@ -308,7 +308,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         l: common_vendor.o(($event) => {
           return form.value.profileSignature = $event.detail.value;
         }),
-        m: common_vendor.t(isSaving.value ? "Saving..." : "Save"),
+        m: common_vendor.t(isSaving.value ? "保存中..." : "保存"),
         n: common_vendor.o(handleSave),
         o: isSaving.value,
         p: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")

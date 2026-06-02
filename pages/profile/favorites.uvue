@@ -5,57 +5,63 @@
 		</view>
 
 		<view class="header">
-			<text class="header-title">{{ pageTitle }}</text>
+			<text class="header-title">我的收藏</text>
 		</view>
 
 		<view class="top-tabs">
 			<view
 				v-for="tab in tabs"
-				:key="tab"
+				:key="tab.key"
 				class="top-tab"
-				@click="activeTab = tab"
+				@click="changeTab(tab.key)"
 			>
-				<text class="top-tab-text" :class="activeTab == tab ? 'top-tab-text-active' : ''">{{ tab }}</text>
-				<view v-if="activeTab == tab" class="top-tab-line"></view>
+				<text class="top-tab-text" :class="activeTab == tab.key ? 'top-tab-text-active' : ''">{{ tab.label }}</text>
+				<view v-if="activeTab == tab.key" class="top-tab-line"></view>
 			</view>
 		</view>
 
 		<scroll-view class="list-scroll" scroll-y="true">
-			<template v-if="activeTab == TAB_BOOK">
-				<view v-for="item in bookItems" :key="item.id" class="book-card">
-					<view class="book-cover-shell">
-						<image class="book-cover" :src="item.cover" mode="aspectFit"></image>
-					</view>
-					<view class="book-main">
-						<view class="book-meta-row">
-							<text class="book-type-tag">{{ item.typeLabel }}</text>
-							<text class="book-title">{{ item.title }}</text>
-						</view>
-						<text class="book-time">{{ lastLearnPrefix }}{{ item.timeText }}</text>
-					</view>
-				</view>
-			</template>
+			<view v-if="isLoading" class="state-wrap">
+				<text class="state-text">加载中...</text>
+			</view>
 
-			<template v-else>
-				<view v-for="item in posterItems" :key="item.id" class="poster-card">
-					<view class="poster-cover" :style="{ backgroundColor: item.coverColor }">
-						<view class="poster-type-badge">
-							<text class="poster-type-badge-text">{{ item.typeLabel }}</text>
-						</view>
-						<view class="poster-main-copy">
-							<text class="poster-main-title">{{ item.posterTitle }}</text>
-							<text class="poster-sub-title">{{ item.posterSubTitle }}</text>
-						</view>
-						<text class="poster-side-text">{{ item.sideText }}</text>
-						<view class="poster-figure-shell">
-							<image class="poster-figure" :src="item.cover" mode="aspectFill"></image>
-						</view>
-					</view>
-					<view class="poster-body">
-						<text class="poster-body-title">{{ item.title }}</text>
+			<view v-else-if="errorText.length > 0" class="state-wrap">
+				<text class="state-text">{{ errorText }}</text>
+				<button class="retry-btn" hover-class="retry-btn-hover" @click="loadFavorites">重新加载</button>
+			</view>
+
+			<view v-else-if="filteredItems.length == 0" class="state-wrap">
+				<text class="state-text">暂无收藏内容</text>
+			</view>
+
+			<view
+				v-else
+				v-for="item in filteredItems"
+				:key="item.id"
+				class="favorite-card"
+				@click="goToDetail(item)"
+			>
+				<view class="favorite-cover-shell" :style="{ backgroundColor: item.coverColor }">
+					<image
+						v-if="item.coverUrl.length > 0"
+						class="favorite-cover"
+						:src="item.coverUrl"
+						mode="aspectFill"
+					></image>
+					<view v-else class="favorite-cover-placeholder">
+						<text class="favorite-cover-placeholder-text">{{ item.typeLabel }}</text>
 					</view>
 				</view>
-			</template>
+
+				<view class="favorite-main">
+					<view class="favorite-meta-row">
+						<text class="favorite-type-tag">{{ item.typeLabel }}</text>
+						<text class="favorite-title">{{ item.title }}</text>
+					</view>
+					<text v-if="item.source.length > 0" class="favorite-source">{{ item.source }}</text>
+					<text class="favorite-time">收藏时间：{{ item.timeText }}</text>
+				</view>
+			</view>
 
 			<view class="bottom-space"></view>
 		</scroll-view>
@@ -63,64 +69,316 @@
 </template>
 
 <script setup lang="uts">
-type BookItem = {
-	id : number
-	title : string
-	timeText : string
-	typeLabel : string
-	cover : string
+import { computed, ref } from 'vue'
+import {
+	fetchAudioDetail,
+	fetchCourseDetail,
+	fetchLiveSessionDetail,
+	fetchProfileFavorites,
+	fetchTopicDetail,
+	type AppPodcast,
+	type AppResourceRecord,
+	type Course,
+	type LiveSession,
+	type Topic
+} from '../../utils/auth.uts'
+
+type FavoriteTab = {
+	key : string
+	label : string
 }
 
-type PosterItem = {
-	id : number
-	title : string
-	posterTitle : string
-	posterSubTitle : string
-	sideText : string
+type FavoriteDisplayItem = {
+	id : string
+	resourceType : string
+	resourceId : number
 	typeLabel : string
-	cover : string
+	title : string
+	source : string
+	timeText : string
+	coverUrl : string
 	coverColor : string
 }
 
-const TAB_BOOK = '\u4e66\u7c4d'
-const TAB_COURSE = '\u8bfe\u7a0b'
-const TAB_TOPIC = '\u4e13\u9898'
-const TAB_PAPER = '\u8bd5\u9898'
+const TYPE_ALL = 'ALL'
+const TYPE_AUDIO = 'AUDIO'
+const TYPE_LIVE = 'LIVE'
+const TYPE_COURSE = 'COURSE'
+const TYPE_TOPIC = 'TOPIC'
+const TYPE_INFO = 'INFO'
 
-const pageTitle = '\u6211\u7684\u6536\u85cf'
-const lastLearnPrefix = '\u4e0a\u6b21\u5b66\u4e60\uff1a'
+const tabs : FavoriteTab[] = [
+	{ key: TYPE_ALL, label: '全部' },
+	{ key: TYPE_AUDIO, label: '音频' },
+	{ key: TYPE_LIVE, label: '直播' },
+	{ key: TYPE_COURSE, label: '课程' },
+	{ key: TYPE_TOPIC, label: '资讯' }
+]
 
-const tabs = [TAB_BOOK, TAB_COURSE, TAB_TOPIC, TAB_PAPER]
-const activeTab = ref(TAB_BOOK)
+const activeTab = ref(TYPE_ALL)
+const isLoading = ref(true)
+const errorText = ref('')
+const allItems = ref<FavoriteDisplayItem[]>([])
 
-const bookItems = ref<BookItem[]>([
-	{ id: 1, title: '\u5bf9\u75c7\u827e\u7078', timeText: '2019-10-10 10:10', typeLabel: TAB_BOOK, cover: '/static/logo.png' },
-	{ id: 2, title: '\u767e\u8349\u826f\u65b9', timeText: '2019-10-10 10:10', typeLabel: TAB_BOOK, cover: '/static/logo.png' },
-	{ id: 3, title: '\u9ec4\u5e1d\u5185\u7ecf', timeText: '2019-10-10 10:10', typeLabel: TAB_BOOK, cover: '/static/logo.png' }
-])
-
-const posterItems = ref<PosterItem[]>([
-	{
-		id: 1,
-		title: '\u5168\u606f\u6613\u8c61\u9488\u7078 \u57fa\u7840\u7406\u8bba\u7bc7',
-		posterTitle: '\u5168\u606f\n\u6613\u8c61\u9488\u7078',
-		posterSubTitle: '\u57fa\u7840\u7406\u8bba\u7bc7',
-		sideText: '\u90d1\u536b\u4e1c',
-		typeLabel: TAB_COURSE,
-		cover: '/static/logo.png',
-		coverColor: '#F7E6D8'
-	},
-	{
-		id: 2,
-		title: '\u5168\u606f\u6613\u8c61\u9488\u7078 \u57fa\u7840\u7406\u8bba\u7bc7',
-		posterTitle: '\u5168\u606f\n\u6613\u8c61\u9488\u7078',
-		posterSubTitle: '\u57fa\u7840\u7406\u8bba\u7bc7',
-		sideText: '\u90d1\u536b\u4e1c',
-		typeLabel: TAB_TOPIC,
-		cover: '/static/logo.png',
-		coverColor: '#F7E6D8'
+const filteredItems = computed(() : FavoriteDisplayItem[] => {
+	if (activeTab.value == TYPE_ALL) {
+		return allItems.value
 	}
-])
+	return allItems.value.filter((item : FavoriteDisplayItem) : boolean => normalizeFavoriteType(item.resourceType) == activeTab.value)
+})
+
+const normalizeFavoriteType = (resourceType : string) : string => {
+	if (resourceType == TYPE_INFO) {
+		return TYPE_TOPIC
+	}
+	return resourceType
+}
+
+const getTypeLabel = (resourceType : string) : string => {
+	const normalizedType = normalizeFavoriteType(resourceType)
+	if (normalizedType == TYPE_AUDIO) {
+		return '音频'
+	}
+	if (normalizedType == TYPE_LIVE) {
+		return '直播'
+	}
+	if (normalizedType == TYPE_COURSE) {
+		return '课程'
+	}
+	if (normalizedType == TYPE_TOPIC) {
+		return '资讯'
+	}
+	return '收藏'
+}
+
+const getCoverColor = (resourceType : string) : string => {
+	const normalizedType = normalizeFavoriteType(resourceType)
+	if (normalizedType == TYPE_AUDIO) {
+		return '#F6E3D2'
+	}
+	if (normalizedType == TYPE_LIVE) {
+		return '#E1D7C8'
+	}
+	if (normalizedType == TYPE_COURSE) {
+		return '#F3E3D8'
+	}
+	if (normalizedType == TYPE_TOPIC) {
+		return '#EFE2D0'
+	}
+	return '#F1F1F1'
+}
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const formatOccurredAt = (value : string) : string => {
+	if (value.length == 0) {
+		return '未知'
+	}
+	return value.replace('T', ' ')
+}
+
+const buildFallbackItem = (record : AppResourceRecord) : FavoriteDisplayItem => {
+	return {
+		id: String(record.id),
+		resourceType: normalizeFavoriteType(record.resourceType),
+		resourceId: record.resourceId,
+		typeLabel: getTypeLabel(record.resourceType),
+		title: getTypeLabel(record.resourceType) + ' #' + String(record.resourceId),
+		source: safeText(record.source),
+		timeText: formatOccurredAt(safeText(record.occurredAt)),
+		coverUrl: '',
+		coverColor: getCoverColor(record.resourceType)
+	}
+}
+
+const mapAudioFavorite = (record : AppResourceRecord, detail : AppPodcast) : FavoriteDisplayItem => {
+	return {
+		id: String(record.id),
+		resourceType: normalizeFavoriteType(record.resourceType),
+		resourceId: record.resourceId,
+		typeLabel: getTypeLabel(record.resourceType),
+		title: safeText(detail.title).length > 0 ? detail.title : '音频 #' + String(record.resourceId),
+		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.publishedAt),
+		timeText: formatOccurredAt(safeText(record.occurredAt)),
+		coverUrl: safeText(detail.coverUrl),
+		coverColor: getCoverColor(record.resourceType)
+	}
+}
+
+const mapLiveFavorite = (record : AppResourceRecord, detail : LiveSession) : FavoriteDisplayItem => {
+	return {
+		id: String(record.id),
+		resourceType: normalizeFavoriteType(record.resourceType),
+		resourceId: record.resourceId,
+		typeLabel: getTypeLabel(record.resourceType),
+		title: safeText(detail.title).length > 0 ? detail.title : '直播 #' + String(record.resourceId),
+		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.anchorName),
+		timeText: formatOccurredAt(safeText(record.occurredAt)),
+		coverUrl: safeText(detail.coverUrl),
+		coverColor: getCoverColor(record.resourceType)
+	}
+}
+
+const mapCourseFavorite = (record : AppResourceRecord, detail : Course) : FavoriteDisplayItem => {
+	return {
+		id: String(record.id),
+		resourceType: normalizeFavoriteType(record.resourceType),
+		resourceId: record.resourceId,
+		typeLabel: getTypeLabel(record.resourceType),
+		title: safeText(detail.courseName).length > 0 ? detail.courseName : '课程 #' + String(record.resourceId),
+		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.lecturerName),
+		timeText: formatOccurredAt(safeText(record.occurredAt)),
+		coverUrl: safeText(detail.coverUrl),
+		coverColor: getCoverColor(record.resourceType)
+	}
+}
+
+const mapTopicFavorite = (record : AppResourceRecord, detail : Topic) : FavoriteDisplayItem => {
+	return {
+		id: String(record.id),
+		resourceType: normalizeFavoriteType(record.resourceType),
+		resourceId: record.resourceId,
+		typeLabel: getTypeLabel(record.resourceType),
+		title: safeText(detail.title).length > 0 ? detail.title : '资讯 #' + String(record.resourceId),
+		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.publishedAt),
+		timeText: formatOccurredAt(safeText(record.occurredAt)),
+		coverUrl: safeText(detail.coverUrl),
+		coverColor: getCoverColor(record.resourceType)
+	}
+}
+
+const enrichFavoriteItem = (
+	record : AppResourceRecord,
+	success : (item : FavoriteDisplayItem) => void
+) => {
+	const normalizedType = normalizeFavoriteType(record.resourceType)
+	if (normalizedType == TYPE_AUDIO) {
+		fetchAudioDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapAudioFavorite(record, detail))
+			},
+			() => {
+				success(buildFallbackItem(record))
+			}
+		)
+		return
+	}
+
+	if (normalizedType == TYPE_LIVE) {
+		fetchLiveSessionDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapLiveFavorite(record, detail))
+			},
+			() => {
+				success(buildFallbackItem(record))
+			}
+		)
+		return
+	}
+
+	if (normalizedType == TYPE_COURSE) {
+		fetchCourseDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapCourseFavorite(record, detail))
+			},
+			() => {
+				success(buildFallbackItem(record))
+			}
+		)
+		return
+	}
+
+	if (normalizedType == TYPE_TOPIC) {
+		fetchTopicDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapTopicFavorite(record, detail))
+			},
+			() => {
+				success(buildFallbackItem(record))
+			}
+		)
+		return
+	}
+
+	success(buildFallbackItem(record))
+}
+
+const loadFavorites = () => {
+	isLoading.value = true
+	errorText.value = ''
+
+	fetchProfileFavorites(
+		1,
+		50,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			if (records.length == 0) {
+				allItems.value = []
+				isLoading.value = false
+				return
+			}
+
+			const resultItems = new Array<FavoriteDisplayItem>()
+			let finishedCount = 0
+
+			records.forEach((record : AppResourceRecord) => {
+				enrichFavoriteItem(record, (item : FavoriteDisplayItem) => {
+					resultItems.push(item)
+					finishedCount += 1
+					if (finishedCount == records.length) {
+						allItems.value = resultItems.sort((left : FavoriteDisplayItem, right : FavoriteDisplayItem) : number => {
+							if (left.timeText == right.timeText) {
+								return 0
+							}
+							return left.timeText > right.timeText ? -1 : 1
+						})
+						isLoading.value = false
+					}
+				})
+			})
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : '加载收藏失败'
+			allItems.value = []
+			isLoading.value = false
+		}
+	)
+}
+
+const changeTab = (tabKey : string) => {
+	activeTab.value = tabKey
+}
+
+const goToDetail = (item : FavoriteDisplayItem) => {
+	let url = ''
+	if (item.resourceType == TYPE_AUDIO) {
+		url = '/pages/audio/detail?id=' + String(item.resourceId)
+	} else if (item.resourceType == TYPE_LIVE) {
+		url = '/pages/live/detail?id=' + String(item.resourceId)
+	} else if (item.resourceType == TYPE_COURSE) {
+		url = '/pages/course/detail?id=' + String(item.resourceId)
+	} else if (item.resourceType == TYPE_TOPIC) {
+		url = '/pages/news/detail?id=' + String(item.resourceId)
+	}
+
+	if (url.length == 0) {
+		uni.showToast({
+			title: '暂不支持打开该收藏',
+			icon: 'none'
+		})
+		return
+	}
+
+	uni.navigateTo({
+		url
+	})
+}
 
 const handleBack = () => {
 	const pages = getCurrentPages()
@@ -132,6 +390,8 @@ const handleBack = () => {
 		url: '/pages/mine/index'
 	})
 }
+
+loadFavorites()
 </script>
 
 <style>
@@ -216,7 +476,37 @@ const handleBack = () => {
 	padding-top: 20rpx;
 }
 
-.book-card {
+.state-wrap {
+	padding-top: 140rpx;
+	padding-left: 40rpx;
+	padding-right: 40rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 28rpx;
+	line-height: 40rpx;
+	color: #9b9b9b;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 28rpx;
+	width: 220rpx;
+	height: 76rpx;
+	line-height: 76rpx;
+	background-color: #10b66d;
+	color: #ffffff;
+	font-size: 28rpx;
+	border-radius: 12rpx;
+	border-width: 0;
+}
+
+.retry-btn-hover {
+	opacity: 0.92;
+}
+
+.favorite-card {
 	margin-left: 16rpx;
 	margin-right: 16rpx;
 	margin-bottom: 20rpx;
@@ -228,34 +518,47 @@ const handleBack = () => {
 	box-shadow: 0 10rpx 24rpx rgba(60, 60, 60, 0.05);
 }
 
-.book-cover-shell {
+.favorite-cover-shell {
 	width: 124rpx;
 	height: 164rpx;
 	margin-right: 26rpx;
 	border-radius: 10rpx;
-	background-color: #f1f1f1;
 	align-items: center;
 	justify-content: center;
 	overflow: hidden;
 }
 
-.book-cover {
-	width: 112rpx;
-	height: 152rpx;
+.favorite-cover {
+	width: 124rpx;
+	height: 164rpx;
 }
 
-.book-main {
+.favorite-cover-placeholder {
+	width: 124rpx;
+	height: 164rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.favorite-cover-placeholder-text {
+	font-size: 26rpx;
+	line-height: 36rpx;
+	color: #8d6e4d;
+	font-weight: 600;
+}
+
+.favorite-main {
 	flex: 1;
 	justify-content: center;
 }
 
-.book-meta-row {
+.favorite-meta-row {
 	flex-direction: row;
-	align-items: center;
-	margin-bottom: 34rpx;
+	align-items: flex-start;
+	margin-bottom: 16rpx;
 }
 
-.book-type-tag {
+.favorite-type-tag {
 	padding-left: 14rpx;
 	padding-right: 14rpx;
 	height: 40rpx;
@@ -267,7 +570,7 @@ const handleBack = () => {
 	margin-right: 16rpx;
 }
 
-.book-title {
+.favorite-title {
 	flex: 1;
 	font-size: 32rpx;
 	font-weight: 600;
@@ -275,101 +578,16 @@ const handleBack = () => {
 	color: #242424;
 }
 
-.book-time {
+.favorite-source {
+	font-size: 24rpx;
+	line-height: 34rpx;
+	color: #8f8f8f;
+	margin-bottom: 10rpx;
+}
+
+.favorite-time {
 	font-size: 24rpx;
 	color: #b1b1b1;
-}
-
-.poster-card {
-	margin-left: 16rpx;
-	margin-right: 16rpx;
-	margin-bottom: 22rpx;
-	background-color: #ffffff;
-	border-radius: 22rpx;
-	overflow: hidden;
-	box-shadow: 0 10rpx 24rpx rgba(60, 60, 60, 0.05);
-}
-
-.poster-cover {
-	height: 314rpx;
-	position: relative;
-}
-
-.poster-type-badge {
-	position: absolute;
-	left: 20rpx;
-	top: 18rpx;
-	padding-left: 14rpx;
-	padding-right: 14rpx;
-	height: 42rpx;
-	border-radius: 21rpx;
-	background-color: #ffffff;
-	align-items: center;
-	justify-content: center;
-	z-index: 3;
-}
-
-.poster-type-badge-text {
-	font-size: 20rpx;
-	font-weight: 600;
-	color: #c27a3a;
-}
-
-.poster-main-copy {
-	position: absolute;
-	left: 42rpx;
-	top: 52rpx;
-	z-index: 2;
-}
-
-.poster-main-title {
-	font-size: 64rpx;
-	line-height: 78rpx;
-	font-weight: 600;
-	color: #b6651d;
-	white-space: pre-line;
-}
-
-.poster-sub-title {
-	margin-top: 18rpx;
-	font-size: 34rpx;
-	line-height: 44rpx;
-	color: #8f6136;
-}
-
-.poster-side-text {
-	position: absolute;
-	right: 38rpx;
-	top: 50rpx;
-	font-size: 48rpx;
-	line-height: 62rpx;
-	color: rgba(174, 108, 55, 0.9);
-}
-
-.poster-figure-shell {
-	position: absolute;
-	right: 100rpx;
-	bottom: 18rpx;
-	width: 226rpx;
-	height: 242rpx;
-	border-radius: 14rpx;
-	overflow: hidden;
-}
-
-.poster-figure {
-	width: 226rpx;
-	height: 242rpx;
-}
-
-.poster-body {
-	padding: 18rpx 24rpx 24rpx;
-}
-
-.poster-body-title {
-	font-size: 28rpx;
-	line-height: 40rpx;
-	font-weight: 600;
-	color: #222222;
 }
 
 .bottom-space {

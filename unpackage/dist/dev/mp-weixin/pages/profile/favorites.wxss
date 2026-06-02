@@ -71,7 +71,33 @@
 	flex: 1;
 	padding-top: 20rpx;
 }
-.book-card {
+.state-wrap {
+	padding-top: 140rpx;
+	padding-left: 40rpx;
+	padding-right: 40rpx;
+	align-items: center;
+}
+.state-text {
+	font-size: 28rpx;
+	line-height: 40rpx;
+	color: #9b9b9b;
+	text-align: center;
+}
+.retry-btn {
+	margin-top: 28rpx;
+	width: 220rpx;
+	height: 76rpx;
+	line-height: 76rpx;
+	background-color: #10b66d;
+	color: #ffffff;
+	font-size: 28rpx;
+	border-radius: 12rpx;
+	border-width: 0;
+}
+.retry-btn-hover {
+	opacity: 0.92;
+}
+.favorite-card {
 	margin-left: 16rpx;
 	margin-right: 16rpx;
 	margin-bottom: 20rpx;
@@ -82,30 +108,41 @@
 	align-items: center;
 	box-shadow: 0 10rpx 24rpx rgba(60, 60, 60, 0.05);
 }
-.book-cover-shell {
+.favorite-cover-shell {
 	width: 124rpx;
 	height: 164rpx;
 	margin-right: 26rpx;
 	border-radius: 10rpx;
-	background-color: #f1f1f1;
 	align-items: center;
 	justify-content: center;
 	overflow: hidden;
 }
-.book-cover {
-	width: 112rpx;
-	height: 152rpx;
+.favorite-cover {
+	width: 124rpx;
+	height: 164rpx;
 }
-.book-main {
+.favorite-cover-placeholder {
+	width: 124rpx;
+	height: 164rpx;
+	align-items: center;
+	justify-content: center;
+}
+.favorite-cover-placeholder-text {
+	font-size: 26rpx;
+	line-height: 36rpx;
+	color: #8d6e4d;
+	font-weight: 600;
+}
+.favorite-main {
 	flex: 1;
 	justify-content: center;
 }
-.book-meta-row {
+.favorite-meta-row {
 	flex-direction: row;
-	align-items: center;
-	margin-bottom: 34rpx;
+	align-items: flex-start;
+	margin-bottom: 16rpx;
 }
-.book-type-tag {
+.favorite-type-tag {
 	padding-left: 14rpx;
 	padding-right: 14rpx;
 	height: 40rpx;
@@ -116,96 +153,22 @@
 	line-height: 40rpx;
 	margin-right: 16rpx;
 }
-.book-title {
+.favorite-title {
 	flex: 1;
 	font-size: 32rpx;
 	font-weight: 600;
 	line-height: 42rpx;
 	color: #242424;
 }
-.book-time {
+.favorite-source {
+	font-size: 24rpx;
+	line-height: 34rpx;
+	color: #8f8f8f;
+	margin-bottom: 10rpx;
+}
+.favorite-time {
 	font-size: 24rpx;
 	color: #b1b1b1;
-}
-.poster-card {
-	margin-left: 16rpx;
-	margin-right: 16rpx;
-	margin-bottom: 22rpx;
-	background-color: #ffffff;
-	border-radius: 22rpx;
-	overflow: hidden;
-	box-shadow: 0 10rpx 24rpx rgba(60, 60, 60, 0.05);
-}
-.poster-cover {
-	height: 314rpx;
-	position: relative;
-}
-.poster-type-badge {
-	position: absolute;
-	left: 20rpx;
-	top: 18rpx;
-	padding-left: 14rpx;
-	padding-right: 14rpx;
-	height: 42rpx;
-	border-radius: 21rpx;
-	background-color: #ffffff;
-	align-items: center;
-	justify-content: center;
-	z-index: 3;
-}
-.poster-type-badge-text {
-	font-size: 20rpx;
-	font-weight: 600;
-	color: #c27a3a;
-}
-.poster-main-copy {
-	position: absolute;
-	left: 42rpx;
-	top: 52rpx;
-	z-index: 2;
-}
-.poster-main-title {
-	font-size: 64rpx;
-	line-height: 78rpx;
-	font-weight: 600;
-	color: #b6651d;
-	white-space: pre-line;
-}
-.poster-sub-title {
-	margin-top: 18rpx;
-	font-size: 34rpx;
-	line-height: 44rpx;
-	color: #8f6136;
-}
-.poster-side-text {
-	position: absolute;
-	right: 38rpx;
-	top: 50rpx;
-	font-size: 48rpx;
-	line-height: 62rpx;
-	color: rgba(174, 108, 55, 0.9);
-}
-.poster-figure-shell {
-	position: absolute;
-	right: 100rpx;
-	bottom: 18rpx;
-	width: 226rpx;
-	height: 242rpx;
-	border-radius: 14rpx;
-	overflow: hidden;
-}
-.poster-figure {
-	width: 226rpx;
-	height: 242rpx;
-}
-.poster-body {
-	padding: 18rpx 24rpx 24rpx;
-}
-.poster-body-title {
-	font-size: 28rpx;
-	line-height: 40rpx;
-	font-weight: 600;
-	color: #222222;
 }
 .bottom-space {
 	height: 36rpx;
