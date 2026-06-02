@@ -1,0 +1,159 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+	position: relative;
+}
+.nav-back {
+	position: absolute;
+	top: 74rpx;
+	left: 12rpx;
+	width: 56rpx;
+	height: 56rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 2;
+}
+.nav-back-icon {
+	width: 26rpx;
+	height: 26rpx;
+}
+.header {
+	padding-top: 78rpx;
+	align-items: center;
+}
+.header-title {
+	font-size: 19px;
+	line-height: 28px;
+	color: #1b1b1b;
+	font-weight: 600;
+}
+.form-scroll {
+	flex: 1;
+	padding-top: 30rpx;
+}
+.status-card,
+.reject-card,
+.form-card {
+	margin-left: 12rpx;
+	margin-right: 12rpx;
+	background-color: #ffffff;
+}
+.status-card,
+.reject-card {
+	margin-bottom: 16rpx;
+	padding: 22rpx 24rpx;
+	border-radius: 12rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+.reject-card {
+	flex-direction: column;
+	align-items: flex-start;
+}
+.status-label,
+.reject-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #222222;
+	font-weight: 600;
+}
+.status-value {
+	font-size: 14px;
+	line-height: 22px;
+}
+.status-on {
+	color: #10b66d;
+}
+.status-pending {
+	color: #f0a330;
+}
+.status-reject {
+	color: #d65f5f;
+}
+.status-off {
+	color: #9a9a9a;
+}
+.reject-text {
+	margin-top: 10rpx;
+	font-size: 14px;
+	line-height: 22px;
+	color: #8b8b8b;
+}
+.form-row {
+	min-height: 98rpx;
+	padding-left: 24rpx;
+	padding-right: 18rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #f0f0f5;
+}
+.material-row {
+	padding: 24rpx;
+	border-bottom-width: 0;
+}
+.row-label {
+	font-size: 18px;
+	line-height: 26px;
+	color: #222222;
+	font-weight: 600;
+}
+.row-right {
+	flex-direction: row;
+	align-items: center;
+	max-width: 430rpx;
+}
+.row-input-wrap {
+	flex: 1;
+	justify-content: flex-end;
+}
+.row-input {
+	flex: 1;
+	height: 52rpx;
+	font-size: 16px;
+	color: #8f8f8f;
+	text-align: right;
+	padding-left: 0;
+	padding-right: 8rpx;
+	background-color: transparent;
+}
+.material-textarea {
+	margin-top: 18rpx;
+	width: 100%;
+	min-height: 180rpx;
+	font-size: 15px;
+	line-height: 24px;
+	color: #8f8f8f;
+	background-color: #f7f7fb;
+	border-radius: 12rpx;
+	padding: 18rpx;
+	box-sizing: border-box;
+}
+.actions {
+	margin-top: 34rpx;
+	margin-left: 20rpx;
+	margin-right: 20rpx;
+	padding-bottom: 100rpx;
+}
+.save-btn {
+	height: 86rpx;
+	line-height: 86rpx;
+	background-color: #10b66d;
+	color: #ffffff;
+	font-size: 18px;
+	font-weight: 600;
+	border-radius: 12rpx;
+	border-width: 0;
+}
+.save-btn[disabled] {
+	opacity: 0.76;
+}
+.save-btn-hover {
+	opacity: 0.92;
+}

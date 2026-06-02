@@ -170,7 +170,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         comments: "320"
       })
     ];
-    const audioItems = common_vendor.ref(placeholderItems);
+    const audioItems = common_vendor.ref([]);
     function safeText(value = null) {
       return value == null || value.length == 0 ? "" : value;
     }

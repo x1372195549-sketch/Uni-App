@@ -29,6 +29,27 @@
 			}
 		},
 		{
+			"path": "pages/profile/certification",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F5F5FB"
+			}
+		},
+		{
+			"path": "pages/profile/favorites",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F5F5FB"
+			}
+		},
+		{
+			"path": "pages/profile/history",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F5F5FB"
+			}
+		},
+		{
 			"path": "pages/index/index",
 			"style": {
 				"navigationStyle": "custom",

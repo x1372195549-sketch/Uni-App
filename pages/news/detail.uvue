@@ -2,7 +2,7 @@
 	<view class="page">
 		<view class="header">
 			<view class="back-btn" @click="goBack">
-				<text class="back-icon"><</text>
+				<image class="back-icon-image" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
 			</view>
 			<text class="header-title">详情</text>
 		</view>
@@ -29,18 +29,15 @@
 			</view>
 
 			<view v-if="activeTab == 'intro'" class="intro-panel">
-				<text class="media-title">资讯标题占位 {{ newsId }}</text>
+				<text class="media-title">{{ topicTitle }}</text>
 
 				<view class="stats-row">
-					<text class="stats-text">浏览 3200</text>
-					<text class="stats-text">收藏 1200</text>
+					<text class="stats-text">浏览 {{ topicViews }}</text>
+					<text class="stats-text">目录 {{ topicCatalogCount }}</text>
 				</view>
 
-				<text class="section-title">资讯介绍</text>
-				<text class="intro-text">
-					这里是资讯简介占位内容。后续可接入真实的资讯简介、来源说明、发布时间、摘要与补充说明等文本信息。
-					这里保留为较长段落，用于模拟设计图中的正文排版效果，方便你后续直接替换成接口返回内容。
-				</text>
+				<text class="section-title">专题介绍</text>
+				<text class="intro-text">{{ topicIntro }}</text>
 			</view>
 
 			<view v-else class="catalog-panel">
@@ -58,21 +55,80 @@
 </template>
 
 <script setup lang="uts">
+import { ref, onMounted } from 'vue'
+import { fetchTopicDetail } from '../../utils/auth.uts'
+
+type TopicItem = {
+	id : number
+	topicId : number
+	itemType : string
+	itemId : number
+	sortOrder : number
+	resource : UTSJSONObject | null
+}
+
+type Topic = {
+	id : number
+	title : string
+	summary : string
+	learningRequirements : string
+	coverUrl : string
+	viewCount : number
+	publishedAt : string
+	items : TopicItem[]
+}
+
 type CatalogItem = {
 	id : string
 	title : string
 	duration : string
 }
 
-const newsId = ref('')
+const topicId = ref('')
 const activeTab = ref('intro')
+const topicTitle = ref('资讯详情')
+const topicViews = ref('0')
+const topicCatalogCount = ref('0')
+const topicIntro = ref('这里展示专题简介、学习要求和补充说明。接口返回真实专题内容时，将优先显示后端数据。')
 
 const catalogItems = ref<CatalogItem[]>([
-	{ id: '1', title: '资讯1：目录标题占位一', duration: '10\'20"' },
-	{ id: '2', title: '资讯2：目录标题占位二', duration: '10\'20"' },
-	{ id: '3', title: '资讯3：目录标题占位三', duration: '10\'20"' },
-	{ id: '4', title: '资讯4：目录标题占位四', duration: '10\'20"' }
+	{ id: '1', title: '专题1：目录标题占位一', duration: '10\'20"' },
+	{ id: '2', title: '专题2：目录标题占位二', duration: '10\'20"' },
+	{ id: '3', title: '专题3：目录标题占位三', duration: '10\'20"' },
+	{ id: '4', title: '专题4：目录标题占位四', duration: '10\'20"' }
 ])
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const applyTopicDetail = (detail : Topic) => {
+	const titleText = safeText(detail.title)
+	if (titleText.length > 0) {
+		topicTitle.value = titleText
+	}
+
+	const introText = safeText(detail.learningRequirements).length > 0
+		? safeText(detail.learningRequirements)
+		: safeText(detail.summary)
+	if (introText.length > 0) {
+		topicIntro.value = introText
+	}
+
+	topicViews.value = String(detail.viewCount != null ? detail.viewCount : 0)
+	topicCatalogCount.value = String(detail.items != null ? detail.items.length : 0)
+
+	if (detail.items != null && detail.items.length > 0) {
+		catalogItems.value = detail.items.map((item : TopicItem, index : number) : CatalogItem => {
+			const itemType = safeText(item.itemType)
+			return {
+				id: String(item.id),
+				title: '专题' + String(index + 1) + '：' + (itemType.length > 0 ? itemType : '目录项'),
+				duration: '10\'20"'
+			}
+		})
+	}
+}
 
 const goBack = () => {
 	uni.navigateBack()
@@ -84,16 +140,28 @@ const loadParams = () => {
 		const current = pages[pages.length - 1]
 		if (current != null && current.options != null) {
 			if (current.options['id'] != null) {
-				newsId.value = current.options['id'] as string
+				topicId.value = current.options['id'] as string
 			}
 			if (current.options['tab'] != null) {
 				activeTab.value = current.options['tab'] as string
 			}
 		}
 	}
+
+	if (topicId.value.length > 0) {
+		fetchTopicDetail(
+			topicId.value,
+			(detail) => {
+				applyTopicDetail(detail)
+			},
+			() => {}
+		)
+	}
 }
 
-loadParams()
+onMounted(() => {
+	loadParams()
+})
 </script>
 
 <style>
@@ -126,11 +194,9 @@ loadParams()
 	justify-content: center;
 }
 
-.back-icon {
-	font-size: 30rpx;
-	line-height: 30rpx;
-	color: #222222;
-	font-weight: 600;
+.back-icon-image {
+	width: 24rpx;
+	height: 24rpx;
 }
 
 .header-title {

@@ -11,7 +11,8 @@
 			<view class="hero">
 				<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
 				<view class="avatar-shell">
-					<view class="avatar-circle">
+					<image v-if="avatarUrl.length > 0" class="avatar-image" :src="avatarUrl" mode="aspectFill"></image>
+					<view v-else class="avatar-circle">
 						<text class="avatar-text">{{ shortName }}</text>
 					</view>
 				</view>
@@ -32,9 +33,7 @@
 					<view class="section-line"></view>
 					<text class="section-title">履历介绍</text>
 				</view>
-				<text class="section-content">
-					{{ introduction }}
-				</text>
+				<text class="section-content">{{ introduction }}</text>
 			</view>
 
 			<view class="section">
@@ -71,40 +70,144 @@
 </template>
 
 <script setup lang="uts">
-const currentPages = getCurrentPages()
+import { ref, onMounted, computed } from 'vue'
+import { fetchExpertDetail } from '../../utils/auth.uts'
 
-let doctorName = '符惠娟'
-let doctorTitle = '主任中医师'
-let organization = '常州市中医院'
-let specialty = '中医心血管'
-let tag = '中医心血管'
-
-if (currentPages.length > 0) {
-	const currentPage = currentPages[currentPages.length - 1]
-	const options = currentPage.options
-	if (options != null) {
-		doctorName = options['name'] != null ? decodeURIComponent(options['name']) : doctorName
-		doctorTitle = options['title'] != null ? decodeURIComponent(options['title']) : doctorTitle
-		organization = options['organization'] != null ? decodeURIComponent(options['organization']) : organization
-		specialty = options['specialty'] != null ? decodeURIComponent(options['specialty']) : specialty
-		tag = options['tag'] != null ? decodeURIComponent(options['tag']) : tag
-	}
+type ExpertExperience = {
+	id : number
+	expertId : number
+	experienceType : string
+	title : string
+	description : string
+	startDate : string
+	endDate : string
+	sortOrder : number
 }
 
-const shortName = doctorName.length > 0 ? doctorName.substring(0, 1) : '医'
+type ExpertDetail = {
+	id : number
+	realName : string
+	avatarUrl : string
+	title : string
+	organization : string
+	specialty : string
+	introduction : string
+	consultationNotice : string
+	sortOrder : number
+	categoryIds : number[]
+	experiences : ExpertExperience[]
+}
 
-const introduction =
-	'这里保留医生详情介绍占位内容，后续将由数据库返回医生的履历简介、研究方向、代表成果和临床经验等信息，用于完整替换当前文案。'
+const detailId = ref('')
+const doctorName = ref('医生详情')
+const doctorTitle = ref('专家')
+const organization = ref('暂无单位信息')
+const specialty = ref('暂无专业方向')
+const tag = ref('暂无标签')
+const avatarUrl = ref('')
+const introduction = ref('这里展示医生简介、履历和研究方向。接口返回医生介绍时，将优先使用后端数据。')
 
-const qaTitleOne =
-	'符主任您好！请问胸闷气短跟黑心慌，高血压口服美托洛尔，利尿剂。'
+const qaTitleOne = ref('医生答疑功能占位，后续可根据后端接口补充真实问答内容。')
+const qaTitleTwo = ref('当前页面已优先展示医生基础信息，问答列表等待后端接口补充。')
 
-const qaTitleTwo =
-	'请问脑梗塞治疗方法'
+const shortName = computed(() : string => {
+	return doctorName.value.length > 0 ? doctorName.value.substring(0, 1) : '医'
+})
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
 
 const goBack = () => {
 	uni.navigateBack()
 }
+
+const applyExpertDetail = (detail : ExpertDetail) => {
+	const nameText = safeText(detail.realName)
+	const titleText = safeText(detail.title)
+	const orgText = safeText(detail.organization)
+	const specialtyText = safeText(detail.specialty)
+	const introText = safeText(detail.introduction)
+	const noticeText = safeText(detail.consultationNotice)
+	const avatarText = safeText(detail.avatarUrl)
+
+	if (nameText.length > 0) {
+		doctorName.value = nameText
+	}
+	if (titleText.length > 0) {
+		doctorTitle.value = titleText
+	}
+	if (orgText.length > 0) {
+		organization.value = orgText
+	}
+	if (specialtyText.length > 0) {
+		specialty.value = specialtyText
+	}
+	if (avatarText.length > 0) {
+		avatarUrl.value = avatarText
+	}
+	if (noticeText.length > 0) {
+		tag.value = noticeText
+	}
+
+	if (introText.length > 0) {
+		introduction.value = introText
+	} else if (detail.experiences != null && detail.experiences.length > 0) {
+		const experienceText = detail.experiences
+			.slice(0, 3)
+			.map((item : ExpertExperience) : string => {
+				const titleValue = safeText(item.title)
+				const descValue = safeText(item.description)
+				return titleValue.length > 0 ? (titleValue + (descValue.length > 0 ? '：' + descValue : '')) : descValue
+			})
+			.filter((item : string) : boolean => item.length > 0)
+		if (experienceText.length > 0) {
+			introduction.value = experienceText.join('；')
+		}
+	}
+}
+
+const loadParams = () => {
+	const currentPages = getCurrentPages()
+	if (currentPages.length > 0) {
+		const currentPage = currentPages[currentPages.length - 1]
+		if (currentPage.options != null) {
+			const options = currentPage.options
+			if (options['id'] != null) {
+				detailId.value = options['id'] as string
+			}
+			if (options['name'] != null) {
+				doctorName.value = decodeURIComponent(options['name'])
+			}
+			if (options['title'] != null) {
+				doctorTitle.value = decodeURIComponent(options['title'])
+			}
+			if (options['organization'] != null) {
+				organization.value = decodeURIComponent(options['organization'])
+			}
+			if (options['specialty'] != null) {
+				specialty.value = decodeURIComponent(options['specialty'])
+			}
+			if (options['tag'] != null) {
+				tag.value = decodeURIComponent(options['tag'])
+			}
+		}
+	}
+
+	if (detailId.value.length > 0) {
+		fetchExpertDetail(
+			detailId.value,
+			(detail) => {
+				applyExpertDetail(detail)
+			},
+			() => {}
+		)
+	}
+}
+
+onMounted(() => {
+	loadParams()
+})
 </script>
 
 <style>
@@ -169,6 +272,16 @@ const goBack = () => {
 	flex: 1;
 	align-items: center;
 	justify-content: center;
+}
+
+.avatar-image {
+	width: 160rpx;
+	height: 160rpx;
+	border-radius: 80rpx;
+	border-width: 8rpx;
+	border-style: solid;
+	border-color: #3dbfe2;
+	margin-top: 20rpx;
 }
 
 .avatar-circle {
@@ -317,9 +430,5 @@ const goBack = () => {
 	color: #ffffff;
 	font-size: 18px;
 	line-height: 88rpx;
-}
-
-.consult-btn-hover {
-	opacity: 0.9;
 }
 </style>

@@ -39,6 +39,9 @@
 	margin-right: 12rpx;
 	background-color: #ffffff;
 }
+.picker-row {
+	display: flex;
+}
 .form-row {
 	min-height: 98rpx;
 	padding-left: 24rpx;
@@ -93,10 +96,22 @@
 	padding-right: 8rpx;
 	background-color: transparent;
 }
-.row-arrow {
-	font-size: 22rpx;
-	line-height: 22rpx;
-	color: #c3c3c3;
+.signature-row {
+	align-items: flex-start;
+	padding-top: 24rpx;
+	padding-bottom: 24rpx;
+}
+.row-textarea {
+	width: 320rpx;
+	min-height: 120rpx;
+	font-size: 16px;
+	line-height: 24px;
+	color: #8f8f8f;
+	text-align: left;
+	background-color: #f7f7fb;
+	border-radius: 12rpx;
+	padding: 16rpx;
+	box-sizing: border-box;
 }
 .actions {
 	margin-top: 34rpx;
@@ -114,13 +129,9 @@
 	border-radius: 12rpx;
 	border-width: 0;
 }
+.save-btn[disabled] {
+	opacity: 0.76;
+}
 .save-btn-hover {
 	opacity: 0.92;
-}
-.hint {
-	margin-top: 16rpx;
-	font-size: 13px;
-	line-height: 20px;
-	color: #a6a6a6;
-	text-align: center;
 }

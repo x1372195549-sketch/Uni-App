@@ -36,9 +36,23 @@
 					</view>
 				</view>
 
-				<view class="placeholder-card">
-					<text class="placeholder-title">首页页面</text>
-					<text class="placeholder-desc">当前先保留页面结构，内容后续再补充。</text>
+				<view class="home-list">
+					<view class="home-card" v-for="item in homeSections" :key="item.sectionKey" @click="goHomeDetail(item)">
+						<view class="card-head">
+							<view>
+								<text class="card-type">{{ item.typeLabel }}</text>
+								<text class="card-title">{{ item.title }}</text>
+								<text class="card-subtitle">{{ item.subtitle }}</text>
+							</view>
+							<image v-if="item.coverUrl.length > 0" class="card-cover" :src="item.coverUrl" mode="aspectFill"></image>
+							<view v-else class="card-cover card-cover-placeholder">
+								<text class="card-cover-text">{{ item.typeShort }}</text>
+							</view>
+						</view>
+						<view class="card-foot">
+							<text class="card-desc">{{ item.description }}</text>
+						</view>
+					</view>
 				</view>
 			</view>
 		</scroll-view>
@@ -69,6 +83,232 @@
 </template>
 
 <script setup lang="uts">
+import { ref, onMounted } from 'vue'
+import { fetchHomeCategories, fetchHomeContents } from '../../utils/auth.uts'
+
+type HomeCategory = {
+	id : number
+	parentId : number
+	categoryName : string
+	categoryCode : string
+	iconUrl : string
+	description : string
+	sortOrder : number
+	status : string
+}
+
+type HomeContent = {
+	id : number
+	categoryId : number
+	contentType : string
+	targetId : number
+	title : string
+	coverUrl : string
+	linkUrl : string
+	sortOrder : number
+	startAt : string
+	endAt : string
+	status : string
+}
+
+type HomeSection = {
+	sectionKey : string
+	contentType : string
+	typeLabel : string
+	typeShort : string
+	title : string
+	subtitle : string
+	description : string
+	coverUrl : string
+	targetId : string
+}
+
+const homeSections = ref<HomeSection[]>([
+	{
+		sectionKey: 'audio',
+		contentType: 'podcast',
+		typeLabel: '音频内容',
+		typeShort: '音频',
+		title: '音频内容占位',
+		subtitle: '等待首页内容接口返回',
+		description: '点击进入音频详情页',
+		coverUrl: '',
+		targetId: ''
+	},
+	{
+		sectionKey: 'live',
+		contentType: 'live',
+		typeLabel: '直播内容',
+		typeShort: '直播',
+		title: '直播内容占位',
+		subtitle: '等待首页内容接口返回',
+		description: '点击进入直播详情页',
+		coverUrl: '',
+		targetId: ''
+	},
+	{
+		sectionKey: 'course',
+		contentType: 'course',
+		typeLabel: '课程内容',
+		typeShort: '课程',
+		title: '课程内容占位',
+		subtitle: '等待首页内容接口返回',
+		description: '点击进入课程详情页',
+		coverUrl: '',
+		targetId: ''
+	},
+	{
+		sectionKey: 'news',
+		contentType: 'topic',
+		typeLabel: '资讯内容',
+		typeShort: '资讯',
+		title: '资讯内容占位',
+		subtitle: '等待首页内容接口返回',
+		description: '点击进入资讯详情页',
+		coverUrl: '',
+		targetId: ''
+	}
+])
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const normalizeContentType = (value : string) : string => {
+	const type = value.toLowerCase()
+	if (type == 'podcast' || type == 'audio') {
+		return 'podcast'
+	}
+	if (type == 'live' || type == 'live_session') {
+		return 'live'
+	}
+	if (type == 'course') {
+		return 'course'
+	}
+	if (type == 'topic' || type == 'article' || type == 'news') {
+		return 'topic'
+	}
+	return type
+}
+
+const buildFallbackSections = () : HomeSection[] => {
+	return [...homeSections.value]
+}
+
+const mapHomeContentToSection = (item : HomeContent, categories : HomeCategory[]) : HomeSection | null => {
+	const normalizedType = normalizeContentType(safeText(item.contentType))
+	if (normalizedType != 'podcast' && normalizedType != 'live' && normalizedType != 'course' && normalizedType != 'topic') {
+		return null
+	}
+
+	const category = categories.find((entry : HomeCategory) : boolean => entry.id == item.categoryId)
+	const categoryName = category != null ? safeText(category.categoryName) : ''
+
+	let typeLabel = '首页内容'
+	let typeShort = '内容'
+	let subtitle = '首页配置内容'
+	let description = '点击进入详情页'
+
+	if (normalizedType == 'podcast') {
+		typeLabel = '音频内容'
+		typeShort = '音频'
+		subtitle = categoryName.length > 0 ? categoryName : '音频推荐'
+		description = '点击进入音频详情页'
+	}
+	if (normalizedType == 'live') {
+		typeLabel = '直播内容'
+		typeShort = '直播'
+		subtitle = categoryName.length > 0 ? categoryName : '直播推荐'
+		description = '点击进入直播详情页'
+	}
+	if (normalizedType == 'course') {
+		typeLabel = '课程内容'
+		typeShort = '课程'
+		subtitle = categoryName.length > 0 ? categoryName : '课程推荐'
+		description = '点击进入课程详情页'
+	}
+	if (normalizedType == 'topic') {
+		typeLabel = '资讯内容'
+		typeShort = '资讯'
+		subtitle = categoryName.length > 0 ? categoryName : '资讯推荐'
+		description = '点击进入资讯详情页'
+	}
+
+	return {
+		sectionKey: normalizedType,
+		contentType: normalizedType,
+		typeLabel,
+		typeShort,
+		title: safeText(item.title).length > 0 ? item.title : typeLabel,
+		subtitle,
+		description,
+		coverUrl: safeText(item.coverUrl),
+		targetId: String(item.targetId)
+	}
+}
+
+const applyHomeData = (categories : HomeCategory[], contents : HomeContent[]) => {
+	const fallbackMap = new Map<string, HomeSection>()
+	const fallbacks = buildFallbackSections()
+	for (let i = 0; i < fallbacks.length; i++) {
+		fallbackMap.set(fallbacks[i].sectionKey, fallbacks[i])
+	}
+
+	const sortedContents = [...contents].sort((left : HomeContent, right : HomeContent) : number => {
+		return (left.sortOrder || 0) - (right.sortOrder || 0)
+	})
+
+	for (let i = 0; i < sortedContents.length; i++) {
+		const mapped = mapHomeContentToSection(sortedContents[i], categories)
+		if (mapped != null && fallbackMap.has(mapped.sectionKey)) {
+			fallbackMap.set(mapped.sectionKey, mapped)
+		}
+	}
+
+	homeSections.value = [
+		fallbackMap.get('podcast') as HomeSection,
+		fallbackMap.get('live') as HomeSection,
+		fallbackMap.get('course') as HomeSection,
+		fallbackMap.get('topic') as HomeSection
+	]
+}
+
+const loadHomeData = () => {
+	fetchHomeCategories(
+		(categoryPage) => {
+			fetchHomeContents(
+				(contentPage) => {
+					applyHomeData(categoryPage.records || [], contentPage.records || [])
+				},
+				() => {}
+			)
+		},
+		() => {}
+	)
+}
+
+const goHomeDetail = (item : HomeSection) => {
+	if (item.targetId.length == 0) {
+		return
+	}
+
+	if (item.contentType == 'podcast') {
+		uni.navigateTo({ url: '/pages/audio/detail?id=' + item.targetId })
+		return
+	}
+	if (item.contentType == 'live') {
+		uni.navigateTo({ url: '/pages/live/detail?id=' + item.targetId })
+		return
+	}
+	if (item.contentType == 'course') {
+		uni.navigateTo({ url: '/pages/course/detail?id=' + item.targetId })
+		return
+	}
+	if (item.contentType == 'topic') {
+		uni.navigateTo({ url: '/pages/news/detail?id=' + item.targetId })
+	}
+}
+
 const goAudioPage = () => {
 	uni.redirectTo({ url: '/pages/audio/index' })
 }
@@ -86,20 +326,24 @@ const goNewsPage = () => {
 }
 
 const goMinePage = () => {
-  uni.redirectTo({ url: '/pages/mine/index' })
+	uni.redirectTo({ url: '/pages/mine/index' })
 }
 
 const goExamPage = () => {
-  uni.redirectTo({ url: '/pages/exam/index' })
+	uni.redirectTo({ url: '/pages/exam/index' })
 }
 
 const goKnowledgePage = () => {
-  uni.redirectTo({ url: '/pages/knowledge/index' })
+	uni.redirectTo({ url: '/pages/knowledge/index' })
 }
 
 const goConsultPage = () => {
-  uni.redirectTo({ url: '/pages/consult/index' })
+	uni.redirectTo({ url: '/pages/consult/index' })
 }
+
+onMounted(() => {
+	loadHomeData()
+})
 </script>
 
 <style>
@@ -193,12 +437,10 @@ const goConsultPage = () => {
 .content-shell {
 	padding-left: 20rpx;
 	padding-right: 20rpx;
-	padding-top: 0;
 	padding-bottom: 40rpx;
 }
 
 .search-wrap {
-	padding-top: 0;
 	padding-bottom: 20rpx;
 	background-color: #f7f7f2;
 }
@@ -229,32 +471,79 @@ const goConsultPage = () => {
 	color: #b0b8ad;
 }
 
-.placeholder-card {
-	min-height: 420rpx;
+.home-list {
+	padding-top: 4rpx;
+}
+
+.home-card {
+	margin-bottom: 24rpx;
 	border-radius: 20rpx;
 	background-color: #ffffff;
-	border-width: 1px;
-	border-style: dashed;
-	border-color: #ddd7cc;
-	align-items: center;
-	justify-content: center;
-	padding-left: 32rpx;
-	padding-right: 32rpx;
+	overflow: hidden;
+	box-shadow: 0 10rpx 24rpx rgba(207, 201, 186, 0.28);
 }
 
-.placeholder-title {
+.card-head {
+	min-height: 220rpx;
+	padding: 30rpx;
+	background-color: #f8e8ce;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.card-type {
+	font-size: 12px;
+	line-height: 18px;
+	color: #b85d69;
+	font-weight: 600;
+	margin-bottom: 10rpx;
+}
+
+.card-title {
+	width: 380rpx;
 	font-size: 22px;
 	line-height: 32px;
-	color: #2f2f2f;
-	font-weight: 600;
-	margin-bottom: 16rpx;
+	color: #d0832e;
+	font-weight: 700;
 }
 
-.placeholder-desc {
+.card-subtitle {
+	margin-top: 10rpx;
+	width: 380rpx;
 	font-size: 14px;
 	line-height: 22px;
-	color: #9d978d;
-	text-align: center;
+	color: #8d6f45;
+}
+
+.card-cover {
+	width: 140rpx;
+	height: 140rpx;
+	border-radius: 24rpx;
+	background-color: #ffffff;
+}
+
+.card-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+
+.card-cover-text {
+	font-size: 22px;
+	line-height: 30px;
+	color: #dfc2a3;
+	font-weight: 600;
+}
+
+.card-foot {
+	padding: 26rpx 30rpx;
+}
+
+.card-desc {
+	font-size: 18px;
+	line-height: 28px;
+	color: #2f2f2f;
+	font-weight: 600;
 }
 
 .tabbar {

@@ -2,6 +2,27 @@
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
+class MineMenuItem extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          label: { type: String, optional: false },
+          icon: { type: String, optional: false }
+        };
+      },
+      name: "MineMenuItem"
+    };
+  }
+  constructor(options, metadata = MineMenuItem.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.label = this.__props__.label;
+    this.icon = this.__props__.icon;
+    delete this.__props__;
+  }
+}
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "index",
   setup(__props) {
@@ -12,12 +33,13 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const isCertified = common_vendor.ref(false);
     const isLoggedIn = common_vendor.ref(utils_auth.hasToken());
     const menuItems = common_vendor.ref([
-      new UTSJSONObject({ label: "个人资料", icon: "/static/mine/icon_about.png" }),
-      new UTSJSONObject({ label: "我的收藏", icon: "/static/mine/icon_favorite.png" }),
-      new UTSJSONObject({ label: "学习历史", icon: "/static/mine/icon_history.png" }),
-      new UTSJSONObject({ label: "意见反馈", icon: "/static/mine/icon_about.png" }),
-      new UTSJSONObject({ label: "退出登录", icon: "/static/mine/icon_about.png" }),
-      new UTSJSONObject({ label: "使用手册", icon: "/static/mine/icon_manual.png" })
+      new MineMenuItem({ label: "个人资料", icon: "/static/mine/icon_about.png" }),
+      new MineMenuItem({ label: "学员认证", icon: "/static/mine/icon_about.png" }),
+      new MineMenuItem({ label: "我的收藏", icon: "/static/mine/icon_favorite.png" }),
+      new MineMenuItem({ label: "学习历史", icon: "/static/mine/icon_history.png" }),
+      new MineMenuItem({ label: "意见反馈", icon: "/static/mine/icon_about.png" }),
+      new MineMenuItem({ label: "退出登录", icon: "/static/mine/icon_about.png" }),
+      new MineMenuItem({ label: "使用手册", icon: "/static/mine/icon_manual.png" })
     ]);
     const loadUserData = () => {
       if (!isLoggedIn.value) {
@@ -29,25 +51,41 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const cached = utils_auth.getCurrentUserFromStorage();
       if (cached != null) {
         nickname.value = cached.nickname;
+        avatarUrl.value = cached.avatarUrl;
         isCertified.value = cached.certificationStatus == "2";
       }
       utils_auth.fetchProfile((profile) => {
         nickname.value = profile.nickname;
-        avatarUrl.value = profile.avatarUrl;
+        avatarUrl.value = profile.avatarUrl || avatarUrl.value;
         studentNo.value = profile.studentId != 0 ? "学员" : "";
         isCertified.value = profile.certificationStatus == "2";
         userTypeText.value = profile.profileCompleted ? "（已认证）" : "（普通用户）";
       }, () => {
       });
     };
-    const goEditProfile = () => {
-      common_vendor.index.navigateTo({
-        url: "/pages/profile/edit"
-      });
-    };
     const handleMenuClick = (label) => {
       if (label == "个人资料") {
-        goEditProfile();
+        common_vendor.index.navigateTo({
+          url: "/pages/profile/edit"
+        });
+        return null;
+      }
+      if (label == "学员认证") {
+        common_vendor.index.navigateTo({
+          url: "/pages/profile/certification"
+        });
+        return null;
+      }
+      if (label == "我的收藏") {
+        common_vendor.index.navigateTo({
+          url: "/pages/profile/favorites"
+        });
+        return null;
+      }
+      if (label == "学习历史") {
+        common_vendor.index.navigateTo({
+          url: "/pages/profile/history"
+        });
         return null;
       }
       if (label == "退出登录") {
@@ -84,6 +122,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       });
     };
     loadUserData();
+    common_vendor.onShow(() => {
+      loadUserData();
+    });
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = common_vendor.e({

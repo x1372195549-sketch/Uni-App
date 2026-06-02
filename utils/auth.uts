@@ -25,6 +25,16 @@ export type CurrentUser = {
 	certificationStatus : string
 }
 
+export type CurrentUserPatch = {
+	nickname? : string
+	avatarUrl? : string
+	mobile? : string
+	email? : string
+	profileCompleted? : boolean
+	studentId? : number
+	certificationStatus? : string
+}
+
 type ApiResponse<T> = {
 	success : boolean
 	code : string
@@ -33,6 +43,7 @@ type ApiResponse<T> = {
 }
 
 const BASE_URL = 'https://api-test.arez.cc.cd'
+
 export type WechatLoginData = {
 	registered : boolean
 	needBindMobile : boolean
@@ -41,6 +52,173 @@ export type WechatLoginData = {
 	accessToken : string
 	expiresIn : number
 	user : LoginUserProfile | null
+}
+
+export type AppProfile = {
+	id : number
+	username : string
+	mobile : string
+	email : string
+	nickname : string
+	profileSignature : string
+	avatarUrl : string
+	authProvider : string
+	gender : string
+	status : string
+	profileCompleted : boolean
+	studentId : number
+	certificationStatus : string
+}
+
+export type AppProfileUpdateRequest = {
+	nickname? : string
+	profileSignature? : string
+	avatarUrl? : string
+	email? : string
+	gender? : string
+}
+
+export type AppStudentCertification = {
+	studentId : number
+	studentNo : string
+	realName : string
+	mobile : string
+	province : string
+	city : string
+	district : string
+	organization : string
+	positionTitle : string
+	status : string
+	certificationStatus : string
+	certificationSubmittedAt : string
+	certificationReviewedAt : string
+	rejectReason : string
+	certificationMaterials : string
+	enrolledAt : string
+}
+
+export type AppStudentCertificationRequest = {
+	realName : string
+	mobile? : string
+	idCardNo? : string
+	province? : string
+	city? : string
+	district? : string
+	organization? : string
+	positionTitle? : string
+	certificationMaterials? : string
+}
+
+export type LiveSession = {
+	id : number
+	title : string
+	coverUrl : string
+	anchorName : string
+	liveUrl : string
+	playbackUrl : string
+	startAt : string
+	endAt : string
+	reviewStatus : string
+	liveStatus : string
+}
+
+export type CourseVideo = {
+	id : number
+	courseId : number
+	title : string
+	videoUrl : string
+	durationSeconds : number
+	sortOrder : number
+}
+
+export type Course = {
+	id : number
+	courseName : string
+	subtitle : string
+	coverUrl : string
+	lecturerName : string
+	introduction : string
+	paperId : number
+	publishedAt : string
+	progressPercent : number
+	studySeconds : number
+	videos : CourseVideo[]
+}
+
+export type TopicItem = {
+	id : number
+	topicId : number
+	itemType : string
+	itemId : number
+	sortOrder : number
+	resource : UTSJSONObject | null
+}
+
+export type Topic = {
+	id : number
+	title : string
+	summary : string
+	learningRequirements : string
+	coverUrl : string
+	viewCount : number
+	publishedAt : string
+	items : TopicItem[]
+}
+
+export type PageResponse<T> = {
+	records : T[]
+	total : number
+	page : number
+	size : number
+}
+
+export type HomeCategory = {
+	id : number
+	parentId : number
+	categoryName : string
+	categoryCode : string
+	iconUrl : string
+	description : string
+	sortOrder : number
+	status : string
+}
+
+export type HomeContent = {
+	id : number
+	categoryId : number
+	contentType : string
+	targetId : number
+	title : string
+	coverUrl : string
+	linkUrl : string
+	sortOrder : number
+	startAt : string
+	endAt : string
+	status : string
+}
+
+export type AvatarUploadUrlResponse = {
+	uploadUrl : string
+	objectKey : string
+	method : string
+	headers : UTSJSONObject | null
+	formData : UTSJSONObject | null
+	publicUrl : string
+}
+
+export type AvatarUploadUrlRequest = {
+	originalName : string
+	contentType : string
+	fileSize : number
+}
+
+export type AvatarConfirmRequest = {
+	objectKey : string
+	originalName? : string
+}
+
+export type AvatarBinaryUploadConfig = {
+	contentType : string
 }
 
 const ACCESS_TOKEN_KEY = 'app_auth_access_token'
@@ -71,6 +249,79 @@ function buildAuthorization() : string {
 	return 'Bearer ' + accessToken
 }
 
+function getBaseOrigin() : string {
+	const matches = BASE_URL.match(/^https?:\/\/[^/]+/)
+	if (matches != null && matches.length > 0) {
+		return matches[0]
+	}
+	return BASE_URL
+}
+
+function normalizeExternalUrl(rawUrl : string) : string {
+	if (rawUrl == null || rawUrl == '') {
+		return ''
+	}
+
+	const baseOrigin = getBaseOrigin()
+
+	if (/^https?:\/\/minio(?::\d+)?($|\/|\?)/.test(rawUrl)) {
+		return rawUrl.replace(/^https?:\/\/minio(?::\d+)?/i, baseOrigin)
+	}
+
+	if (/^https?:\/\/[^/]*minio[^/]*($|\/|\?)/.test(rawUrl)) {
+		return rawUrl.replace(/^https?:\/\/[^/]*minio[^/]*/i, baseOrigin)
+	}
+
+	if (/^https?:\/\/minio(?::\d+)?\//.test(rawUrl)) {
+		return rawUrl.replace(/^https?:\/\/minio(?::\d+)?/, baseOrigin)
+	}
+
+	if (/^https?:\/\/[^/]+\/minio\//.test(rawUrl) && rawUrl.indexOf(baseOrigin) == 0) {
+		return rawUrl
+	}
+
+	if (rawUrl.startsWith('/')) {
+		return baseOrigin + rawUrl
+	}
+
+	return rawUrl
+}
+
+function normalizeUploadUrlResponse(data : UTSJSONObject) : AvatarUploadUrlResponse {
+	const rawUploadUrl =
+		(data['uploadUrl'] as string) ||
+		(data['signedUrl'] as string) ||
+		(data['presignedUrl'] as string) ||
+		(data['url'] as string) ||
+		''
+	const uploadUrl = normalizeExternalUrl(rawUploadUrl)
+	const objectKey =
+		(data['objectKey'] as string) ||
+		(data['fileKey'] as string) ||
+		(data['key'] as string) ||
+		''
+	const method =
+		(data['method'] as string) ||
+		'PUT'
+	const headers = data['headers'] as UTSJSONObject | null
+	const formData = data['formData'] as UTSJSONObject | null
+	const rawPublicUrl =
+		(data['publicUrl'] as string) ||
+		(data['avatarUrl'] as string) ||
+		(data['fileUrl'] as string) ||
+		''
+	const publicUrl = normalizeExternalUrl(rawPublicUrl)
+
+	return {
+		uploadUrl,
+		objectKey,
+		method,
+		headers,
+		formData,
+		publicUrl
+	} as AvatarUploadUrlResponse
+}
+
 export function saveLogin(data : LoginResponseData) {
 	uni.setStorageSync(ACCESS_TOKEN_KEY, data.accessToken)
 	uni.setStorageSync(TOKEN_TYPE_KEY, data.tokenType)
@@ -83,28 +334,59 @@ function saveCurrentUser(user : CurrentUser) {
 	uni.setStorageSync(CURRENT_USER_KEY, user)
 }
 
-export type AppProfile = {
-	id : number
-	username : string
-	mobile : string
-	email : string
-	nickname : string
-	profileSignature : string
-	avatarUrl : string
-	authProvider : string
-	gender : string
-	status : string
-	profileCompleted : boolean
-	studentId : number
-	certificationStatus : string
+function normalizeCurrentUserData(raw : UTSJSONObject | null) : CurrentUser | null {
+	if (raw == null) {
+		return null
+	}
+
+	return {
+		id: typeof raw['id'] == 'number' ? (raw['id'] as number) : 0,
+		username: typeof raw['username'] == 'string' ? (raw['username'] as string) : '',
+		nickname: typeof raw['nickname'] == 'string' ? (raw['nickname'] as string) : '',
+		avatarUrl: typeof raw['avatarUrl'] == 'string' ? (raw['avatarUrl'] as string) : '',
+		mobile: typeof raw['mobile'] == 'string' ? (raw['mobile'] as string) : '',
+		email: typeof raw['email'] == 'string' ? (raw['email'] as string) : '',
+		profileCompleted: typeof raw['profileCompleted'] == 'boolean' ? (raw['profileCompleted'] as boolean) : false,
+		studentId: typeof raw['studentId'] == 'number' ? (raw['studentId'] as number) : 0,
+		certificationStatus: typeof raw['certificationStatus'] == 'string' ? (raw['certificationStatus'] as string) : ''
+	} as CurrentUser
 }
 
-export type AppProfileUpdateRequest = {
-	nickname? : string
-	profileSignature? : string
-	avatarUrl? : string
-	email? : string
-	gender? : string
+export function patchCurrentUser(partial : CurrentUserPatch) {
+	const cached = getCurrentUserFromStorage()
+	if (cached == null) {
+		return
+	}
+
+	const nextUser : CurrentUser = {
+		id: cached.id,
+		username: cached.username,
+		nickname: partial.nickname != null && partial.nickname != '' ? partial.nickname! : cached.nickname,
+		avatarUrl: partial.avatarUrl != null && partial.avatarUrl != '' ? partial.avatarUrl! : cached.avatarUrl,
+		mobile: partial.mobile != null && partial.mobile != '' ? partial.mobile! : cached.mobile,
+		email: partial.email != null && partial.email != '' ? partial.email! : cached.email,
+		profileCompleted: partial.profileCompleted != null ? partial.profileCompleted! : cached.profileCompleted,
+		studentId: partial.studentId != null ? partial.studentId! : cached.studentId,
+		certificationStatus: partial.certificationStatus != null && partial.certificationStatus != '' ? partial.certificationStatus! : cached.certificationStatus
+	}
+
+	saveCurrentUser(nextUser)
+}
+
+export function mergeProfileIntoCurrentUser(profile : AppProfile) {
+	const cached = getCurrentUserFromStorage()
+	const nextUser : CurrentUser = {
+		id: cached != null ? cached.id : (profile.id || 0),
+		username: cached != null ? cached.username : (profile.username || ''),
+		nickname: profile.nickname || (cached != null ? cached.nickname : ''),
+		avatarUrl: profile.avatarUrl || (cached != null ? cached.avatarUrl : ''),
+		mobile: profile.mobile || (cached != null ? cached.mobile : ''),
+		email: profile.email || (cached != null ? cached.email : ''),
+		profileCompleted: profile.profileCompleted || (cached != null ? cached.profileCompleted : false),
+		studentId: profile.studentId || (cached != null ? cached.studentId : 0),
+		certificationStatus: profile.certificationStatus || (cached != null ? cached.certificationStatus : '')
+	}
+	saveCurrentUser(nextUser)
 }
 
 export function fetchProfile(
@@ -146,6 +428,465 @@ export function updateProfile(
 	)
 }
 
+export function fetchCertificationStatus(
+	success : (data : AppStudentCertification) => void,
+	fail : (message : string) => void
+) {
+	request<AppStudentCertification>(
+		'/api/v1/app/profile/certification',
+		'GET',
+		null,
+		true,
+		false,
+		(data) => {
+			success(data)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function submitCertification(
+	data : AppStudentCertificationRequest,
+	success : (result : AppStudentCertification) => void,
+	fail : (message : string) => void
+) {
+	request<AppStudentCertification>(
+		'/api/v1/app/profile/certification',
+		'POST',
+		data as UTSJSONObject,
+		true,
+		false,
+		(result) => {
+			success(result)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchLiveSessions(
+	success : (pageData : PageResponse<LiveSession>) => void,
+	fail : (message : string) => void
+) {
+	request<PageResponse<LiveSession>>(
+		'/api/v1/app/live-sessions?page=1&size=20',
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			success(pageData)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchLiveSessionDetail(
+	id : string,
+	success : (detail : LiveSession) => void,
+	fail : (message : string) => void
+) {
+	request<LiveSession>(
+		'/api/v1/app/live-sessions/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(detail)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchCourses(
+	success : (pageData : PageResponse<Course>) => void,
+	fail : (message : string) => void
+) {
+	request<PageResponse<Course>>(
+		'/api/v1/app/learning/courses?page=1&size=20',
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			success(pageData)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchCourseDetail(
+	id : string,
+	success : (detail : Course) => void,
+	fail : (message : string) => void
+) {
+	request<Course>(
+		'/api/v1/app/learning/courses/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(detail)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export type ExpertExperience = {
+	id : number
+	expertId : number
+	experienceType : string
+	title : string
+	description : string
+	startDate : string
+	endDate : string
+	sortOrder : number
+}
+
+export type ExpertDetail = {
+	id : number
+	realName : string
+	avatarUrl : string
+	title : string
+	organization : string
+	specialty : string
+	introduction : string
+	consultationNotice : string
+	sortOrder : number
+	categoryIds : number[]
+	experiences : ExpertExperience[]
+}
+
+export function fetchExpertDetail(
+	id : string,
+	success : (detail : ExpertDetail) => void,
+	fail : (message : string) => void
+) {
+	request<ExpertDetail>(
+		'/api/v1/app/experts/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(detail)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchTopics(
+	success : (pageData : PageResponse<Topic>) => void,
+	fail : (message : string) => void
+) {
+	request<PageResponse<Topic>>(
+		'/api/v1/app/learning/topics?page=1&size=20',
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			success(pageData)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchHomeCategories(
+	success : (pageData : PageResponse<HomeCategory>) => void,
+	fail : (message : string) => void
+) {
+	request<PageResponse<HomeCategory>>(
+		'/api/v1/admin/content/home/categories?page=1&size=50',
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			success(pageData)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchHomeContents(
+	success : (pageData : PageResponse<HomeContent>) => void,
+	fail : (message : string) => void
+) {
+	request<PageResponse<HomeContent>>(
+		'/api/v1/admin/content/home/contents?page=1&size=50',
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			success(pageData)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchTopicDetail(
+	id : string,
+	success : (detail : Topic) => void,
+	fail : (message : string) => void
+) {
+	request<Topic>(
+		'/api/v1/app/learning/topics/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(detail)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function requestAvatarUploadUrl(
+	requestData : AvatarUploadUrlRequest,
+	success : (data : AvatarUploadUrlResponse) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/profile/avatar/upload-url',
+		'POST',
+		requestData as UTSJSONObject,
+		true,
+		false,
+		(data) => {
+			const normalized = normalizeUploadUrlResponse(data)
+			if (normalized.uploadUrl == '' || normalized.objectKey == '') {
+				fail('头像上传地址返回格式不正确')
+				return
+			}
+			success(normalized)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function confirmAvatarUpload(
+	data : AvatarConfirmRequest,
+	success : (result : AppProfile) => void,
+	fail : (message : string) => void
+) {
+	request<AppProfile>(
+		'/api/v1/app/profile/avatar/confirm',
+		'POST',
+		data as UTSJSONObject,
+		true,
+		false,
+		(result) => {
+			success(result)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function uploadAvatarFile(
+	filePath : string,
+	config : AvatarUploadUrlResponse,
+	success : () => void,
+	fail : (message : string) => void
+) {
+	if (config.method.toUpperCase() == 'PUT') {
+		uni.uploadFile({
+			url: config.uploadUrl,
+			filePath,
+			name: 'file',
+			header: (() : UTSJSONObject => {
+				const putHeaders : UTSJSONObject = {
+					'Content-Type': 'application/octet-stream'
+				}
+				if (config.headers != null) {
+					const keys = Object.keys(config.headers)
+					for (let i = 0; i < keys.length; i++) {
+						const key = keys[i]
+						const value = config.headers[key]
+						if (typeof value == 'string') {
+							putHeaders[key] = value
+						}
+					}
+				}
+				return putHeaders
+			})(),
+			success: (res) => {
+				if (res.statusCode >= 200 && res.statusCode < 300) {
+					success()
+					return
+				}
+				fail('头像文件上传失败')
+			},
+			fail: (err) => {
+				fail(err.errMsg != null && err.errMsg != '' ? err.errMsg : '头像文件上传失败')
+			}
+		})
+		return
+	}
+
+	const uploadHeader : UTSJSONObject = {}
+	if (config.headers != null) {
+		const keys = Object.keys(config.headers)
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]
+			const value = config.headers[key]
+			if (typeof value == 'string') {
+				uploadHeader[key] = value
+			}
+		}
+	}
+
+	const uploadFormData : UTSJSONObject = {}
+	if (config.formData != null) {
+		const keys = Object.keys(config.formData)
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]
+			const value = config.formData[key]
+			if (typeof value == 'string') {
+				uploadFormData[key] = value
+			}
+		}
+	}
+
+	uni.uploadFile({
+		url: config.uploadUrl,
+		filePath,
+		name: 'file',
+		formData: uploadFormData,
+		header: uploadHeader,
+		success: (res) => {
+			if (res.statusCode >= 200 && res.statusCode < 300) {
+				success()
+				return
+			}
+			fail('头像文件上传失败')
+		},
+		fail: (err) => {
+			fail(err.errMsg != null && err.errMsg != '' ? err.errMsg : '头像文件上传失败')
+		}
+	})
+}
+
+export function uploadAvatarBinaryFile(
+	filePath : string,
+	config : AvatarUploadUrlResponse,
+	binaryConfig : AvatarBinaryUploadConfig,
+	success : () => void,
+	fail : (message : string) => void
+) {
+	if (config.method.toUpperCase() == 'PUT') {
+		uni.getFileSystemManager().readFile({
+			filePath,
+			success: (readRes) => {
+				const putHeaders : UTSJSONObject = {
+					'Content-Type': binaryConfig.contentType
+				}
+				if (config.headers != null) {
+					const keys = Object.keys(config.headers)
+					for (let i = 0; i < keys.length; i++) {
+						const key = keys[i]
+						const value = config.headers[key]
+						if (typeof value == 'string') {
+							putHeaders[key] = value
+						}
+					}
+				}
+				uni.request({
+					url: config.uploadUrl,
+					method: 'PUT',
+					data: readRes.data,
+					header: putHeaders,
+					success: (res) => {
+						if (res.statusCode >= 200 && res.statusCode < 300) {
+							success()
+							return
+						}
+						fail('头像文件上传失败')
+					},
+					fail: (err) => {
+						fail(err.errMsg != null && err.errMsg != '' ? err.errMsg : '头像文件上传失败')
+					}
+				})
+			},
+			fail: (err) => {
+				fail(err.errMsg != null && err.errMsg != '' ? err.errMsg : '读取头像文件失败')
+			}
+		})
+		return
+	}
+
+	const uploadHeader : UTSJSONObject = {}
+	if (config.headers != null) {
+		const keys = Object.keys(config.headers)
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]
+			const value = config.headers[key]
+			if (typeof value == 'string') {
+				uploadHeader[key] = value
+			}
+		}
+	}
+
+	const uploadFormData : UTSJSONObject = {}
+	if (config.formData != null) {
+		const keys = Object.keys(config.formData)
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]
+			const value = config.formData[key]
+			if (typeof value == 'string') {
+				uploadFormData[key] = value
+			}
+		}
+	}
+
+	uni.uploadFile({
+		url: config.uploadUrl,
+		filePath,
+		name: 'file',
+		formData: uploadFormData,
+		header: uploadHeader,
+		success: (res) => {
+			if (res.statusCode >= 200 && res.statusCode < 300) {
+				success()
+				return
+			}
+			fail('头像文件上传失败')
+		},
+		fail: (err) => {
+			fail(err.errMsg != null && err.errMsg != '' ? err.errMsg : '头像文件上传失败')
+		}
+	})
+}
+
 export function clearAuthStorage() {
 	uni.removeStorageSync(ACCESS_TOKEN_KEY)
 	uni.removeStorageSync(TOKEN_TYPE_KEY)
@@ -159,7 +900,7 @@ export function getCurrentUserFromStorage() : CurrentUser | null {
 	if (user == null || user == '') {
 		return null
 	}
-	return user as CurrentUser
+	return normalizeCurrentUserData(user as UTSJSONObject)
 }
 
 export function hasToken() : boolean {
@@ -281,12 +1022,10 @@ export function loginByWechat(
 				false,
 				(loginData) => {
 					if (loginData.needBindMobile) {
-						// New user, save bindToken and tell page to bind phone
 						saveBindToken(loginData.bindToken)
 						success(null)
 						return
 					}
-					// Existing user, save token and fetch profile
 					const saveData : LoginResponseData = {
 						tokenType: loginData.tokenType,
 						accessToken: loginData.accessToken,

@@ -1,0 +1,378 @@
+<template>
+	<view class="page">
+		<view class="nav-back" @click="handleBack">
+			<image class="nav-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+		</view>
+
+		<view class="header">
+			<text class="header-title">{{ pageTitle }}</text>
+		</view>
+
+		<view class="top-tabs">
+			<view
+				v-for="tab in tabs"
+				:key="tab"
+				class="top-tab"
+				@click="activeTab = tab"
+			>
+				<text class="top-tab-text" :class="activeTab == tab ? 'top-tab-text-active' : ''">{{ tab }}</text>
+				<view v-if="activeTab == tab" class="top-tab-line"></view>
+			</view>
+		</view>
+
+		<scroll-view class="list-scroll" scroll-y="true">
+			<template v-if="activeTab == TAB_BOOK">
+				<view v-for="item in bookItems" :key="item.id" class="book-card">
+					<view class="book-cover-shell">
+						<image class="book-cover" :src="item.cover" mode="aspectFit"></image>
+					</view>
+					<view class="book-main">
+						<view class="book-meta-row">
+							<text class="book-type-tag">{{ item.typeLabel }}</text>
+							<text class="book-title">{{ item.title }}</text>
+						</view>
+						<text class="book-time">{{ lastLearnPrefix }}{{ item.timeText }}</text>
+					</view>
+				</view>
+			</template>
+
+			<template v-else>
+				<view v-for="item in posterItems" :key="item.id" class="poster-card">
+					<view class="poster-cover" :style="{ backgroundColor: item.coverColor }">
+						<view class="poster-type-badge">
+							<text class="poster-type-badge-text">{{ item.typeLabel }}</text>
+						</view>
+						<view class="poster-main-copy">
+							<text class="poster-main-title">{{ item.posterTitle }}</text>
+							<text class="poster-sub-title">{{ item.posterSubTitle }}</text>
+						</view>
+						<text class="poster-side-text">{{ item.sideText }}</text>
+						<view class="poster-figure-shell">
+							<image class="poster-figure" :src="item.cover" mode="aspectFill"></image>
+						</view>
+					</view>
+					<view class="poster-body">
+						<text class="poster-body-title">{{ item.title }}</text>
+					</view>
+				</view>
+			</template>
+
+			<view class="bottom-space"></view>
+		</scroll-view>
+	</view>
+</template>
+
+<script setup lang="uts">
+type BookItem = {
+	id : number
+	title : string
+	timeText : string
+	typeLabel : string
+	cover : string
+}
+
+type PosterItem = {
+	id : number
+	title : string
+	posterTitle : string
+	posterSubTitle : string
+	sideText : string
+	typeLabel : string
+	cover : string
+	coverColor : string
+}
+
+const TAB_BOOK = '\u4e66\u7c4d'
+const TAB_COURSE = '\u8bfe\u7a0b'
+const TAB_TOPIC = '\u4e13\u9898'
+const TAB_PAPER = '\u8bd5\u9898'
+
+const pageTitle = '\u5b66\u4e60\u5386\u53f2'
+const lastLearnPrefix = '\u4e0a\u6b21\u5b66\u4e60\uff1a'
+
+const tabs = [TAB_BOOK, TAB_COURSE, TAB_TOPIC, TAB_PAPER]
+const activeTab = ref(TAB_COURSE)
+
+const bookItems = ref<BookItem[]>([
+	{ id: 1, title: '\u5bf9\u75c7\u827e\u7078', timeText: '2019-10-10 10:10', typeLabel: TAB_BOOK, cover: '/static/logo.png' },
+	{ id: 2, title: '\u767e\u8349\u826f\u65b9', timeText: '2019-10-10 10:10', typeLabel: TAB_BOOK, cover: '/static/logo.png' },
+	{ id: 3, title: '\u9ec4\u5e1d\u5185\u7ecf', timeText: '2019-10-10 10:10', typeLabel: TAB_BOOK, cover: '/static/logo.png' }
+])
+
+const posterItems = ref<PosterItem[]>([
+	{
+		id: 1,
+		title: '\u5168\u606f\u6613\u8c61\u9488\u7078 \u5168\u606f\u6613\u8c61\u9488\u7078 \u57fa\u7840\u7406\u8bba\u7bc7',
+		posterTitle: '\u5168\u606f\n\u6613\u8c61\u9488\u7078',
+		posterSubTitle: '\u57fa\u7840\u7406\u8bba\u7bc7',
+		sideText: '\u90d1\u536b\u4e1c',
+		typeLabel: TAB_COURSE,
+		cover: '/static/logo.png',
+		coverColor: '#F7E6D8'
+	},
+	{
+		id: 2,
+		title: '\u5168\u606f\u6613\u8c61\u9488\u7078 \u5168\u606f\u6613\u8c61\u9488\u7078 \u57fa\u7840\u7406\u8bba\u7bc7',
+		posterTitle: '\u5168\u606f\n\u6613\u8c61\u9488\u7078',
+		posterSubTitle: '\u57fa\u7840\u7406\u8bba\u7bc7',
+		sideText: '\u90d1\u536b\u4e1c',
+		typeLabel: TAB_TOPIC,
+		cover: '/static/logo.png',
+		coverColor: '#F7E6D8'
+	}
+])
+
+const handleBack = () => {
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack()
+		return
+	}
+	uni.redirectTo({
+		url: '/pages/mine/index'
+	})
+}
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+}
+
+.nav-back {
+	position: absolute;
+	left: 22rpx;
+	top: 108rpx;
+	width: 52rpx;
+	height: 52rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 10;
+}
+
+.nav-back-icon {
+	width: 26rpx;
+	height: 26rpx;
+}
+
+.header {
+	height: 188rpx;
+	padding-top: 36rpx;
+	background-color: #ffffff;
+	align-items: center;
+	justify-content: center;
+}
+
+.header-title {
+	font-size: 34rpx;
+	font-weight: 600;
+	color: #1f1f1f;
+}
+
+.top-tabs {
+	height: 92rpx;
+	background-color: #ffffff;
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: #efefef;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #efefef;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-around;
+}
+
+.top-tab {
+	flex: 1;
+	height: 92rpx;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.top-tab-text {
+	font-size: 28rpx;
+	color: #303030;
+}
+
+.top-tab-text-active {
+	color: #b45f73;
+	font-weight: 600;
+}
+
+.top-tab-line {
+	position: absolute;
+	bottom: 10rpx;
+	width: 48rpx;
+	height: 6rpx;
+	border-radius: 4rpx;
+	background-color: #b45f73;
+}
+
+.list-scroll {
+	flex: 1;
+	padding-top: 20rpx;
+}
+
+.book-card {
+	margin-left: 16rpx;
+	margin-right: 16rpx;
+	margin-bottom: 20rpx;
+	padding: 22rpx 24rpx;
+	background-color: #ffffff;
+	border-radius: 22rpx;
+	flex-direction: row;
+	align-items: center;
+	box-shadow: 0 10rpx 24rpx rgba(60, 60, 60, 0.05);
+}
+
+.book-cover-shell {
+	width: 124rpx;
+	height: 164rpx;
+	margin-right: 26rpx;
+	border-radius: 10rpx;
+	background-color: #f1f1f1;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.book-cover {
+	width: 112rpx;
+	height: 152rpx;
+}
+
+.book-main {
+	flex: 1;
+	justify-content: center;
+}
+
+.book-meta-row {
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: 34rpx;
+}
+
+.book-type-tag {
+	padding-left: 14rpx;
+	padding-right: 14rpx;
+	height: 40rpx;
+	border-radius: 20rpx;
+	background-color: #f7e6d8;
+	color: #c4803f;
+	font-size: 22rpx;
+	line-height: 40rpx;
+	margin-right: 16rpx;
+}
+
+.book-title {
+	flex: 1;
+	font-size: 32rpx;
+	font-weight: 600;
+	line-height: 42rpx;
+	color: #242424;
+}
+
+.book-time {
+	font-size: 24rpx;
+	color: #b1b1b1;
+}
+
+.poster-card {
+	margin-left: 16rpx;
+	margin-right: 16rpx;
+	margin-bottom: 22rpx;
+	background-color: #ffffff;
+	border-radius: 22rpx;
+	overflow: hidden;
+	box-shadow: 0 10rpx 24rpx rgba(60, 60, 60, 0.05);
+}
+
+.poster-cover {
+	height: 314rpx;
+	position: relative;
+}
+
+.poster-type-badge {
+	position: absolute;
+	left: 20rpx;
+	top: 18rpx;
+	padding-left: 14rpx;
+	padding-right: 14rpx;
+	height: 42rpx;
+	border-radius: 21rpx;
+	background-color: #ffffff;
+	align-items: center;
+	justify-content: center;
+	z-index: 3;
+}
+
+.poster-type-badge-text {
+	font-size: 20rpx;
+	font-weight: 600;
+	color: #c27a3a;
+}
+
+.poster-main-copy {
+	position: absolute;
+	left: 42rpx;
+	top: 52rpx;
+	z-index: 2;
+}
+
+.poster-main-title {
+	font-size: 64rpx;
+	line-height: 78rpx;
+	font-weight: 600;
+	color: #b6651d;
+	white-space: pre-line;
+}
+
+.poster-sub-title {
+	margin-top: 18rpx;
+	font-size: 34rpx;
+	line-height: 44rpx;
+	color: #8f6136;
+}
+
+.poster-side-text {
+	position: absolute;
+	right: 38rpx;
+	top: 50rpx;
+	font-size: 48rpx;
+	line-height: 62rpx;
+	color: rgba(174, 108, 55, 0.9);
+}
+
+.poster-figure-shell {
+	position: absolute;
+	right: 100rpx;
+	bottom: 18rpx;
+	width: 226rpx;
+	height: 242rpx;
+	border-radius: 14rpx;
+	overflow: hidden;
+}
+
+.poster-figure {
+	width: 226rpx;
+	height: 242rpx;
+}
+
+.poster-body {
+	padding: 18rpx 24rpx 24rpx;
+}
+
+.poster-body-title {
+	font-size: 28rpx;
+	line-height: 40rpx;
+	font-weight: 600;
+	color: #222222;
+}
+
+.bottom-space {
+	height: 36rpx;
+}
+</style>

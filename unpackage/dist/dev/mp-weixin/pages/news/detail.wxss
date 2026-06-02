@@ -27,11 +27,9 @@
 	align-items: center;
 	justify-content: center;
 }
-.back-icon {
-	font-size: 30rpx;
-	line-height: 30rpx;
-	color: #222222;
-	font-weight: 600;
+.back-icon-image {
+	width: 24rpx;
+	height: 24rpx;
 }
 .header-title {
 	font-size: 20px;

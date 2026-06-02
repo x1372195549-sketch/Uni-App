@@ -151,7 +151,7 @@ const placeholderItems: AudioCardItem[] = [
   }
 ]
 
-const audioItems = ref<AudioCardItem[]>(placeholderItems)
+const audioItems = ref<AudioCardItem[]>([])
 
 function safeText(value: string | null): string {
   return value == null || value.length == 0 ? '' : value

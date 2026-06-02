@@ -81,6 +81,9 @@
 </template>
 
 <script setup lang="uts">
+import { ref } from 'vue'
+import { fetchCourses } from '../../utils/auth.uts'
+
 type CourseItem = {
 	id : string
 	coverTitle : string
@@ -91,7 +94,30 @@ type CourseItem = {
 	comments : string
 }
 
-const courseItems = ref<CourseItem[]>([
+type CourseVideo = {
+	id : number
+	courseId : number
+	title : string
+	videoUrl : string
+	durationSeconds : number
+	sortOrder : number
+}
+
+type Course = {
+	id : number
+	courseName : string
+	subtitle : string
+	coverUrl : string
+	lecturerName : string
+	introduction : string
+	paperId : number
+	publishedAt : string
+	progressPercent : number
+	studySeconds : number
+	videos : CourseVideo[]
+}
+
+const placeholderItems = [
 	{
 		id: '1',
 		coverTitle: '课程封面占位',
@@ -110,7 +136,45 @@ const courseItems = ref<CourseItem[]>([
 		views: '2600',
 		comments: '420'
 	}
-])
+]
+
+const courseItems = ref<CourseItem[]>([])
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const mapCourseToCard = (item : Course, index : number) : CourseItem => {
+	const courseName = safeText(item.courseName)
+	const subtitle = safeText(item.subtitle)
+	const lecturer = safeText(item.lecturerName)
+	return {
+		id: String(item.id),
+		coverTitle: courseName.length > 0 ? courseName : '课程封面占位',
+		coverSubtitle: subtitle.length > 0 ? subtitle : '第' + String(index + 1) + '门课程',
+		title: courseName.length > 0 ? courseName : '课程标题占位',
+		teacher: lecturer.length > 0 ? lecturer : '讲师名称占位',
+		views: String(item.studySeconds != null ? item.studySeconds : 0),
+		comments: String(item.videos != null ? item.videos.length : 0)
+	}
+}
+
+const loadCourseItems = () => {
+	fetchCourses(
+		(pageData) => {
+			if (pageData.records != null && pageData.records.length > 0) {
+				courseItems.value = pageData.records.map((item : Course, index : number) : CourseItem => {
+					return mapCourseToCard(item, index)
+				})
+				return
+			}
+			courseItems.value = placeholderItems
+		},
+		() => {
+			courseItems.value = placeholderItems
+		}
+	)
+}
 
 const goLearningPage = () => {
 	uni.redirectTo({ url: '/pages/index/index' })
@@ -147,6 +211,8 @@ const goKnowledgePage = () => {
 const goConsultPage = () => {
 	uni.redirectTo({ url: '/pages/consult/index' })
 }
+
+loadCourseItems()
 </script>
 
 <style>

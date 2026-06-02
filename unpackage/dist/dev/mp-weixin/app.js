@@ -6,6 +6,9 @@ if (!Math) {
   "./pages/auth/bind-phone.js";
   "./pages/mine/index.js";
   "./pages/profile/edit.js";
+  "./pages/profile/certification.js";
+  "./pages/profile/favorites.js";
+  "./pages/profile/history.js";
   "./pages/index/index.js";
   "./pages/audio/index.js";
   "./pages/audio/detail.js";

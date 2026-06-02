@@ -5,129 +5,146 @@
 		</view>
 
 		<view class="header">
-			<text class="header-title">个人资料</text>
+			<text class="header-title">涓汉璧勬枡</text>
 		</view>
 
 		<scroll-view class="form-scroll" scroll-y="true">
 			<view class="form-card">
 				<view class="form-row avatar-row" @click="handleChooseAvatar">
-					<text class="row-label">头像</text>
+					<text class="row-label">澶村儚</text>
 					<view class="row-right">
-						<image class="avatar" :src="form.avatarUrl" mode="aspectFill"></image>
-						<text class="row-arrow">></text>
+						<image class="avatar" :src="form.avatarUrl || defaultAvatar" mode="aspectFill"></image>
 					</view>
 				</view>
 
 				<view class="form-row">
-					<text class="row-label">昵称</text>
+					<text class="row-label">鏄电О</text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.nickname" placeholder="请输入昵称" />
-						<text class="row-arrow">></text>
+						<input class="row-input" v-model="form.nickname" placeholder="璇疯緭鍏ユ樀绉? />
 					</view>
 				</view>
 
 				<view class="form-row" @click="handleChooseGender">
-					<text class="row-label">性别</text>
+					<text class="row-label">鎬у埆</text>
 					<view class="row-right">
-						<text class="row-value">{{ form.gender || '请选择' }}</text>
-						<text class="row-arrow">></text>
+						<text class="row-value">{{ form.gender || '璇烽€夋嫨' }}</text>
 					</view>
 				</view>
 
 				<view class="form-row">
-					<text class="row-label">年龄</text>
+					<text class="row-label">閭</text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" type="number" maxlength="3" v-model="form.age" placeholder="请输入数字年龄" @input="handleAgeInput" />
-						<text class="row-arrow">></text>
+						<input class="row-input" v-model="form.email" placeholder="璇疯緭鍏ラ偖绠? />
 					</view>
 				</view>
 
-				<view class="form-row" @click="handleChooseEducation">
-					<text class="row-label">文化程度</text>
-					<view class="row-right">
-						<text class="row-value">{{ form.education || '请选择' }}</text>
-						<text class="row-arrow">></text>
-					</view>
-				</view>
-
-				<view class="form-row">
-					<text class="row-label">执业类别</text>
+				<view class="form-row signature-row">
+					<text class="row-label">涓€х鍚?/text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.practiceType" placeholder="请输入执业类别" />
-						<text class="row-arrow">></text>
-					</view>
-				</view>
-
-				<view class="form-row">
-					<text class="row-label">地区</text>
-					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.organization" placeholder="请输入地区" />
-						<text class="row-arrow">></text>
-					</view>
-				</view>
-
-				<view class="form-row">
-					<text class="row-label">联系电话</text>
-					<view class="row-right row-input-wrap">
-						<input class="row-input" type="number" maxlength="11" v-model="form.phone" placeholder="请输入11位联系电话" @input="handlePhoneInput" />
-						<text class="row-arrow">></text>
+						<textarea class="row-textarea" v-model="form.profileSignature" placeholder="璇疯緭鍏ヤ釜鎬х鍚?></textarea>
 					</view>
 				</view>
 			</view>
 
 			<view class="actions">
-				<button class="save-btn" hover-class="save-btn-hover" @click="handleSave">保存</button>
+				<button class="save-btn" hover-class="save-btn-hover" @click="handleSave" :disabled="isSaving">
+					{{ isSaving ? '淇濆瓨涓?..' : '淇濆瓨' }}
+				</button>
 			</view>
 		</scroll-view>
 	</view>
 </template>
 
 <script setup lang="uts">
-import { fetchProfile, updateProfile } from '../../utils/auth.uts'
+import {
+	fetchProfile,
+	updateProfile,
+	requestAvatarUploadUrl,
+	uploadAvatarBinaryFile,
+	confirmAvatarUpload
+} from '../../utils/auth.uts'
 
 type ProfileForm = {
 	avatarUrl : string
 	nickname : string
 	gender : string
-	age : string
-	education : string
-	practiceType : string
-	organization : string
-	phone : string
+	email : string
+	profileSignature : string
+}
+
+type AvatarMeta = {
+	originalName : string
+	contentType : string
+	fileSize : number
 }
 
 const storageKey = 'profile_edit_form'
-const educationOptions = ['小学', '初中', '高中', '专科', '本科', '研究生', '博士']
-const genderOptions = ['男', '女']
+const genderOptions = ['鐢?, '濂?]
 const defaultAvatar = '/static/mine/avatar.png'
+const testAvatarSource = '/static/profile/test-avatar.png'
+const isSaving = ref(false)
+const selectedAvatarMeta = ref<AvatarMeta | null>(null)
 
 const form = ref<ProfileForm>({
 	avatarUrl: defaultAvatar,
 	nickname: '',
 	gender: '',
-	age: '',
-	education: '',
-	practiceType: '',
-	organization: '',
-	phone: ''
+	email: '',
+	profileSignature: ''
 })
 
 const genderMap : UTSJSONObject = {
-	'男': '1',
-	'女': '2'
+	'鐢?: '1',
+	'濂?: '2'
 }
 
 const genderReverseMap : UTSJSONObject = {
-	'1': '男',
-	'2': '女'
+	'1': '鐢?,
+	'2': '濂?
 }
 
-const digitsOnly = (value : string) : string => {
-	return value.replace(/[^0-9]/g, '')
+const isRemoteAvatarUrl = (value : string) : boolean => {
+	if (value == null || value == '') {
+		return false
+	}
+	return /^https?:\/\//.test(value)
 }
 
-const isValidPhone = (value : string) : boolean => {
-	return /^1\d{10}$/.test(value)
+const getFileNameFromPath = (filePath : string) : string => {
+	if (filePath == null || filePath == '') {
+		return 'avatar.jpg'
+	}
+	const parts = filePath.split('/')
+	if (parts.length > 0) {
+		const last = parts[parts.length - 1]
+		if (last != null && last != '') {
+			return last
+		}
+	}
+	return 'avatar.jpg'
+}
+
+const getContentTypeFromFileName = (fileName : string) : string => {
+	const lower = fileName.toLowerCase()
+	if (lower.endsWith('.png')) {
+		return 'image/png'
+	}
+	if (lower.endsWith('.gif')) {
+		return 'image/gif'
+	}
+	if (lower.endsWith('.webp')) {
+		return 'image/webp'
+	}
+	return 'image/jpeg'
+}
+
+const buildAvatarMeta = (filePath : string, fileSize : number) : AvatarMeta => {
+	const originalName = getFileNameFromPath(filePath)
+	return {
+		originalName,
+		contentType: getContentTypeFromFileName(originalName),
+		fileSize: fileSize > 0 ? fileSize : 1024
+	}
 }
 
 const handleBack = () => {
@@ -145,41 +162,49 @@ const loadProfile = () => {
 	const cached = uni.getStorageSync(storageKey)
 	if (cached != null && cached != '') {
 		form.value = cached as ProfileForm
-		form.value.age = digitsOnly(form.value.age).slice(0, 3)
-		form.value.phone = digitsOnly(form.value.phone).slice(0, 11)
 	}
 
 	fetchProfile(
 		(profile) => {
 			form.value.nickname = profile.nickname || form.value.nickname
 			form.value.avatarUrl = profile.avatarUrl || form.value.avatarUrl
-			form.value.phone = profile.mobile || form.value.phone
+			form.value.email = profile.email || form.value.email
+			form.value.profileSignature = profile.profileSignature || form.value.profileSignature
 			const g = genderReverseMap[profile.gender] as string
 			if (g) {
 				form.value.gender = g
 			}
+			saveProfileLocal()
 		},
 		() => {}
 	)
 }
 
-const handleAgeInput = () => {
-	form.value.age = digitsOnly(form.value.age).slice(0, 3)
-}
-
-const handlePhoneInput = () => {
-	form.value.phone = digitsOnly(form.value.phone).slice(0, 11)
-}
-
 const handleChooseAvatar = () => {
-	uni.chooseImage({
-		count: 1,
-		sizeType: ['compressed'],
-		sourceType: ['album'],
+	uni.getImageInfo({
+		src: testAvatarSource,
 		success: (res) => {
-			if (res.tempFilePaths != null && res.tempFilePaths.length > 0) {
-				form.value.avatarUrl = res.tempFilePaths[0]
-			}
+			const resolvedPath = res.path != null && res.path != '' ? res.path : testAvatarSource
+			form.value.avatarUrl = resolvedPath
+			selectedAvatarMeta.value = buildAvatarMeta('test-avatar.png', 1024)
+		},
+		fail: () => {
+			uni.chooseImage({
+				count: 1,
+				sizeType: ['compressed'],
+				sourceType: ['album'],
+				success: (res) => {
+					if (res.tempFilePaths != null && res.tempFilePaths.length > 0) {
+						form.value.avatarUrl = res.tempFilePaths[0]
+						if (res.tempFiles != null && res.tempFiles.length > 0) {
+							const tempFile = res.tempFiles[0]
+							selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], tempFile.size)
+							return
+						}
+						selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], 1024)
+					}
+				}
+			})
 		}
 	})
 }
@@ -193,55 +218,131 @@ const handleChooseGender = () => {
 	})
 }
 
-const handleChooseEducation = () => {
-	uni.showActionSheet({
-		itemList: educationOptions,
-		success: (res) => {
-			form.value.education = educationOptions[res.tapIndex]
-		}
-	})
-}
-
 const saveProfileLocal = () => {
 	uni.setStorageSync(storageKey, form.value)
 }
 
-const handleSave = () => {
-	handleAgeInput()
-	handlePhoneInput()
-
-	if (form.value.age != '' && digitsOnly(form.value.age) != form.value.age) {
-		uni.showToast({
-			title: '年龄只能填写数字',
-			icon: 'none'
-		})
+const uploadAvatarIfNeeded = (
+	success : (remoteAvatarUrl : string, didUploadAvatar : boolean) => void,
+	fail : (message : string) => void
+) => {
+	const currentAvatar = form.value.avatarUrl || ''
+	if (currentAvatar == '' || currentAvatar == defaultAvatar || isRemoteAvatarUrl(currentAvatar)) {
+		success(currentAvatar, false)
 		return
 	}
 
-	if (form.value.phone != '' && !isValidPhone(form.value.phone)) {
-		uni.showToast({
-			title: '联系电话需为11位手机号',
-			icon: 'none'
-		})
-		return
-	}
-
-	saveProfileLocal()
-
-	const genderCode = genderMap[form.value.gender] as string
-	updateProfile(
+	requestAvatarUploadUrl(
 		{
-			nickname: form.value.nickname,
-			avatarUrl: form.value.avatarUrl != defaultAvatar ? form.value.avatarUrl : undefined,
-			gender: genderCode
+			originalName: selectedAvatarMeta.value != null ? selectedAvatarMeta.value!.originalName : getFileNameFromPath(currentAvatar),
+			contentType: selectedAvatarMeta.value != null ? selectedAvatarMeta.value!.contentType : getContentTypeFromFileName(getFileNameFromPath(currentAvatar)),
+			fileSize: selectedAvatarMeta.value != null ? selectedAvatarMeta.value!.fileSize : 1024
 		},
-		() => {
-			uni.showToast({
-				title: '已保存',
-				icon: 'success'
-			})
+		(uploadConfig) => {
+			uploadAvatarBinaryFile(
+				currentAvatar,
+				uploadConfig,
+				{
+					contentType: selectedAvatarMeta.value != null ? selectedAvatarMeta.value!.contentType : getContentTypeFromFileName(getFileNameFromPath(currentAvatar))
+				},
+				() => {
+					const originalName = getFileNameFromPath(currentAvatar)
+					confirmAvatarUpload(
+						{
+							objectKey: uploadConfig.objectKey,
+							originalName
+						},
+						(result) => {
+							const remoteAvatarUrl = result.avatarUrl || uploadConfig.publicUrl
+							if (remoteAvatarUrl == '') {
+								fail('澶村儚涓婁紶纭鎴愬姛锛屼絾鏈繑鍥炲ご鍍忓湴鍧€')
+								return
+							}
+							form.value.avatarUrl = remoteAvatarUrl
+							selectedAvatarMeta.value = null
+							success(remoteAvatarUrl, true)
+						},
+						(message) => {
+							fail(message || '澶村儚涓婁紶纭澶辫触')
+						}
+					)
+				},
+				(message) => {
+					fail(message || '澶村儚涓婁紶澶辫触')
+				}
+			)
 		},
 		(message) => {
+			fail(message || '澶村儚涓婁紶鍦板潃鑾峰彇澶辫触')
+		}
+	)
+}
+
+const handleSave = () => {
+	if (isSaving.value) {
+		return
+	}
+
+	isSaving.value = true
+
+	uploadAvatarIfNeeded(
+		(remoteAvatarUrl, didUploadAvatar) => {
+			const genderCode = genderMap[form.value.gender] as string
+			updateProfile(
+				{
+					nickname: form.value.nickname,
+					profileSignature: form.value.profileSignature,
+					email: form.value.email,
+					gender: genderCode
+				},
+				() => {
+					if (didUploadAvatar && remoteAvatarUrl != '') {
+						fetchProfile(
+							(profile) => {
+								saveProfileLocal()
+								isSaving.value = false
+								if (profile.avatarUrl == remoteAvatarUrl) {
+									uni.showToast({
+										title: '澶村儚宸蹭笂浼犲苟鍏ュ簱',
+										icon: 'success'
+									})
+									return
+								}
+								uni.showToast({
+									title: '澶村儚鏂囦欢宸蹭笂浼狅紝浣嗗悗绔祫鏂欐湭鏇存柊',
+									icon: 'none'
+								})
+							},
+							() => {
+								saveProfileLocal()
+								isSaving.value = false
+								uni.showToast({
+									title: '璧勬枡宸蹭繚瀛橈紝澶村儚涓婁紶缁撴灉寰呯‘璁?,
+									icon: 'none'
+								})
+							}
+						)
+						return
+					}
+
+					saveProfileLocal()
+					isSaving.value = false
+					uni.showToast({
+						title: '宸蹭繚瀛?,
+						icon: 'success'
+					})
+				},
+				(message) => {
+					isSaving.value = false
+					uni.showToast({
+						title: message,
+						icon: 'none'
+					})
+				}
+			)
+		},
+		(message) => {
+			isSaving.value = false
 			uni.showToast({
 				title: message,
 				icon: 'none'
@@ -297,6 +398,10 @@ loadProfile()
 	margin-left: 12rpx;
 	margin-right: 12rpx;
 	background-color: #ffffff;
+}
+
+.picker-row {
+	display: flex;
 }
 
 .form-row {
@@ -362,10 +467,23 @@ loadProfile()
 	background-color: transparent;
 }
 
-.row-arrow {
-	font-size: 22rpx;
-	line-height: 22rpx;
-	color: #c3c3c3;
+.signature-row {
+	align-items: flex-start;
+	padding-top: 24rpx;
+	padding-bottom: 24rpx;
+}
+
+.row-textarea {
+	width: 320rpx;
+	min-height: 120rpx;
+	font-size: 16px;
+	line-height: 24px;
+	color: #8f8f8f;
+	text-align: left;
+	background-color: #f7f7fb;
+	border-radius: 12rpx;
+	padding: 16rpx;
+	box-sizing: border-box;
 }
 
 .actions {
@@ -386,15 +504,11 @@ loadProfile()
 	border-width: 0;
 }
 
-.save-btn-hover {
-	opacity: 0.92;
+.save-btn[disabled] {
+	opacity: 0.76;
 }
 
-.hint {
-	margin-top: 16rpx;
-	font-size: 13px;
-	line-height: 20px;
-	color: #a6a6a6;
-	text-align: center;
+.save-btn-hover {
+	opacity: 0.92;
 }
 </style>

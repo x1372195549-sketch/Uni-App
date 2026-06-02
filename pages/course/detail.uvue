@@ -2,7 +2,7 @@
 	<view class="page">
 		<view class="header">
 			<view class="back-btn" @click="goBack">
-				<text class="back-icon"><</text>
+				<image class="back-icon-image" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
 			</view>
 			<text class="header-title">详情</text>
 		</view>
@@ -27,18 +27,15 @@
 			</view>
 
 			<view v-if="activeTab == 'intro'" class="intro-panel">
-				<text class="media-title">课程标题占位 {{ courseId }}</text>
+				<text class="media-title">{{ courseTitle }}</text>
 
 				<view class="stats-row">
-					<text class="stats-text">浏览 2600</text>
-					<text class="stats-text">收藏 980</text>
+					<text class="stats-text">学时 {{ courseViews }}</text>
+					<text class="stats-text">目录 {{ courseFavorites }}</text>
 				</view>
 
 				<text class="section-title">课程介绍</text>
-				<text class="intro-text">
-					这里是课程简介占位内容。后续可接入真实的课程简介、讲师说明、学习目标、适用人群与补充说明等文本信息。
-					这里保留为较长段落，用于模拟设计图中的正文排版效果，方便你后续直接替换成接口返回内容。
-				</text>
+				<text class="intro-text">{{ courseIntro }}</text>
 			</view>
 
 			<view v-else class="catalog-panel">
@@ -56,14 +53,44 @@
 </template>
 
 <script setup lang="uts">
+import { ref, onMounted } from 'vue'
+import { fetchCourseDetail } from '../../utils/auth.uts'
+
 type CatalogItem = {
 	id : string
 	title : string
 	duration : string
 }
 
+type CourseVideo = {
+	id : number
+	courseId : number
+	title : string
+	videoUrl : string
+	durationSeconds : number
+	sortOrder : number
+}
+
+type Course = {
+	id : number
+	courseName : string
+	subtitle : string
+	coverUrl : string
+	lecturerName : string
+	introduction : string
+	paperId : number
+	publishedAt : string
+	progressPercent : number
+	studySeconds : number
+	videos : CourseVideo[]
+}
+
 const courseId = ref('')
 const activeTab = ref('intro')
+const courseTitle = ref('课程详情')
+const courseViews = ref('0')
+const courseFavorites = ref('0')
+const courseIntro = ref('这里展示课程基础信息。接口返回课程简介、讲师、课程副标题与视频目录时，将优先使用后端数据。')
 
 const catalogItems = ref<CatalogItem[]>([
 	{ id: '1', title: '课程1：目录标题占位一', duration: '21\'40"' },
@@ -71,6 +98,60 @@ const catalogItems = ref<CatalogItem[]>([
 	{ id: '3', title: '课程3：目录标题占位三', duration: '21\'40"' },
 	{ id: '4', title: '课程4：目录标题占位四', duration: '21\'40"' }
 ])
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const formatDuration = (seconds : number) : string => {
+	const total = seconds > 0 ? seconds : 0
+	const minute = Math.floor(total / 60)
+	const second = total % 60
+	const secondText = second < 10 ? '0' + String(second) : String(second)
+	return String(minute) + "'" + secondText + '"'
+}
+
+const applyCourseDetail = (detail : Course) => {
+	const titleText = safeText(detail.courseName)
+	if (titleText.length > 0) {
+		courseTitle.value = titleText
+	}
+
+	const introText = safeText(detail.introduction)
+	if (introText.length > 0) {
+		courseIntro.value = introText
+	} else {
+		const introParts = new Array<string>()
+		const subtitleText = safeText(detail.subtitle)
+		const lecturerText = safeText(detail.lecturerName)
+		const publishedText = safeText(detail.publishedAt)
+		if (subtitleText.length > 0) {
+			introParts.push('课程副标题：' + subtitleText)
+		}
+		if (lecturerText.length > 0) {
+			introParts.push('讲师：' + lecturerText)
+		}
+		if (publishedText.length > 0) {
+			introParts.push('发布时间：' + publishedText.replace('T', ' '))
+		}
+		if (introParts.length > 0) {
+			courseIntro.value = introParts.join('；')
+		}
+	}
+
+	courseViews.value = String(detail.studySeconds != null ? detail.studySeconds : 0)
+	courseFavorites.value = String(detail.videos != null ? detail.videos.length : 0)
+
+	if (detail.videos != null && detail.videos.length > 0) {
+		catalogItems.value = detail.videos.map((item : CourseVideo, index : number) : CatalogItem => {
+			return {
+				id: String(item.id),
+				title: safeText(item.title).length > 0 ? item.title : '课程' + String(index + 1),
+				duration: formatDuration(item.durationSeconds)
+			}
+		})
+	}
+}
 
 const goBack = () => {
 	uni.navigateBack()
@@ -89,9 +170,21 @@ const loadParams = () => {
 			}
 		}
 	}
+
+	if (courseId.value.length > 0) {
+		fetchCourseDetail(
+			courseId.value,
+			(detail) => {
+				applyCourseDetail(detail)
+			},
+			() => {}
+		)
+	}
 }
 
-loadParams()
+onMounted(() => {
+	loadParams()
+})
 </script>
 
 <style>
@@ -124,11 +217,9 @@ loadParams()
 	justify-content: center;
 }
 
-.back-icon {
-	font-size: 30rpx;
-	line-height: 30rpx;
-	color: #222222;
-	font-weight: 600;
+.back-icon-image {
+	width: 24rpx;
+	height: 24rpx;
 }
 
 .header-title {

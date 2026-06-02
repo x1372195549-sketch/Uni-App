@@ -7838,9 +7838,9 @@ function isConsoleWritable() {
   return isWritable;
 }
 function initRuntimeSocketService() {
-  const hosts = "198.18.0.1,26.111.21.246,10.21.146.83,127.0.0.1";
+  const hosts = "26.111.21.246,10.21.146.83,127.0.0.1";
   const port = "8090";
-  const id = "mp-weixin_QFdrEE";
+  const id = "mp-weixin_4jX2s3";
   const lazy = typeof swan !== "undefined";
   let restoreError = lazy ? () => {
   } : initOnError();
@@ -9491,6 +9491,14 @@ const createSubpackageApp = initCreateSubpackageApp();
   wx.createPluginApp = global.createPluginApp = createPluginApp;
   wx.createSubpackageApp = global.createSubpackageApp = createSubpackageApp;
 }
+const createLifeCycleHook = (lifecycle, flag = 0) => (hook, target = getCurrentInstance()) => {
+  !isInSSRComponentSetup && injectHook(lifecycle, hook, target);
+};
+const onShow = /* @__PURE__ */ createLifeCycleHook(
+  ON_SHOW,
+  1 | 2
+  /* HookFlags.PAGE */
+);
 exports.computed = computed;
 exports.createSSRApp = createSSRApp;
 exports.defineComponent = defineComponent;
@@ -9502,6 +9510,7 @@ exports.isRef = isRef;
 exports.n = n;
 exports.o = o;
 exports.onMounted = onMounted;
+exports.onShow = onShow;
 exports.onUnmounted = onUnmounted;
 exports.ref = ref;
 exports.sei = sei;

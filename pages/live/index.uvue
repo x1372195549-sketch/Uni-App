@@ -83,6 +83,9 @@
 </template>
 
 <script setup lang="uts">
+import { ref } from 'vue'
+import { fetchLiveSessions } from '../../utils/auth.uts'
+
 type LiveItem = {
 	id : string
 	coverTitle : string
@@ -93,7 +96,20 @@ type LiveItem = {
 	comments : string
 }
 
-const liveItems = ref<LiveItem[]>([
+type LiveSession = {
+	id : number
+	title : string
+	coverUrl : string
+	anchorName : string
+	liveUrl : string
+	playbackUrl : string
+	startAt : string
+	endAt : string
+	reviewStatus : string
+	liveStatus : string
+}
+
+const placeholderItems = [
 	{
 		id: '1',
 		coverTitle: '直播封面占位',
@@ -112,7 +128,63 @@ const liveItems = ref<LiveItem[]>([
 		views: '1800',
 		comments: '240'
 	}
-])
+]
+
+const liveItems = ref<LiveItem[]>([])
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const formatStartText = (value : string | null, index : number) : string => {
+	const text = safeText(value)
+	if (text.length == 0) {
+		return '第' + String(index + 1) + '场直播'
+	}
+	if (text.length >= 16) {
+		return text.slice(5, 16).replace('T', ' ')
+	}
+	return text
+}
+
+const mapLiveToCard = (item : LiveSession, index : number) : LiveItem => {
+	const titleText = safeText(item.title)
+	const anchorText = safeText(item.anchorName)
+	const liveStatusText = item.liveStatus == '1'
+		? '直播中'
+		: item.liveStatus == '2'
+			? '直播预告'
+			: item.liveStatus == '3'
+				? '直播回放'
+				: '直播内容'
+
+	return {
+		id: String(item.id),
+		coverTitle: titleText.length > 0 ? titleText : '直播封面占位',
+		coverSubtitle: formatStartText(item.startAt, index),
+		title: titleText.length > 0 ? titleText : '直播标题占位',
+		teacher: anchorText.length > 0 ? anchorText : liveStatusText,
+		views: item.startAt != null && item.startAt.length > 0 ? '已排期' : '未排期',
+		comments: item.playbackUrl != null && item.playbackUrl.length > 0 ? '有回放' : '无回放'
+	}
+}
+
+const loadLiveItems = () => {
+	fetchLiveSessions(
+		(pageData) => {
+			if (pageData.records != null && pageData.records.length > 0) {
+				liveItems.value = pageData.records.map((item : LiveSession, index : number) : LiveItem => {
+					return mapLiveToCard(item, index)
+				})
+				return
+			}
+			liveItems.value = placeholderItems
+		},
+		() => {
+			liveItems.value = placeholderItems
+		}
+	)
+}
 
 const goLearningPage = () => {
 	uni.redirectTo({ url: '/pages/index/index' })
@@ -149,6 +221,8 @@ const goKnowledgePage = () => {
 const goConsultPage = () => {
 	uni.redirectTo({ url: '/pages/consult/index' })
 }
+
+loadLiveItems()
 </script>
 
 <style>

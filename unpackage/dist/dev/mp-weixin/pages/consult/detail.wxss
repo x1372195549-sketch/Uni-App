@@ -55,6 +55,15 @@
 	align-items: center;
 	justify-content: center;
 }
+.avatar-image {
+	width: 160rpx;
+	height: 160rpx;
+	border-radius: 80rpx;
+	border-width: 8rpx;
+	border-style: solid;
+	border-color: #3dbfe2;
+	margin-top: 20rpx;
+}
 .avatar-circle {
 	width: 160rpx;
 	height: 160rpx;
@@ -180,7 +189,4 @@
 	color: #ffffff;
 	font-size: 18px;
 	line-height: 88rpx;
-}
-.consult-btn-hover {
-	opacity: 0.9;
 }

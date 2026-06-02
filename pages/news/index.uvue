@@ -49,7 +49,7 @@
 							<text class="teacher-name">{{ item.source }}</text>
 							<view class="stats">
 								<text class="stat-text">浏览 {{ item.views }}</text>
-								<text class="stat-text">评论 {{ item.comments }}</text>
+								<text class="stat-text">目录 {{ item.comments }}</text>
 							</view>
 						</view>
 					</view>
@@ -83,6 +83,29 @@
 </template>
 
 <script setup lang="uts">
+import { ref } from 'vue'
+import { fetchTopics } from '../../utils/auth.uts'
+
+type TopicItem = {
+	id : number
+	topicId : number
+	itemType : string
+	itemId : number
+	sortOrder : number
+	resource : UTSJSONObject | null
+}
+
+type Topic = {
+	id : number
+	title : string
+	summary : string
+	learningRequirements : string
+	coverUrl : string
+	viewCount : number
+	publishedAt : string
+	items : TopicItem[]
+}
+
 type NewsItem = {
 	id : string
 	coverTitle : string
@@ -93,7 +116,7 @@ type NewsItem = {
 	comments : string
 }
 
-const newsItems = ref<NewsItem[]>([
+const placeholderItems : NewsItem[] = [
 	{
 		id: '1',
 		coverTitle: '资讯封面占位',
@@ -101,7 +124,7 @@ const newsItems = ref<NewsItem[]>([
 		title: '资讯标题占位一，点击进入资讯详情页面',
 		source: '来源占位',
 		views: '3200',
-		comments: '530'
+		comments: '3'
 	},
 	{
 		id: '2',
@@ -110,9 +133,46 @@ const newsItems = ref<NewsItem[]>([
 		title: '资讯标题占位二，点击进入资讯详情页面',
 		source: '来源占位',
 		views: '3200',
-		comments: '530'
+		comments: '3'
 	}
-])
+]
+
+const newsItems = ref<NewsItem[]>([])
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const mapTopicToNews = (item : Topic, index : number) : NewsItem => {
+	const title = safeText(item.title)
+	const summary = safeText(item.summary)
+	return {
+		id: String(item.id),
+		coverTitle: title.length > 0 ? title : '资讯封面占位',
+		coverSubtitle: summary.length > 0 ? summary : '第' + String(index + 1) + '条资讯',
+		title: title.length > 0 ? title : '资讯标题占位',
+		source: safeText(item.publishedAt).length > 0 ? item.publishedAt : '专题来源',
+		views: String(item.viewCount != null ? item.viewCount : 0),
+		comments: String(item.items != null ? item.items.length : 0)
+	}
+}
+
+const loadNewsItems = () => {
+	fetchTopics(
+		(pageData) => {
+			if (pageData.records != null && pageData.records.length > 0) {
+				newsItems.value = pageData.records.map((item : Topic, index : number) : NewsItem => {
+					return mapTopicToNews(item, index)
+				})
+				return
+			}
+			newsItems.value = placeholderItems
+		},
+		() => {
+			newsItems.value = placeholderItems
+		}
+	)
+}
 
 const goLearningPage = () => {
 	uni.redirectTo({ url: '/pages/index/index' })
@@ -149,6 +209,8 @@ const goKnowledgePage = () => {
 const goConsultPage = () => {
 	uni.redirectTo({ url: '/pages/consult/index' })
 }
+
+loadNewsItems()
 </script>
 
 <style>
