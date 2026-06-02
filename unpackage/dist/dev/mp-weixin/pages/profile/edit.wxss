@@ -39,9 +39,6 @@
 	margin-right: 12rpx;
 	background-color: #ffffff;
 }
-.picker-row {
-	display: flex;
-}
 .form-row {
 	min-height: 98rpx;
 	padding-left: 24rpx;

@@ -5,50 +5,50 @@
 		</view>
 
 		<view class="header">
-			<text class="header-title">涓汉璧勬枡</text>
+			<text class="header-title">Profile</text>
 		</view>
 
 		<scroll-view class="form-scroll" scroll-y="true">
 			<view class="form-card">
 				<view class="form-row avatar-row" @click="handleChooseAvatar">
-					<text class="row-label">澶村儚</text>
+					<text class="row-label">Avatar</text>
 					<view class="row-right">
 						<image class="avatar" :src="form.avatarUrl || defaultAvatar" mode="aspectFill"></image>
 					</view>
 				</view>
 
 				<view class="form-row">
-					<text class="row-label">鏄电О</text>
+					<text class="row-label">Nickname</text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.nickname" placeholder="璇疯緭鍏ユ樀绉? />
+						<input class="row-input" v-model="form.nickname" placeholder="Enter nickname" />
 					</view>
 				</view>
 
 				<view class="form-row" @click="handleChooseGender">
-					<text class="row-label">鎬у埆</text>
+					<text class="row-label">Gender</text>
 					<view class="row-right">
-						<text class="row-value">{{ form.gender || '璇烽€夋嫨' }}</text>
+						<text class="row-value">{{ form.gender || 'Select gender' }}</text>
 					</view>
 				</view>
 
 				<view class="form-row">
-					<text class="row-label">閭</text>
+					<text class="row-label">Email</text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.email" placeholder="璇疯緭鍏ラ偖绠? />
+						<input class="row-input" v-model="form.email" placeholder="Enter email" />
 					</view>
 				</view>
 
 				<view class="form-row signature-row">
-					<text class="row-label">涓€х鍚?/text>
+					<text class="row-label">Signature</text>
 					<view class="row-right row-input-wrap">
-						<textarea class="row-textarea" v-model="form.profileSignature" placeholder="璇疯緭鍏ヤ釜鎬х鍚?></textarea>
+						<textarea class="row-textarea" v-model="form.profileSignature" placeholder="Enter signature"></textarea>
 					</view>
 				</view>
 			</view>
 
 			<view class="actions">
 				<button class="save-btn" hover-class="save-btn-hover" @click="handleSave" :disabled="isSaving">
-					{{ isSaving ? '淇濆瓨涓?..' : '淇濆瓨' }}
+					{{ isSaving ? 'Saving...' : 'Save' }}
 				</button>
 			</view>
 		</scroll-view>
@@ -56,6 +56,7 @@
 </template>
 
 <script setup lang="uts">
+import { ref } from 'vue'
 import {
 	fetchProfile,
 	updateProfile,
@@ -79,7 +80,7 @@ type AvatarMeta = {
 }
 
 const storageKey = 'profile_edit_form'
-const genderOptions = ['鐢?, '濂?]
+const genderOptions = ['Male', 'Female']
 const defaultAvatar = '/static/mine/avatar.png'
 const testAvatarSource = '/static/profile/test-avatar.png'
 const isSaving = ref(false)
@@ -94,13 +95,13 @@ const form = ref<ProfileForm>({
 })
 
 const genderMap : UTSJSONObject = {
-	'鐢?: '1',
-	'濂?: '2'
+	'Male': '1',
+	'Female': '2'
 }
 
 const genderReverseMap : UTSJSONObject = {
-	'1': '鐢?,
-	'2': '濂?
+	'1': 'Male',
+	'2': 'Female'
 }
 
 const isRemoteAvatarUrl = (value : string) : boolean => {
@@ -147,6 +148,10 @@ const buildAvatarMeta = (filePath : string, fileSize : number) : AvatarMeta => {
 	}
 }
 
+const saveProfileLocal = () => {
+	uni.setStorageSync(storageKey, form.value)
+}
+
 const handleBack = () => {
 	const pages = getCurrentPages()
 	if (pages.length > 1) {
@@ -170,9 +175,9 @@ const loadProfile = () => {
 			form.value.avatarUrl = profile.avatarUrl || form.value.avatarUrl
 			form.value.email = profile.email || form.value.email
 			form.value.profileSignature = profile.profileSignature || form.value.profileSignature
-			const g = genderReverseMap[profile.gender] as string
-			if (g) {
-				form.value.gender = g
+			const mappedGender = genderReverseMap[profile.gender] as string
+			if (mappedGender != null && mappedGender != '') {
+				form.value.gender = mappedGender
 			}
 			saveProfileLocal()
 		},
@@ -218,10 +223,6 @@ const handleChooseGender = () => {
 	})
 }
 
-const saveProfileLocal = () => {
-	uni.setStorageSync(storageKey, form.value)
-}
-
 const uploadAvatarIfNeeded = (
 	success : (remoteAvatarUrl : string, didUploadAvatar : boolean) => void,
 	fail : (message : string) => void
@@ -255,7 +256,7 @@ const uploadAvatarIfNeeded = (
 						(result) => {
 							const remoteAvatarUrl = result.avatarUrl || uploadConfig.publicUrl
 							if (remoteAvatarUrl == '') {
-								fail('澶村儚涓婁紶纭鎴愬姛锛屼絾鏈繑鍥炲ご鍍忓湴鍧€')
+								fail('Avatar uploaded but no URL returned')
 								return
 							}
 							form.value.avatarUrl = remoteAvatarUrl
@@ -263,17 +264,17 @@ const uploadAvatarIfNeeded = (
 							success(remoteAvatarUrl, true)
 						},
 						(message) => {
-							fail(message || '澶村儚涓婁紶纭澶辫触')
+							fail(message || 'Confirm avatar upload failed')
 						}
 					)
 				},
 				(message) => {
-					fail(message || '澶村儚涓婁紶澶辫触')
+					fail(message || 'Avatar file upload failed')
 				}
 			)
 		},
 		(message) => {
-			fail(message || '澶村儚涓婁紶鍦板潃鑾峰彇澶辫触')
+			fail(message || 'Request upload url failed')
 		}
 	)
 }
@@ -303,13 +304,13 @@ const handleSave = () => {
 								isSaving.value = false
 								if (profile.avatarUrl == remoteAvatarUrl) {
 									uni.showToast({
-										title: '澶村儚宸蹭笂浼犲苟鍏ュ簱',
+										title: 'Avatar saved',
 										icon: 'success'
 									})
 									return
 								}
 								uni.showToast({
-									title: '澶村儚鏂囦欢宸蹭笂浼狅紝浣嗗悗绔祫鏂欐湭鏇存柊',
+									title: 'Avatar uploaded, profile not updated',
 									icon: 'none'
 								})
 							},
@@ -317,7 +318,7 @@ const handleSave = () => {
 								saveProfileLocal()
 								isSaving.value = false
 								uni.showToast({
-									title: '璧勬枡宸蹭繚瀛橈紝澶村儚涓婁紶缁撴灉寰呯‘璁?,
+									title: 'Saved, avatar status unknown',
 									icon: 'none'
 								})
 							}
@@ -328,7 +329,7 @@ const handleSave = () => {
 					saveProfileLocal()
 					isSaving.value = false
 					uni.showToast({
-						title: '宸蹭繚瀛?,
+						title: 'Saved',
 						icon: 'success'
 					})
 				},
@@ -398,10 +399,6 @@ loadProfile()
 	margin-left: 12rpx;
 	margin-right: 12rpx;
 	background-color: #ffffff;
-}
-
-.picker-row {
-	display: flex;
 }
 
 .form-row {

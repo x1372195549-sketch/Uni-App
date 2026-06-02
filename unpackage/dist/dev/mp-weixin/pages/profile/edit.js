@@ -54,10 +54,11 @@ class AvatarMeta extends UTS.UTSType {
 }
 const storageKey = "profile_edit_form";
 const defaultAvatar = "/static/mine/avatar.png";
+const testAvatarSource = "/static/profile/test-avatar.png";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "edit",
   setup(__props) {
-    const genderOptions = ["男", "女"];
+    const genderOptions = ["Male", "Female"];
     const isSaving = common_vendor.ref(false);
     const selectedAvatarMeta = common_vendor.ref(null);
     const form = common_vendor.ref(new ProfileForm({
@@ -68,12 +69,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       profileSignature: ""
     }));
     const genderMap = new UTSJSONObject({
-      "男": "1",
-      "女": "2"
+      "Male": "1",
+      "Female": "2"
     });
     const genderReverseMap = new UTSJSONObject({
-      "1": "男",
-      "2": "女"
+      "1": "Male",
+      "2": "Female"
     });
     const isRemoteAvatarUrl = (value) => {
       if (value == null || value == "") {
@@ -115,6 +116,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         fileSize: fileSize > 0 ? fileSize : 1024
       });
     };
+    const saveProfileLocal = () => {
+      common_vendor.index.setStorageSync(storageKey, form.value);
+    };
     const handleBack = () => {
       const pages = getCurrentPages();
       if (pages.length > 1) {
@@ -135,31 +139,41 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         form.value.avatarUrl = profile.avatarUrl || form.value.avatarUrl;
         form.value.email = profile.email || form.value.email;
         form.value.profileSignature = profile.profileSignature || form.value.profileSignature;
-        const g = genderReverseMap[profile.gender];
-        if (g) {
-          form.value.gender = g;
+        const mappedGender = genderReverseMap[profile.gender];
+        if (mappedGender != null && mappedGender != "") {
+          form.value.gender = mappedGender;
         }
         saveProfileLocal();
       }, () => {
       });
     };
     const handleChooseAvatar = () => {
-      common_vendor.index.chooseImage(new UTSJSONObject({
-        count: 1,
-        sizeType: ["compressed"],
-        sourceType: ["album"],
+      common_vendor.index.getImageInfo({
+        src: testAvatarSource,
         success: (res) => {
-          if (res.tempFilePaths != null && res.tempFilePaths.length > 0) {
-            form.value.avatarUrl = res.tempFilePaths[0];
-            if (res.tempFiles != null && res.tempFiles.length > 0) {
-              const tempFile = res.tempFiles[0];
-              selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], tempFile.size);
-              return null;
+          const resolvedPath = res.path != null && res.path != "" ? res.path : testAvatarSource;
+          form.value.avatarUrl = resolvedPath;
+          selectedAvatarMeta.value = buildAvatarMeta("test-avatar.png", 1024);
+        },
+        fail: () => {
+          common_vendor.index.chooseImage(new UTSJSONObject({
+            count: 1,
+            sizeType: ["compressed"],
+            sourceType: ["album"],
+            success: (res) => {
+              if (res.tempFilePaths != null && res.tempFilePaths.length > 0) {
+                form.value.avatarUrl = res.tempFilePaths[0];
+                if (res.tempFiles != null && res.tempFiles.length > 0) {
+                  const tempFile = res.tempFiles[0];
+                  selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], tempFile.size);
+                  return null;
+                }
+                selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], 1024);
+              }
             }
-            selectedAvatarMeta.value = buildAvatarMeta(res.tempFilePaths[0], 1024);
-          }
+          }));
         }
-      }));
+      });
     };
     const handleChooseGender = () => {
       common_vendor.index.showActionSheet({
@@ -168,9 +182,6 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           form.value.gender = genderOptions[res.tapIndex];
         }
       });
-    };
-    const saveProfileLocal = () => {
-      common_vendor.index.setStorageSync(storageKey, form.value);
     };
     const uploadAvatarIfNeeded = (success, fail) => {
       const currentAvatar = form.value.avatarUrl || "";
@@ -193,20 +204,20 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           }), (result) => {
             const remoteAvatarUrl = result.avatarUrl || uploadConfig.publicUrl;
             if (remoteAvatarUrl == "") {
-              fail("头像上传确认成功，但未返回头像地址");
+              fail("Avatar uploaded but no URL returned");
               return null;
             }
             form.value.avatarUrl = remoteAvatarUrl;
             selectedAvatarMeta.value = null;
             success(remoteAvatarUrl, true);
           }, (message) => {
-            fail(message || "头像上传确认失败");
+            fail(message || "Confirm avatar upload failed");
           });
         }, (message) => {
-          fail(message || "头像上传失败");
+          fail(message || "Avatar file upload failed");
         });
       }, (message) => {
-        fail(message || "头像上传地址获取失败");
+        fail(message || "Request upload url failed");
       });
     };
     const handleSave = () => {
@@ -228,20 +239,20 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
               isSaving.value = false;
               if (profile.avatarUrl == remoteAvatarUrl) {
                 common_vendor.index.showToast({
-                  title: "头像已上传并入库",
+                  title: "Avatar saved",
                   icon: "success"
                 });
                 return null;
               }
               common_vendor.index.showToast({
-                title: "头像文件已上传，但后端资料未更新",
+                title: "Avatar uploaded, profile not updated",
                 icon: "none"
               });
             }, () => {
               saveProfileLocal();
               isSaving.value = false;
               common_vendor.index.showToast({
-                title: "资料已保存，头像上传结果待确认",
+                title: "Saved, avatar status unknown",
                 icon: "none"
               });
             });
@@ -250,7 +261,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           saveProfileLocal();
           isSaving.value = false;
           common_vendor.index.showToast({
-            title: "已保存",
+            title: "Saved",
             icon: "success"
           });
         }, (message) => {
@@ -274,25 +285,25 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const __returned__ = {
         a: common_assets._imports_0$1,
         b: common_vendor.o(handleBack),
-        c: common_vendor.unref(form).avatarUrl || defaultAvatar,
+        c: form.value.avatarUrl || defaultAvatar,
         d: common_vendor.o(handleChooseAvatar),
-        e: common_vendor.unref(form).nickname,
+        e: form.value.nickname,
         f: common_vendor.o(($event) => {
-          return common_vendor.unref(form).nickname = $event.detail.value;
+          return form.value.nickname = $event.detail.value;
         }),
-        g: common_vendor.t(common_vendor.unref(form).gender || "请选择"),
+        g: common_vendor.t(form.value.gender || "Select gender"),
         h: common_vendor.o(handleChooseGender),
-        i: common_vendor.unref(form).email,
+        i: form.value.email,
         j: common_vendor.o(($event) => {
-          return common_vendor.unref(form).email = $event.detail.value;
+          return form.value.email = $event.detail.value;
         }),
-        k: common_vendor.unref(form).profileSignature,
+        k: form.value.profileSignature,
         l: common_vendor.o(($event) => {
-          return common_vendor.unref(form).profileSignature = $event.detail.value;
+          return form.value.profileSignature = $event.detail.value;
         }),
-        m: common_vendor.t(common_vendor.unref(isSaving) ? "保存中..." : "保存"),
+        m: common_vendor.t(isSaving.value ? "Saving..." : "Save"),
         n: common_vendor.o(handleSave),
-        o: common_vendor.unref(isSaving),
+        o: isSaving.value,
         p: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       };
       return __returned__;
