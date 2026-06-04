@@ -147,10 +147,11 @@ class AudioCardItem extends UTS.UTSType {
 const BASE_URL = "https://api-test.arez.cc.cd";
 const ACCESS_TOKEN_KEY = "app_auth_access_token";
 const TOKEN_TYPE_KEY = "app_auth_token_type";
+const PAGE_SIZE = 10;
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "index",
   setup(__props) {
-    const placeholderItems = [
+    [
       new AudioCardItem({
         id: "1",
         coverTitle: "音频封面占位",
@@ -171,6 +172,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       })
     ];
     const audioItems = common_vendor.ref([]);
+    const keyword = common_vendor.ref("");
+    const page = common_vendor.ref(1);
+    const hasMore = common_vendor.ref(true);
+    const isLoading = common_vendor.ref(true);
+    const isListLoading = common_vendor.ref(false);
+    const errorText = common_vendor.ref("");
     function safeText(value = null) {
       return value == null || value.length == 0 ? "" : value;
     }
@@ -201,7 +208,18 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         comments: safeNumberText(item.audios != null ? item.audios.length : 0)
       });
     }
-    function fetchAudioItems() {
+    function fetchAudioItems(loadMoreValue) {
+      if (!loadMoreValue) {
+        page.value = 1;
+        hasMore.value = true;
+        errorText.value = "";
+        isLoading.value = true;
+      } else {
+        if (!hasMore.value || isListLoading.value) {
+          return null;
+        }
+        isListLoading.value = true;
+      }
       const headers = new UTSJSONObject({
         "Content-Type": "application/json"
       });
@@ -210,26 +228,52 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         headers["Authorization"] = authorization;
       }
       common_vendor.index.request({
-        url: BASE_URL + "/api/v1/app/learning/podcasts?page=1&size=20",
+        url: BASE_URL + "/api/v1/app/learning/podcasts?page=" + String(page.value) + "&size=" + String(PAGE_SIZE) + (keyword.value.length > 0 ? "&keyword=" + encodeURIComponent(keyword.value) : ""),
         method: "GET",
         header: headers,
         success: (res) => {
           const data = res.data;
-          if (res.statusCode == 200 && data != null && data.success && data.data != null && data.data.records != null && data.data.records.length > 0) {
-            audioItems.value = data.data.records.map((item, index) => {
+          if (res.statusCode == 200 && data != null && data.success && data.data != null && data.data.records != null) {
+            const mapped = data.data.records.map((item, index) => {
               return mapPodcastToCard(item, index);
             });
+            if (loadMoreValue) {
+              audioItems.value = audioItems.value.concat(mapped);
+            } else {
+              audioItems.value = mapped;
+            }
+            hasMore.value = mapped.length >= PAGE_SIZE;
+            if (hasMore.value) {
+              page.value += 1;
+            }
           } else {
-            audioItems.value = placeholderItems;
+            if (!loadMoreValue) {
+              audioItems.value = [];
+            }
+            hasMore.value = false;
+            errorText.value = data != null && data.message != null && data.message.length > 0 ? data.message : "闊抽鍔犺浇澶辫触";
           }
+          isLoading.value = false;
+          isListLoading.value = false;
         },
         fail: () => {
-          audioItems.value = placeholderItems;
+          errorText.value = "音频加载失败";
+          isLoading.value = false;
+          isListLoading.value = false;
         }
       });
     }
+    function reloadList() {
+      fetchAudioItems(false);
+    }
+    function loadMore() {
+      fetchAudioItems(true);
+    }
     function goLearningPage() {
       common_vendor.index.redirectTo({ url: "/pages/index/index" });
+    }
+    function goTopicsPage() {
+      common_vendor.index.redirectTo({ url: "/pages/topics/list" });
     }
     function goLivePage() {
       common_vendor.index.redirectTo({ url: "/pages/live/index" });
@@ -255,16 +299,28 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     function goConsultPage() {
       common_vendor.index.redirectTo({ url: "/pages/consult/index" });
     }
-    fetchAudioItems();
+    fetchAudioItems(false);
     return (_ctx, _cache) => {
       "raw js";
-      const __returned__ = {
+      const __returned__ = common_vendor.e({
         a: common_assets._imports_0$3,
         b: common_vendor.o(goLearningPage),
-        c: common_vendor.o(goLivePage),
-        d: common_vendor.o(goCoursePage),
-        e: common_vendor.o(goNewsPage),
-        f: common_vendor.f(audioItems.value, (item, k0, i0) => {
+        c: common_vendor.o(goTopicsPage),
+        d: common_vendor.o(goLivePage),
+        e: common_vendor.o(goCoursePage),
+        f: common_vendor.o(goNewsPage),
+        g: common_vendor.o(reloadList),
+        h: keyword.value,
+        i: common_vendor.o(($event) => {
+          return keyword.value = $event.detail.value;
+        }),
+        j: common_vendor.o(reloadList),
+        k: isLoading.value
+      }, isLoading.value ? {} : errorText.value.length > 0 ? {
+        m: common_vendor.t(errorText.value),
+        n: common_vendor.o(reloadList)
+      } : audioItems.value.length == 0 ? {} : common_vendor.e({
+        p: common_vendor.f(audioItems.value, (item, k0, i0) => {
           return {
             a: common_vendor.t(item.coverTitle),
             b: common_vendor.t(item.coverSubtitle),
@@ -278,17 +334,24 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, item.id)
           };
         }),
-        g: common_assets._imports_1$4,
-        h: common_assets._imports_2,
-        i: common_vendor.o(goExamPage),
-        j: common_assets._imports_3,
-        k: common_vendor.o(goConsultPage),
-        l: common_assets._imports_4,
-        m: common_vendor.o(goKnowledgePage),
-        n: common_assets._imports_5,
-        o: common_vendor.o(goMinePage),
-        p: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
-      };
+        q: isListLoading.value
+      }, isListLoading.value ? {} : !hasMore.value ? {} : {}, {
+        r: !hasMore.value
+      }), {
+        l: errorText.value.length > 0,
+        o: audioItems.value.length == 0,
+        s: common_vendor.o(loadMore),
+        t: common_assets._imports_1$3,
+        v: common_assets._imports_2,
+        w: common_vendor.o(goExamPage),
+        x: common_assets._imports_3,
+        y: common_vendor.o(goConsultPage),
+        z: common_assets._imports_4,
+        A: common_vendor.o(goKnowledgePage),
+        B: common_assets._imports_5,
+        C: common_vendor.o(goMinePage),
+        D: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+      });
       return __returned__;
     };
   }

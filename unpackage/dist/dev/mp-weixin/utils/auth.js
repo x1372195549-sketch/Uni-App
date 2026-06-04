@@ -558,6 +558,229 @@ let Topic$1 = class Topic extends UTS.UTSType {
     delete this.__props__;
   }
 };
+let TopicTag$1 = class TopicTag extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          tagName: { type: String, optional: false }
+        };
+      },
+      name: "TopicTag"
+    };
+  }
+  constructor(options, metadata = TopicTag.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.tagName = this.__props__.tagName;
+    delete this.__props__;
+  }
+};
+let TopicSectionResource$1 = class TopicSectionResource extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          subtitle: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          browseCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          progressPercent: { type: Number, optional: false }
+        };
+      },
+      name: "TopicSectionResource"
+    };
+  }
+  constructor(options, metadata = TopicSectionResource.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.title = this.__props__.title;
+    this.subtitle = this.__props__.subtitle;
+    this.summary = this.__props__.summary;
+    this.coverUrl = this.__props__.coverUrl;
+    this.browseCount = this.__props__.browseCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.progressPercent = this.__props__.progressPercent;
+    delete this.__props__;
+  }
+};
+let TopicSection$1 = class TopicSection extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          sectionType: { type: String, optional: false },
+          sectionLabel: { type: String, optional: false },
+          total: { type: Number, optional: false },
+          hasMore: { type: Boolean, optional: false },
+          previewItems: { type: UTS.UTSType.withGenerics(Array, [TopicSectionResource$1]), optional: false }
+        };
+      },
+      name: "TopicSection"
+    };
+  }
+  constructor(options, metadata = TopicSection.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.sectionType = this.__props__.sectionType;
+    this.sectionLabel = this.__props__.sectionLabel;
+    this.total = this.__props__.total;
+    this.hasMore = this.__props__.hasMore;
+    this.previewItems = this.__props__.previewItems;
+    delete this.__props__;
+  }
+};
+let TopicCard$1 = class TopicCard extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          learningRequirements: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false },
+          viewCount: { type: Number, optional: false },
+          publishedAt: { type: String, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false }
+        };
+      },
+      name: "TopicCard"
+    };
+  }
+  constructor(options, metadata = TopicCard.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.learningRequirements = this.__props__.learningRequirements;
+    this.coverUrl = this.__props__.coverUrl;
+    this.tags = this.__props__.tags;
+    this.viewCount = this.__props__.viewCount;
+    this.publishedAt = this.__props__.publishedAt;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    delete this.__props__;
+  }
+};
+let TopicDetail$1 = class TopicDetail extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          learningRequirements: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false },
+          viewCount: { type: Number, optional: false },
+          publishedAt: { type: String, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          sections: { type: UTS.UTSType.withGenerics(Array, [TopicSection$1]), optional: false }
+        };
+      },
+      name: "TopicDetail"
+    };
+  }
+  constructor(options, metadata = TopicDetail.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.learningRequirements = this.__props__.learningRequirements;
+    this.coverUrl = this.__props__.coverUrl;
+    this.tags = this.__props__.tags;
+    this.viewCount = this.__props__.viewCount;
+    this.publishedAt = this.__props__.publishedAt;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.sections = this.__props__.sections;
+    delete this.__props__;
+  }
+};
+let Article$1 = class Article extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          content: { type: String, optional: false },
+          authorName: { type: String, optional: false },
+          source: { type: String, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false },
+          viewCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          publishedAt: { type: String, optional: false }
+        };
+      },
+      name: "Article"
+    };
+  }
+  constructor(options, metadata = Article.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.coverUrl = this.__props__.coverUrl;
+    this.content = this.__props__.content;
+    this.authorName = this.__props__.authorName;
+    this.source = this.__props__.source;
+    this.tags = this.__props__.tags;
+    this.viewCount = this.__props__.viewCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.publishedAt = this.__props__.publishedAt;
+    delete this.__props__;
+  }
+};
+let BrowseHistoryRequest$1 = class BrowseHistoryRequest extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false }
+        };
+      },
+      name: "BrowseHistoryRequest"
+    };
+  }
+  constructor(options, metadata = BrowseHistoryRequest.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    delete this.__props__;
+  }
+};
 let KnowledgeCategory$1 = class KnowledgeCategory extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -1056,8 +1279,12 @@ function submitCertification(data, success, fail) {
     fail(message);
   });
 }
-function fetchLiveSessions(success, fail) {
-  request("/api/v1/app/live-sessions?page=1&size=20", "GET", null, true, false, (pageData) => {
+function fetchLiveSessions(page, size, keyword, success, fail) {
+  let path = "/api/v1/app/live-sessions?page=" + String(page) + "&size=" + String(size);
+  if (keyword != null && keyword.length > 0) {
+    path += "&keyword=" + encodeURIComponent(keyword);
+  }
+  request(path, "GET", null, true, false, (pageData) => {
     success(pageData);
   }, (message) => {
     fail(message);
@@ -1070,8 +1297,12 @@ function fetchLiveSessionDetail(id, success, fail) {
     fail(message);
   });
 }
-function fetchCourses(success, fail) {
-  request("/api/v1/app/learning/courses?page=1&size=20", "GET", null, true, false, (pageData) => {
+function fetchCourses(page, size, keyword, success, fail) {
+  let path = "/api/v1/app/learning/courses?page=" + String(page) + "&size=" + String(size);
+  if (keyword != null && keyword.length > 0) {
+    path += "&keyword=" + encodeURIComponent(keyword);
+  }
+  request(path, "GET", null, true, false, (pageData) => {
     success(pageData);
   }, (message) => {
     fail(message);
@@ -1394,13 +1625,6 @@ function fetchQaQuestionDetail(id, success, fail) {
     fail(message);
   });
 }
-function fetchTopics(success, fail) {
-  request("/api/v1/app/learning/topics?page=1&size=20", "GET", null, true, false, (pageData) => {
-    success(pageData);
-  }, (message) => {
-    fail(message);
-  });
-}
 function readStringField(raw, key) {
   const value = raw[key];
   return typeof value == "string" ? value : "";
@@ -1408,6 +1632,127 @@ function readStringField(raw, key) {
 function readNumberField(raw, key) {
   const value = raw[key];
   return typeof value == "number" ? value : 0;
+}
+function readLooseNumberField(raw, key) {
+  const value = raw[key];
+  if (typeof value == "number") {
+    return value;
+  }
+  if (typeof value == "string") {
+    const text = value;
+    if (text.length > 0) {
+      return Number(text);
+    }
+  }
+  return 0;
+}
+function readBooleanField(raw, key) {
+  const value = raw[key];
+  return typeof value == "boolean" ? value : false;
+}
+function readStringArrayField(raw, key) {
+  const value = raw[key];
+  if (value == null || !UTS.isInstanceOf(value, Array)) {
+    return [];
+  }
+  return value.filter((item = null) => {
+    return typeof item == "string";
+  }).map((item = null) => {
+    return item;
+  });
+}
+function normalizeTopicSectionResource(raw) {
+  const resourceId = readLooseNumberField(raw, "resourceId");
+  const itemId = readLooseNumberField(raw, "itemId");
+  const entryId = readLooseNumberField(raw, "entryId");
+  const knowledgeId = readLooseNumberField(raw, "knowledgeId");
+  const contentId = readLooseNumberField(raw, "contentId");
+  const id = readLooseNumberField(raw, "id");
+  const resourceValue = raw["resource"];
+  const nestedResource = resourceValue != null && UTS.isInstanceOf(resourceValue, UTSJSONObject) ? resourceValue : null;
+  const nestedId = nestedResource != null ? readLooseNumberField(nestedResource, "id") : 0;
+  const nestedEntryId = nestedResource != null ? readLooseNumberField(nestedResource, "entryId") : 0;
+  const nestedKnowledgeId = nestedResource != null ? readLooseNumberField(nestedResource, "knowledgeId") : 0;
+  const nestedContentId = nestedResource != null ? readLooseNumberField(nestedResource, "contentId") : 0;
+  const resolvedResourceType = readStringField(raw, "resourceType").length > 0 ? readStringField(raw, "resourceType") : readStringField(raw, "itemType").length > 0 ? readStringField(raw, "itemType") : nestedResource != null ? readStringField(nestedResource, "resourceType") : "";
+  const resolvedTitle = readStringField(raw, "title").length > 0 ? readStringField(raw, "title") : nestedResource != null ? readStringField(nestedResource, "title") : "";
+  const resolvedSubtitle = readStringField(raw, "subtitle").length > 0 ? readStringField(raw, "subtitle") : nestedResource != null ? readStringField(nestedResource, "subtitle") : "";
+  const resolvedSummary = readStringField(raw, "summary").length > 0 ? readStringField(raw, "summary") : nestedResource != null ? readStringField(nestedResource, "summary") : "";
+  const resolvedCoverUrl = readStringField(raw, "coverUrl").length > 0 ? readStringField(raw, "coverUrl") : nestedResource != null ? readStringField(nestedResource, "coverUrl") : "";
+  return new TopicSectionResource$1({
+    resourceType: resolvedResourceType,
+    resourceId: resourceId > 0 ? resourceId : itemId > 0 ? itemId : entryId > 0 ? entryId : knowledgeId > 0 ? knowledgeId : contentId > 0 ? contentId : nestedEntryId > 0 ? nestedEntryId : nestedKnowledgeId > 0 ? nestedKnowledgeId : nestedContentId > 0 ? nestedContentId : nestedId > 0 ? nestedId : id,
+    title: resolvedTitle,
+    subtitle: resolvedSubtitle,
+    summary: resolvedSummary,
+    coverUrl: normalizeAppUrl(resolvedCoverUrl),
+    browseCount: readNumberField(raw, "browseCount") > 0 ? readNumberField(raw, "browseCount") : nestedResource != null ? readNumberField(nestedResource, "browseCount") : 0,
+    favoriteCount: readNumberField(raw, "favoriteCount") > 0 ? readNumberField(raw, "favoriteCount") : nestedResource != null ? readNumberField(nestedResource, "favoriteCount") : 0,
+    favorited: readBooleanField(raw, "favorited") || (nestedResource != null ? readBooleanField(nestedResource, "favorited") : false),
+    progressPercent: readNumberField(raw, "progressPercent") > 0 ? readNumberField(raw, "progressPercent") : nestedResource != null ? readNumberField(nestedResource, "progressPercent") : 0
+  });
+}
+function normalizeTopicSection(raw) {
+  const previewValue = raw["previewItems"] != null ? raw["previewItems"] : raw["items"];
+  const previewItems = previewValue != null && UTS.isInstanceOf(previewValue, Array) ? previewValue : [];
+  return new TopicSection$1({
+    sectionType: readStringField(raw, "sectionType"),
+    sectionLabel: readStringField(raw, "sectionLabel"),
+    total: readNumberField(raw, "total"),
+    hasMore: readBooleanField(raw, "hasMore"),
+    previewItems: previewItems.map((item) => {
+      return normalizeTopicSectionResource(item);
+    })
+  });
+}
+function normalizeTopicCard(raw) {
+  return new TopicCard$1({
+    id: readNumberField(raw, "id"),
+    title: readStringField(raw, "title"),
+    summary: readStringField(raw, "summary"),
+    learningRequirements: readStringField(raw, "learningRequirements"),
+    coverUrl: normalizeAppUrl(readStringField(raw, "coverUrl")),
+    tags: readStringArrayField(raw, "tags"),
+    viewCount: readNumberField(raw, "viewCount"),
+    publishedAt: readStringField(raw, "publishedAt"),
+    favoriteCount: readNumberField(raw, "favoriteCount"),
+    favorited: readBooleanField(raw, "favorited")
+  });
+}
+function normalizeTopicDetail(raw) {
+  const sectionsValue = raw["sections"];
+  const sections = sectionsValue != null && UTS.isInstanceOf(sectionsValue, Array) ? sectionsValue : [];
+  return new TopicDetail$1({
+    id: readNumberField(raw, "id"),
+    title: readStringField(raw, "title"),
+    summary: readStringField(raw, "summary"),
+    learningRequirements: readStringField(raw, "learningRequirements"),
+    coverUrl: normalizeAppUrl(readStringField(raw, "coverUrl")),
+    tags: readStringArrayField(raw, "tags"),
+    viewCount: readNumberField(raw, "viewCount"),
+    publishedAt: readStringField(raw, "publishedAt"),
+    favoriteCount: readNumberField(raw, "favoriteCount"),
+    favorited: readBooleanField(raw, "favorited"),
+    sections: sections.map((item) => {
+      return normalizeTopicSection(item);
+    })
+  });
+}
+function normalizeArticle(raw) {
+  return new Article$1({
+    id: readNumberField(raw, "id"),
+    title: readStringField(raw, "title"),
+    summary: readStringField(raw, "summary"),
+    coverUrl: normalizeAppUrl(readStringField(raw, "coverUrl")),
+    content: readStringField(raw, "content"),
+    authorName: readStringField(raw, "authorName"),
+    source: readStringField(raw, "source"),
+    tags: readStringArrayField(raw, "tags"),
+    viewCount: readNumberField(raw, "viewCount"),
+    favoriteCount: readNumberField(raw, "favoriteCount"),
+    favorited: readBooleanField(raw, "favorited"),
+    publishedAt: readStringField(raw, "publishedAt")
+  });
 }
 function normalizeKnowledgeCategory(raw) {
   const childrenValue = raw["children"];
@@ -1487,20 +1832,6 @@ function fetchKnowledgeEntryDetail(id, success, fail) {
     fail(message);
   });
 }
-function fetchHomeCategories(success, fail) {
-  request("/api/v1/admin/content/home/categories?page=1&size=50", "GET", null, true, false, (pageData) => {
-    success(pageData);
-  }, (message) => {
-    fail(message);
-  });
-}
-function fetchHomeContents(success, fail) {
-  request("/api/v1/admin/content/home/contents?page=1&size=50", "GET", null, true, false, (pageData) => {
-    success(pageData);
-  }, (message) => {
-    fail(message);
-  });
-}
 function fetchTopicDetail(id, success, fail) {
   request("/api/v1/app/learning/topics/" + id, "GET", null, true, false, (detail) => {
     success(detail);
@@ -1511,6 +1842,83 @@ function fetchTopicDetail(id, success, fail) {
 function fetchProfileFavorites(page, size, success, fail) {
   request("/api/v1/app/profile/favorites?page=" + String(page) + "&size=" + String(size), "GET", null, true, false, (pageData) => {
     success(pageData);
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchTopicCards(page, size, keyword, success, fail) {
+  let path = "/api/v1/app/learning/topics?page=" + String(page) + "&size=" + String(size);
+  if (keyword != null && keyword.length > 0) {
+    path += "&keyword=" + encodeURIComponent(keyword);
+  }
+  request(path, "GET", null, true, false, (pageData) => {
+    const recordsValue = pageData["records"];
+    const records = recordsValue != null && UTS.isInstanceOf(recordsValue, Array) ? recordsValue : [];
+    success(new PageResponse$1({
+      records: records.map((item) => {
+        return normalizeTopicCard(item);
+      }),
+      total: readNumberField(pageData, "total"),
+      page: readNumberField(pageData, "page") > 0 ? readNumberField(pageData, "page") : page,
+      size: readNumberField(pageData, "size") > 0 ? readNumberField(pageData, "size") : size
+    }));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchTopicDetailV2(id, success, fail) {
+  request("/api/v1/app/learning/topics/" + id, "GET", null, true, false, (detail) => {
+    success(normalizeTopicDetail(detail));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchTopicSectionResources(topicId, sectionType, page, size, success, fail) {
+  request("/api/v1/app/learning/topics/" + topicId + "/sections/" + sectionType + "?page=" + String(page) + "&size=" + String(size), "GET", null, true, false, (pageData) => {
+    const recordsValue = pageData["records"];
+    const records = recordsValue != null && UTS.isInstanceOf(recordsValue, Array) ? recordsValue : [];
+    success(new PageResponse$1({
+      records: records.map((item) => {
+        return normalizeTopicSectionResource(item);
+      }),
+      total: readNumberField(pageData, "total"),
+      page: readNumberField(pageData, "page") > 0 ? readNumberField(pageData, "page") : page,
+      size: readNumberField(pageData, "size") > 0 ? readNumberField(pageData, "size") : size
+    }));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchArticles(page, size, keyword, success, fail) {
+  let path = "/api/v1/app/content/articles?page=" + String(page) + "&size=" + String(size);
+  if (keyword != null && keyword.length > 0) {
+    path += "&keyword=" + encodeURIComponent(keyword);
+  }
+  request(path, "GET", null, true, false, (pageData) => {
+    const recordsValue = pageData["records"];
+    const records = recordsValue != null && UTS.isInstanceOf(recordsValue, Array) ? recordsValue : [];
+    success(new PageResponse$1({
+      records: records.map((item) => {
+        return normalizeArticle(item);
+      }),
+      total: readNumberField(pageData, "total"),
+      page: readNumberField(pageData, "page") > 0 ? readNumberField(pageData, "page") : page,
+      size: readNumberField(pageData, "size") > 0 ? readNumberField(pageData, "size") : size
+    }));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchArticleDetail(id, success, fail) {
+  request("/api/v1/app/content/articles/" + id, "GET", null, true, false, (detail) => {
+    success(normalizeArticle(detail));
+  }, (message) => {
+    fail(message);
+  });
+}
+function reportBrowseHistory(data, success, fail) {
+  request("/api/v1/app/interaction/browse-histories", "POST", data, true, true, () => {
+    success();
   }, (message) => {
     fail(message);
   });
@@ -2379,6 +2787,229 @@ class Topic2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+class TopicTag2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          tagName: { type: String, optional: false }
+        };
+      },
+      name: "TopicTag"
+    };
+  }
+  constructor(options, metadata = TopicTag2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.tagName = this.__props__.tagName;
+    delete this.__props__;
+  }
+}
+class TopicSectionResource2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          subtitle: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          browseCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          progressPercent: { type: Number, optional: false }
+        };
+      },
+      name: "TopicSectionResource"
+    };
+  }
+  constructor(options, metadata = TopicSectionResource2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.title = this.__props__.title;
+    this.subtitle = this.__props__.subtitle;
+    this.summary = this.__props__.summary;
+    this.coverUrl = this.__props__.coverUrl;
+    this.browseCount = this.__props__.browseCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.progressPercent = this.__props__.progressPercent;
+    delete this.__props__;
+  }
+}
+class TopicSection2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          sectionType: { type: String, optional: false },
+          sectionLabel: { type: String, optional: false },
+          total: { type: Number, optional: false },
+          hasMore: { type: Boolean, optional: false },
+          previewItems: { type: UTS.UTSType.withGenerics(Array, [TopicSectionResource2]), optional: false }
+        };
+      },
+      name: "TopicSection"
+    };
+  }
+  constructor(options, metadata = TopicSection2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.sectionType = this.__props__.sectionType;
+    this.sectionLabel = this.__props__.sectionLabel;
+    this.total = this.__props__.total;
+    this.hasMore = this.__props__.hasMore;
+    this.previewItems = this.__props__.previewItems;
+    delete this.__props__;
+  }
+}
+class TopicCard2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          learningRequirements: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false },
+          viewCount: { type: Number, optional: false },
+          publishedAt: { type: String, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false }
+        };
+      },
+      name: "TopicCard"
+    };
+  }
+  constructor(options, metadata = TopicCard2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.learningRequirements = this.__props__.learningRequirements;
+    this.coverUrl = this.__props__.coverUrl;
+    this.tags = this.__props__.tags;
+    this.viewCount = this.__props__.viewCount;
+    this.publishedAt = this.__props__.publishedAt;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    delete this.__props__;
+  }
+}
+class TopicDetail2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          learningRequirements: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false },
+          viewCount: { type: Number, optional: false },
+          publishedAt: { type: String, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          sections: { type: UTS.UTSType.withGenerics(Array, [TopicSection2]), optional: false }
+        };
+      },
+      name: "TopicDetail"
+    };
+  }
+  constructor(options, metadata = TopicDetail2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.learningRequirements = this.__props__.learningRequirements;
+    this.coverUrl = this.__props__.coverUrl;
+    this.tags = this.__props__.tags;
+    this.viewCount = this.__props__.viewCount;
+    this.publishedAt = this.__props__.publishedAt;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.sections = this.__props__.sections;
+    delete this.__props__;
+  }
+}
+class Article2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          content: { type: String, optional: false },
+          authorName: { type: String, optional: false },
+          source: { type: String, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false },
+          viewCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          publishedAt: { type: String, optional: false }
+        };
+      },
+      name: "Article"
+    };
+  }
+  constructor(options, metadata = Article2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.coverUrl = this.__props__.coverUrl;
+    this.content = this.__props__.content;
+    this.authorName = this.__props__.authorName;
+    this.source = this.__props__.source;
+    this.tags = this.__props__.tags;
+    this.viewCount = this.__props__.viewCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.publishedAt = this.__props__.publishedAt;
+    delete this.__props__;
+  }
+}
+class BrowseHistoryRequest2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false }
+        };
+      },
+      name: "BrowseHistoryRequest"
+    };
+  }
+  constructor(options, metadata = BrowseHistoryRequest2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    delete this.__props__;
+  }
+}
 class KnowledgeCategory2 extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -2902,18 +3533,19 @@ exports.AppStudentCertificationRequest = AppStudentCertificationRequest2;
 exports.AvatarBinaryUploadConfig = AvatarBinaryUploadConfig2;
 exports.AvatarConfirmRequest = AvatarConfirmRequest2;
 exports.AvatarUploadUrlRequest = AvatarUploadUrlRequest2;
+exports.BrowseHistoryRequest = BrowseHistoryRequest2;
 exports.checkFavoriteStatus = checkFavoriteStatus;
 exports.clearBindToken = clearBindToken;
 exports.confirmAvatarUpload = confirmAvatarUpload;
 exports.createQaQuestion = createQaQuestion;
+exports.fetchArticleDetail = fetchArticleDetail;
+exports.fetchArticles = fetchArticles;
 exports.fetchAudioDetail = fetchAudioDetail;
 exports.fetchCertificationStatus = fetchCertificationStatus;
 exports.fetchCourseDetail = fetchCourseDetail;
 exports.fetchCourses = fetchCourses;
 exports.fetchExpertDetail = fetchExpertDetail;
 exports.fetchExperts = fetchExperts;
-exports.fetchHomeCategories = fetchHomeCategories;
-exports.fetchHomeContents = fetchHomeContents;
 exports.fetchKnowledgeCategoryTree = fetchKnowledgeCategoryTree;
 exports.fetchKnowledgeEntries = fetchKnowledgeEntries;
 exports.fetchKnowledgeEntryDetail = fetchKnowledgeEntryDetail;
@@ -2923,8 +3555,10 @@ exports.fetchProfile = fetchProfile;
 exports.fetchProfileFavorites = fetchProfileFavorites;
 exports.fetchQaQuestionDetail = fetchQaQuestionDetail;
 exports.fetchQaQuestions = fetchQaQuestions;
+exports.fetchTopicCards = fetchTopicCards;
 exports.fetchTopicDetail = fetchTopicDetail;
-exports.fetchTopics = fetchTopics;
+exports.fetchTopicDetailV2 = fetchTopicDetailV2;
+exports.fetchTopicSectionResources = fetchTopicSectionResources;
 exports.getBindToken = getBindToken;
 exports.getCurrentUserFromStorage = getCurrentUserFromStorage;
 exports.hasBoundMobile = hasBoundMobile;
@@ -2933,6 +3567,7 @@ exports.loginBySms = loginBySms;
 exports.loginByWechat = loginByWechat;
 exports.logout = logout;
 exports.normalizeAppUrl = normalizeAppUrl;
+exports.reportBrowseHistory = reportBrowseHistory;
 exports.requestAvatarUploadUrl = requestAvatarUploadUrl;
 exports.saveLogin = saveLogin;
 exports.sendSmsCode = sendSmsCode;

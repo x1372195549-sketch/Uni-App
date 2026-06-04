@@ -7,7 +7,7 @@
 }
 .hero-shell {
 	position: relative;
-	height: 236rpx;
+	height: 218rpx;
 	overflow: hidden;
 }
 .hero-bg {
@@ -15,13 +15,13 @@
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 236rpx;
+	height: 218rpx;
 }
 .header {
 	position: relative;
 	z-index: 1;
 	padding-top: 34rpx;
-	height: 118rpx;
+	height: 110rpx;
 	align-items: center;
 	justify-content: center;
 }
@@ -34,10 +34,9 @@
 .top-tabs {
 	position: relative;
 	z-index: 1;
-	height: 96rpx;
-	margin-top: 18rpx;
-	padding-left: 28rpx;
-	padding-right: 28rpx;
+	height: 108rpx;
+	padding-left: 18rpx;
+	padding-right: 18rpx;
 	background-color: rgba(251, 250, 246, 0.78);
 	flex-direction: row;
 	align-items: flex-end;
@@ -47,7 +46,7 @@
 	border-bottom-color: rgba(229, 234, 225, 0.95);
 }
 .top-tab {
-	min-width: 88rpx;
+	min-width: 78rpx;
 	height: 96rpx;
 	align-items: center;
 	justify-content: center;
@@ -56,8 +55,8 @@
 	position: relative;
 }
 .top-tab-text {
-	font-size: 18px;
-	line-height: 26px;
+	font-size: 15px;
+	line-height: 22px;
 	color: #333333;
 }
 .top-tab-text-active {
@@ -66,8 +65,8 @@
 }
 .top-tab-line {
 	position: absolute;
-	bottom: 10rpx;
-	width: 48rpx;
+	bottom: 12rpx;
+	width: 42rpx;
 	height: 6rpx;
 	border-radius: 4rpx;
 	background-color: #b85d69;
@@ -79,98 +78,195 @@
 .content-shell {
 	padding-left: 20rpx;
 	padding-right: 20rpx;
-	padding-bottom: 40rpx;
-}
-.search-wrap {
 	padding-bottom: 20rpx;
-	background-color: #f7f7f2;
 }
-.search-box {
-	height: 72rpx;
-	padding-left: 24rpx;
-	padding-right: 24rpx;
-	border-radius: 36rpx;
-	background-color: rgba(255, 255, 255, 0.94);
-	border-width: 1px;
-	border-style: solid;
-	border-color: rgba(191, 214, 195, 0.9);
-	flex-direction: row;
-	align-items: center;
+.hero-card-top {
+	margin-top: 0;
 }
-.search-icon {
-	width: 30rpx;
-	height: 30rpx;
-	margin-right: 18rpx;
-	opacity: 0.78;
+.hero-card {
+	padding: 28rpx;
+	border-radius: 24rpx;
+	background: linear-gradient(135deg, #f7e4c8 0%, #f3efe7 100%);
+	box-shadow: 0 12rpx 28rpx rgba(152, 118, 72, 0.12);
 }
-.search-placeholder {
-	font-size: 14px;
-	line-height: 22px;
-	color: #b0b8ad;
-}
-.home-list {
-	padding-top: 4rpx;
-}
-.home-card {
-	margin-bottom: 24rpx;
-	border-radius: 20rpx;
-	background-color: #ffffff;
-	overflow: hidden;
-	box-shadow: 0 10rpx 24rpx rgba(207, 201, 186, 0.28);
-}
-.card-head {
-	min-height: 220rpx;
-	padding: 30rpx;
-	background-color: #f8e8ce;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-}
-.card-type {
+.hero-kicker {
 	font-size: 12px;
 	line-height: 18px;
 	color: #b85d69;
 	font-weight: 600;
-	margin-bottom: 10rpx;
 }
-.card-title {
-	width: 380rpx;
-	font-size: 22px;
-	line-height: 32px;
-	color: #d0832e;
+.hero-title {
+	margin-top: 12rpx;
+	font-size: 21px;
+	line-height: 30px;
+	color: #8a5a28;
 	font-weight: 700;
 }
-.card-subtitle {
-	margin-top: 10rpx;
-	width: 380rpx;
+.hero-subtitle {
+	margin-top: 14rpx;
 	font-size: 14px;
 	line-height: 22px;
-	color: #8d6f45;
+	color: #7c6e58;
 }
-.card-cover {
-	width: 140rpx;
-	height: 140rpx;
-	border-radius: 24rpx;
-	background-color: #ffffff;
-}
-.card-cover-placeholder {
+.hero-action {
+	margin-top: 22rpx;
+	width: 170rpx;
+	height: 60rpx;
+	border-radius: 30rpx;
+	background-color: #18b775;
 	align-items: center;
 	justify-content: center;
 }
-.card-cover-text {
-	font-size: 22px;
-	line-height: 30px;
-	color: #dfc2a3;
+.hero-action-text {
+	font-size: 14px;
+	line-height: 20px;
+	color: #ffffff;
 	font-weight: 600;
 }
-.card-foot {
-	padding: 26rpx 30rpx;
+.section-head {
+	margin-top: 30rpx;
+	margin-bottom: 18rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
 }
-.card-desc {
+.section-gap {
+	margin-top: 36rpx;
+}
+.section-title {
 	font-size: 18px;
-	line-height: 28px;
+	line-height: 26px;
 	color: #2f2f2f;
 	font-weight: 600;
+}
+.section-more {
+	font-size: 13px;
+	line-height: 20px;
+	color: #b85d69;
+}
+.topic-scroll {
+	white-space: nowrap;
+}
+.topic-row {
+	flex-direction: row;
+}
+.topic-card {
+	width: 280rpx;
+	margin-right: 18rpx;
+	padding: 18rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.06);
+}
+.topic-cover {
+	width: 244rpx;
+	height: 156rpx;
+	border-radius: 16rpx;
+	background-color: #f4e4cf;
+}
+.topic-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+.topic-cover-text {
+	font-size: 16px;
+	color: #cbad88;
+	font-weight: 600;
+}
+.topic-title {
+	margin-top: 14rpx;
+	font-size: 16px;
+	line-height: 24px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+.topic-summary {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8e8e8e;
+	height: 54rpx;
+	overflow: hidden;
+}
+.topic-tags {
+	margin-top: 12rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+.topic-tag {
+	margin-right: 10rpx;
+	margin-bottom: 8rpx;
+	padding-left: 12rpx;
+	padding-right: 12rpx;
+	height: 34rpx;
+	line-height: 34rpx;
+	border-radius: 18rpx;
+	background-color: #f5efe7;
+	font-size: 11px;
+	color: #907456;
+}
+.topic-meta {
+	margin-top: 12rpx;
+	flex-direction: row;
+	justify-content: space-between;
+}
+.topic-meta-text {
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+}
+.article-list {
+	padding-bottom: 16rpx;
+}
+.article-card {
+	margin-bottom: 18rpx;
+	padding: 16rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
+}
+.article-cover {
+	width: 156rpx;
+	height: 156rpx;
+	border-radius: 16rpx;
+	background-color: #f3e6d6;
+}
+.article-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+.article-cover-text {
+	font-size: 18px;
+	color: #c88a54;
+	font-weight: 700;
+}
+.article-main {
+	flex: 1;
+	padding-left: 18rpx;
+}
+.article-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #252525;
+	font-weight: 600;
+}
+.article-summary {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8f8f8f;
+	height: 54rpx;
+	overflow: hidden;
+}
+.article-meta {
+	margin-top: 16rpx;
+}
+.article-meta-text {
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+	margin-top: 4rpx;
 }
 .tabbar {
 	position: absolute;

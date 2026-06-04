@@ -87,15 +87,15 @@
 	margin-top: 28rpx;
 	width: 220rpx;
 	height: 76rpx;
-	line-height: 76rpx;
-	background-color: #10b66d;
-	color: #ffffff;
-	font-size: 28rpx;
 	border-radius: 12rpx;
-	border-width: 0;
+	background-color: #10b66d;
+	align-items: center;
+	justify-content: center;
 }
-.retry-btn-hover {
-	opacity: 0.92;
+.retry-btn-text {
+	font-size: 28rpx;
+	color: #ffffff;
+	font-weight: 600;
 }
 .favorite-card {
 	margin-left: 16rpx;

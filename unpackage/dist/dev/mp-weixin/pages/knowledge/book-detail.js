@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
+const KNOWLEDGE_DETAIL_ID_KEY = "knowledge_detail_id";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "book-detail",
   setup(__props) {
@@ -57,6 +58,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     function loadParams() {
       const pages = getCurrentPages();
       if (pages.length == 0) {
+        const cachedId_1 = common_vendor.index.getStorageSync(KNOWLEDGE_DETAIL_ID_KEY);
+        if (typeof cachedId_1 == "string" && cachedId_1.length > 0) {
+          detailId.value = cachedId_1;
+        }
         return null;
       }
       const currentPage = pages[pages.length - 1];
@@ -65,8 +70,32 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       const options = currentPage.options;
       const idValue = options["id"];
+      const entryIdValue = options["entryId"];
+      const knowledgeIdValue = options["knowledgeId"];
+      const contentIdValue = options["contentId"];
       if (typeof idValue == "string" && idValue.length > 0) {
         detailId.value = idValue;
+        common_vendor.index.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value);
+        return null;
+      }
+      if (typeof entryIdValue == "string" && entryIdValue.length > 0) {
+        detailId.value = entryIdValue;
+        common_vendor.index.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value);
+        return null;
+      }
+      if (typeof knowledgeIdValue == "string" && knowledgeIdValue.length > 0) {
+        detailId.value = knowledgeIdValue;
+        common_vendor.index.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value);
+        return null;
+      }
+      if (typeof contentIdValue == "string" && contentIdValue.length > 0) {
+        detailId.value = contentIdValue;
+        common_vendor.index.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value);
+        return null;
+      }
+      const cachedId = common_vendor.index.getStorageSync(KNOWLEDGE_DETAIL_ID_KEY);
+      if (typeof cachedId == "string" && cachedId.length > 0) {
+        detailId.value = cachedId;
       }
     }
     function loadDetail() {

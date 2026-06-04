@@ -11,6 +11,9 @@
 				<view class="top-tab" @click="goLearningPage">
 					<text class="top-tab-text">首页</text>
 				</view>
+				<view class="top-tab" @click="goTopicsPage">
+					<text class="top-tab-text">专题</text>
+				</view>
 				<view class="top-tab" @click="goAudioPage">
 					<text class="top-tab-text">音频</text>
 				</view>
@@ -27,8 +30,37 @@
 			</view>
 		</view>
 
-		<scroll-view class="content" scroll-y="true">
+		<view class="search-bar">
+			<input
+				v-model="keyword"
+				class="search-input"
+				placeholder="搜索标题、讲师、课程"
+				confirm-type="search"
+				@confirm="reloadList"
+			/>
+			<view class="search-btn" @tap="reloadList">
+				<text class="search-btn-text">搜索</text>
+			</view>
+		</view>
+
+		<scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
 			<view class="content-shell">
+				<view v-if="isLoading" class="state-wrap">
+					<text class="state-text">加载中...</text>
+				</view>
+
+				<view v-else-if="errorText.length > 0" class="state-wrap">
+					<text class="state-text">{{ errorText }}</text>
+					<view class="search-btn retry-btn" @tap="reloadList">
+						<text class="search-btn-text">重新加载</text>
+					</view>
+				</view>
+
+				<view v-else-if="courseItems.length == 0" class="state-wrap">
+					<text class="state-text">暂无课程</text>
+				</view>
+
+				<view v-else class="list-wrap">
 				<view class="course-card" v-for="item in courseItems" :key="item.id" @click="goCourseDetail(item.id)">
 					<view class="course-cover-shell">
 						<view class="course-cover">
@@ -51,6 +83,13 @@
 							</view>
 						</view>
 					</view>
+				</view>
+				<view v-if="isListLoading" class="bottom-state">
+					<text class="bottom-state-text">加载更多中...</text>
+				</view>
+				<view v-else-if="!hasMore" class="bottom-state">
+					<text class="bottom-state-text">没有更多了</text>
+				</view>
 				</view>
 			</view>
 		</scroll-view>
@@ -138,7 +177,15 @@ const placeholderItems = [
 	}
 ]
 
+const PAGE_SIZE = 10
+
 const courseItems = ref<CourseItem[]>([])
+const keyword = ref('')
+const page = ref(1)
+const hasMore = ref(true)
+const isLoading = ref(true)
+const isListLoading = ref(false)
+const errorText = ref('')
 
 const safeText = (value : string | null) : string => {
 	return value == null || value.length == 0 ? '' : value
@@ -159,25 +206,62 @@ const mapCourseToCard = (item : Course, index : number) : CourseItem => {
 	}
 }
 
-const loadCourseItems = () => {
+const loadCourseItems = (loadMoreValue : boolean) => {
+	if (!loadMoreValue) {
+		page.value = 1
+		hasMore.value = true
+		errorText.value = ''
+		isLoading.value = true
+	} else {
+		if (!hasMore.value || isListLoading.value) {
+			return
+		}
+		isListLoading.value = true
+	}
+
 	fetchCourses(
+		page.value,
+		PAGE_SIZE,
+		keyword.value,
 		(pageData) => {
-			if (pageData.records != null && pageData.records.length > 0) {
-				courseItems.value = pageData.records.map((item : Course, index : number) : CourseItem => {
-					return mapCourseToCard(item, index)
-				})
-				return
+			const records = pageData.records != null ? pageData.records : []
+			const mapped = records.map((item : Course, index : number) : CourseItem => {
+				return mapCourseToCard(item, index)
+			})
+			if (loadMoreValue) {
+				courseItems.value = courseItems.value.concat(mapped)
+			} else {
+				courseItems.value = mapped
 			}
-			courseItems.value = placeholderItems
+			hasMore.value = mapped.length >= PAGE_SIZE
+			if (hasMore.value) {
+				page.value += 1
+			}
+			isLoading.value = false
+			isListLoading.value = false
 		},
-		() => {
-			courseItems.value = placeholderItems
+		(message) => {
+			errorText.value = message.length > 0 ? message : '课程加载失败'
+			isLoading.value = false
+			isListLoading.value = false
 		}
 	)
 }
 
+const reloadList = () => {
+	loadCourseItems(false)
+}
+
+const loadMore = () => {
+	loadCourseItems(true)
+}
+
 const goLearningPage = () => {
 	uni.redirectTo({ url: '/pages/index/index' })
+}
+
+const goTopicsPage = () => {
+	uni.redirectTo({ url: '/pages/topics/list' })
 }
 
 const goAudioPage = () => {
@@ -212,7 +296,7 @@ const goConsultPage = () => {
 	uni.redirectTo({ url: '/pages/consult/index' })
 }
 
-loadCourseItems()
+loadCourseItems(false)
 </script>
 
 <style>
@@ -223,7 +307,7 @@ loadCourseItems()
 
 .hero-shell {
 	position: relative;
-	height: 236rpx;
+	height: 226rpx;
 	overflow: hidden;
 }
 
@@ -232,7 +316,7 @@ loadCourseItems()
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 236rpx;
+	height: 226rpx;
 }
 
 .header {
@@ -254,10 +338,9 @@ loadCourseItems()
 .top-tabs {
 	position: relative;
 	z-index: 1;
-	height: 96rpx;
-	margin-top: 18rpx;
-	padding-left: 28rpx;
-	padding-right: 28rpx;
+	height: 108rpx;
+	padding-left: 18rpx;
+	padding-right: 18rpx;
 	background-color: rgba(251, 250, 246, 0.78);
 	flex-direction: row;
 	align-items: flex-end;
@@ -268,7 +351,7 @@ loadCourseItems()
 }
 
 .top-tab {
-	min-width: 88rpx;
+	min-width: 78rpx;
 	height: 96rpx;
 	align-items: center;
 	justify-content: center;
@@ -279,8 +362,8 @@ loadCourseItems()
 }
 
 .top-tab-text {
-	font-size: 18px;
-	line-height: 26px;
+	font-size: 15px;
+	line-height: 22px;
 	color: #333333;
 }
 
@@ -298,6 +381,39 @@ loadCourseItems()
 	background-color: #b85d69;
 }
 
+.search-bar {
+	margin: 0 20rpx 0;
+	padding-left: 18rpx;
+	padding-right: 10rpx;
+	height: 76rpx;
+	border-radius: 18rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	align-items: center;
+}
+
+.search-input {
+	flex: 1;
+	height: 76rpx;
+	font-size: 14px;
+	color: #2f2f2f;
+}
+
+.search-btn {
+	width: 108rpx;
+	height: 54rpx;
+	border-radius: 27rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-btn-text {
+	font-size: 13px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
 .content {
 	flex: 1;
 	padding-bottom: 110rpx;
@@ -306,8 +422,36 @@ loadCourseItems()
 .content-shell {
 	padding-left: 20rpx;
 	padding-right: 20rpx;
-	padding-top: 24rpx;
+	padding-top: 8rpx;
 	padding-bottom: 40rpx;
+}
+
+.state-wrap {
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx !important;
+	height: 70rpx !important;
+	border-radius: 14rpx !important;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
 }
 
 .course-card {
@@ -316,6 +460,17 @@ loadCourseItems()
 	background-color: #ffffff;
 	overflow: hidden;
 	box-shadow: 0 12rpx 24rpx rgba(110, 100, 80, 0.05);
+}
+
+.bottom-state {
+	padding-top: 10rpx;
+	align-items: center;
+}
+
+.bottom-state-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #b1b1b1;
 }
 
 .course-cover-shell {

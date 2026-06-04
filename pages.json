@@ -113,6 +113,27 @@
 			}
 		},
 		{
+			"path": "pages/topics/list",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/topics/detail",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/topics/section",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
 			"path": "pages/knowledge/index",
 			"style": {
 				"navigationStyle": "custom",

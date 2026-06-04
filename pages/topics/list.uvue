@@ -1,0 +1,574 @@
+<template>
+	<view class="page">
+		<view class="hero-shell">
+			<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
+
+			<view class="header">
+				<text class="header-title">{{ appTitleText }}</text>
+			</view>
+
+			<view class="top-tabs">
+				<view class="top-tab" @tap="goHomePage">
+					<text class="top-tab-text">{{ homeTabText }}</text>
+				</view>
+				<view class="top-tab top-tab-active">
+					<text class="top-tab-text top-tab-text-active">{{ pageTitleText }}</text>
+					<view class="top-tab-line"></view>
+				</view>
+				<view class="top-tab" @tap="goAudioPage">
+					<text class="top-tab-text">{{ audioTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goLivePage">
+					<text class="top-tab-text">{{ liveTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goCoursePage">
+					<text class="top-tab-text">{{ courseTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goNewsPage">
+					<text class="top-tab-text">{{ newsTabText }}</text>
+				</view>
+			</view>
+		</view>
+
+		<view class="search-bar">
+			<input
+				v-model="keyword"
+				class="search-input"
+				:placeholder="searchPlaceholder"
+				confirm-type="search"
+				@confirm="reloadList"
+			/>
+			<view class="search-btn" @tap="reloadList">
+				<text class="search-btn-text">{{ searchText }}</text>
+			</view>
+		</view>
+
+		<scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
+			<view class="content-shell">
+				<view v-if="isLoading" class="state-wrap">
+					<text class="state-text">{{ loadingText }}</text>
+				</view>
+
+				<view v-else-if="errorText.length > 0" class="state-wrap">
+					<text class="state-text">{{ errorText }}</text>
+					<view class="retry-btn" @tap="reloadList">
+						<text class="retry-btn-text">{{ retryText }}</text>
+					</view>
+				</view>
+
+				<view v-else-if="topicItems.length == 0" class="state-wrap">
+					<text class="state-text">{{ emptyText }}</text>
+				</view>
+
+				<view v-else class="topic-list">
+					<view
+						v-for="item in topicItems"
+						:key="item.id"
+						class="topic-card"
+						@tap="goDetail(item.id)"
+					>
+						<image v-if="item.coverUrl.length > 0" class="topic-cover" :src="item.coverUrl" mode="aspectFill"></image>
+						<view v-else class="topic-cover topic-cover-placeholder">
+							<text class="topic-cover-text">{{ pageTitleText }}</text>
+						</view>
+						<view class="topic-main">
+							<text class="topic-title">{{ item.title }}</text>
+							<text class="topic-summary">{{ item.summary }}</text>
+							<text class="topic-requirement">{{ item.learningRequirements }}</text>
+							<view class="tag-row">
+								<text v-for="tag in item.tags" :key="tag" class="tag-item">{{ tag }}</text>
+							</view>
+							<view class="meta-row">
+								<text class="meta-text">{{ viewText }} {{ item.viewCount }}</text>
+								<text class="meta-text">{{ favoriteText }} {{ item.favoriteCount }}</text>
+							</view>
+						</view>
+					</view>
+
+					<view v-if="isListLoading" class="bottom-state">
+						<text class="bottom-state-text">{{ loadingMoreText }}</text>
+					</view>
+					<view v-else-if="!hasMore" class="bottom-state">
+						<text class="bottom-state-text">{{ noMoreText }}</text>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
+
+		<view class="tabbar">
+			<view class="tab-item tab-item-active">
+				<image class="tab-icon-image" src="/static/tabbar/icon_xuexidianji.png" mode="aspectFit"></image>
+				<text class="tab-label tab-label-active">{{ learningTabText }}</text>
+			</view>
+			<view class="tab-item" @tap="goExamPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">{{ examTabText }}</text>
+			</view>
+			<view class="tab-item" @tap="goConsultPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
+				<text class="tab-label">{{ consultTabText }}</text>
+			</view>
+			<view class="tab-item" @tap="goKnowledgePage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">{{ knowledgeTabText }}</text>
+			</view>
+			<view class="tab-item" @tap="goMinePage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">{{ mineTabText }}</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { ref } from 'vue'
+import { fetchTopicCards, type TopicCard } from '../../utils/auth.uts'
+
+type TopicListItem = {
+	id : number
+	title : string
+	summary : string
+	learningRequirements : string
+	coverUrl : string
+	tags : string[]
+	viewCount : number
+	favoriteCount : number
+}
+
+const PAGE_SIZE = 10
+
+const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
+const homeTabText = '\u9996\u9875'
+const pageTitleText = '\u4e13\u9898'
+const audioTabText = '\u97f3\u9891'
+const liveTabText = '\u76f4\u64ad'
+const courseTabText = '\u8bfe\u7a0b'
+const newsTabText = '\u8d44\u8baf'
+const learningTabText = '\u5b66\u4e60'
+const examTabText = '\u8003\u6838'
+const consultTabText = '\u54a8\u8be2'
+const knowledgeTabText = '\u77e5\u8bc6\u5e93'
+const mineTabText = '\u6211\u7684'
+const searchPlaceholder = '\u641c\u7d22\u4e13\u9898\u6807\u9898'
+const searchText = '\u641c\u7d22'
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const emptyText = '\u6682\u65e0\u4e13\u9898'
+const loadingMoreText = '\u52a0\u8f7d\u66f4\u591a\u4e2d...'
+const noMoreText = '\u6ca1\u6709\u66f4\u591a\u4e86'
+const loadFailedText = '\u4e13\u9898\u52a0\u8f7d\u5931\u8d25'
+const viewText = '\u6d4f\u89c8'
+const favoriteText = '\u6536\u85cf'
+const fallbackSummaryText = '\u6682\u65e0\u4e13\u9898\u7b80\u4ecb'
+const fallbackRequirementText = '\u6682\u65e0\u5b66\u4e60\u8981\u6c42'
+const TOPIC_DETAIL_ID_KEY = 'topic_detail_id'
+
+const keyword = ref('')
+const topicItems = ref<TopicListItem[]>([])
+const page = ref(1)
+const hasMore = ref(true)
+const isLoading = ref(true)
+const isListLoading = ref(false)
+const errorText = ref('')
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const mapTopic = (item : TopicCard) : TopicListItem => {
+	return {
+		id: item.id,
+		title: safeText(item.title),
+		summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryText,
+		learningRequirements: safeText(item.learningRequirements).length > 0 ? safeText(item.learningRequirements) : fallbackRequirementText,
+		coverUrl: safeText(item.coverUrl),
+		tags: item.tags != null ? item.tags.slice(0, 3) : [],
+		viewCount: item.viewCount,
+		favoriteCount: item.favoriteCount
+	}
+}
+
+const loadTopics = (loadMoreValue : boolean) => {
+	if (!loadMoreValue) {
+		page.value = 1
+		hasMore.value = true
+		errorText.value = ''
+		isLoading.value = true
+	} else {
+		if (!hasMore.value || isListLoading.value) {
+			return
+		}
+		isListLoading.value = true
+	}
+
+	fetchTopicCards(
+		page.value,
+		PAGE_SIZE,
+		keyword.value,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			const mapped = records.map((item : TopicCard) : TopicListItem => {
+				return mapTopic(item)
+			})
+
+			if (loadMoreValue) {
+				topicItems.value = topicItems.value.concat(mapped)
+			} else {
+				topicItems.value = mapped
+			}
+
+			hasMore.value = mapped.length >= PAGE_SIZE
+			if (hasMore.value) {
+				page.value += 1
+			}
+
+			isLoading.value = false
+			isListLoading.value = false
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : loadFailedText
+			isLoading.value = false
+			isListLoading.value = false
+		}
+	)
+}
+
+const reloadList = () => {
+	loadTopics(false)
+}
+
+const loadMore = () => {
+	loadTopics(true)
+}
+
+const goDetail = (id : number) => {
+	uni.setStorageSync(TOPIC_DETAIL_ID_KEY, String(id))
+	uni.navigateTo({ url: '/pages/topics/detail?id=' + String(id) })
+}
+
+const goHomePage = () => {
+	uni.redirectTo({ url: '/pages/index/index' })
+}
+
+const goAudioPage = () => {
+	uni.redirectTo({ url: '/pages/audio/index' })
+}
+
+const goLivePage = () => {
+	uni.redirectTo({ url: '/pages/live/index' })
+}
+
+const goCoursePage = () => {
+	uni.redirectTo({ url: '/pages/course/index' })
+}
+
+const goNewsPage = () => {
+	uni.redirectTo({ url: '/pages/news/index' })
+}
+
+const goExamPage = () => {
+	uni.switchTab({ url: '/pages/exam/index' })
+}
+
+const goConsultPage = () => {
+	uni.switchTab({ url: '/pages/consult/index' })
+}
+
+const goKnowledgePage = () => {
+	uni.switchTab({ url: '/pages/knowledge/index' })
+}
+
+const goMinePage = () => {
+	uni.switchTab({ url: '/pages/mine/index' })
+}
+
+const goBack = () => {
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack({ delta: 1 })
+		return
+	}
+	uni.redirectTo({ url: '/pages/index/index' })
+}
+
+loadTopics(false)
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f7f7f2;
+}
+
+.hero-shell {
+	position: relative;
+	height: 226rpx;
+	overflow: hidden;
+}
+
+.hero-bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 750rpx;
+	height: 226rpx;
+}
+
+.header {
+	position: relative;
+	z-index: 1;
+	padding-top: 34rpx;
+	height: 118rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.header-title {
+	font-size: 20px;
+	line-height: 30px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.top-tabs {
+	position: relative;
+	z-index: 1;
+	height: 108rpx;
+	padding-left: 18rpx;
+	padding-right: 18rpx;
+	background-color: rgba(251, 250, 246, 0.78);
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.top-tab {
+	min-width: 78rpx;
+	height: 96rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.top-tab-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #333333;
+}
+
+.top-tab-text-active {
+	color: #b85d69;
+	font-weight: 600;
+}
+
+.top-tab-line {
+	margin-top: 12rpx;
+	width: 40rpx;
+	height: 6rpx;
+	border-radius: 4rpx;
+	background-color: #b85d69;
+}
+
+.search-bar {
+	margin: 0 20rpx 0;
+	padding-left: 18rpx;
+	padding-right: 10rpx;
+	height: 76rpx;
+	border-radius: 18rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	align-items: center;
+}
+
+.search-input {
+	flex: 1;
+	height: 76rpx;
+	font-size: 14px;
+	color: #2f2f2f;
+}
+
+.search-btn {
+	width: 108rpx;
+	height: 54rpx;
+	border-radius: 27rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-btn-text {
+	font-size: 13px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.content {
+	flex: 1;
+}
+
+.content-shell {
+	padding: 18rpx 20rpx 176rpx;
+}
+
+.state-wrap {
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.topic-card {
+	margin-bottom: 18rpx;
+	padding: 16rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
+}
+
+.topic-cover {
+	width: 170rpx;
+	height: 170rpx;
+	border-radius: 18rpx;
+	background-color: #f3e6d6;
+}
+
+.topic-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+
+.topic-cover-text {
+	font-size: 16px;
+	color: #cc8e58;
+	font-weight: 700;
+}
+
+.topic-main {
+	flex: 1;
+	padding-left: 18rpx;
+}
+
+.topic-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #252525;
+	font-weight: 600;
+}
+
+.topic-summary {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8f8f8f;
+}
+
+.topic-requirement {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #907456;
+}
+
+.tag-row {
+	margin-top: 10rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+.tag-item {
+	margin-right: 10rpx;
+	margin-bottom: 8rpx;
+	padding-left: 12rpx;
+	padding-right: 12rpx;
+	height: 34rpx;
+	line-height: 34rpx;
+	border-radius: 18rpx;
+	background-color: #f5efe7;
+	font-size: 11px;
+	color: #907456;
+}
+
+.meta-row {
+	margin-top: 10rpx;
+	flex-direction: row;
+}
+
+.meta-text {
+	margin-right: 16rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+}
+
+.bottom-state {
+	padding-top: 10rpx;
+	align-items: center;
+}
+
+.bottom-state-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #b1b1b1;
+}
+
+.tabbar {
+	height: 120rpx;
+	padding-top: 10rpx;
+	padding-bottom: 10rpx;
+	background-color: #ffffff;
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: #ededed;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-around;
+}
+
+.tab-item {
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+
+.tab-item-active {
+	opacity: 1;
+}
+
+.tab-icon-image {
+	width: 42rpx;
+	height: 42rpx;
+}
+
+.tab-label {
+	margin-top: 6rpx;
+	font-size: 22rpx;
+	line-height: 30rpx;
+	color: #b8b8b8;
+}
+
+.tab-label-active {
+	color: #22b573;
+	font-weight: 600;
+}
+</style>

@@ -1,11 +1,11 @@
 <template>
 	<view class="page">
-		<view class="nav-back" @click="handleBack">
+		<view class="nav-back" @tap="handleBack">
 			<image class="nav-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
 		</view>
 
 		<view class="header">
-			<text class="header-title">我的收藏</text>
+			<text class="header-title">{{ pageTitleText }}</text>
 		</view>
 
 		<view class="top-tabs">
@@ -13,7 +13,7 @@
 				v-for="tab in tabs"
 				:key="tab.key"
 				class="top-tab"
-				@click="changeTab(tab.key)"
+				@tap="changeTab(tab.key)"
 			>
 				<text class="top-tab-text" :class="activeTab == tab.key ? 'top-tab-text-active' : ''">{{ tab.label }}</text>
 				<view v-if="activeTab == tab.key" class="top-tab-line"></view>
@@ -22,16 +22,18 @@
 
 		<scroll-view class="list-scroll" scroll-y="true">
 			<view v-if="isLoading" class="state-wrap">
-				<text class="state-text">加载中...</text>
+				<text class="state-text">{{ loadingText }}</text>
 			</view>
 
 			<view v-else-if="errorText.length > 0" class="state-wrap">
 				<text class="state-text">{{ errorText }}</text>
-				<button class="retry-btn" hover-class="retry-btn-hover" @click="loadFavorites">重新加载</button>
+				<view class="retry-btn" @tap="loadFavorites">
+					<text class="retry-btn-text">{{ retryText }}</text>
+				</view>
 			</view>
 
 			<view v-else-if="filteredItems.length == 0" class="state-wrap">
-				<text class="state-text">暂无收藏内容</text>
+				<text class="state-text">{{ emptyText }}</text>
 			</view>
 
 			<view
@@ -39,7 +41,7 @@
 				v-for="item in filteredItems"
 				:key="item.id"
 				class="favorite-card"
-				@click="goToDetail(item)"
+				@tap="goToDetail(item)"
 			>
 				<view class="favorite-cover-shell" :style="{ backgroundColor: item.coverColor }">
 					<image
@@ -60,7 +62,7 @@
 						<text class="favorite-title">{{ item.title }}</text>
 					</view>
 					<text v-if="item.source.length > 0" class="favorite-source">{{ item.source }}</text>
-					<text class="favorite-time">收藏时间: {{ item.timeText }}</text>
+					<text class="favorite-time">{{ favoriteTimeText }} {{ item.timeText }}</text>
 				</view>
 			</view>
 
@@ -74,10 +76,12 @@ import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import {
 	fetchAudioDetail,
+	fetchArticleDetail,
 	fetchCourseDetail,
 	fetchLiveSessionDetail,
 	fetchProfileFavorites,
 	fetchTopicDetail,
+	type Article,
 	type AppPodcast,
 	type AppResourceRecord,
 	type Course,
@@ -107,13 +111,24 @@ const TYPE_AUDIO = 'AUDIO'
 const TYPE_LIVE = 'LIVE'
 const TYPE_COURSE = 'COURSE'
 const TYPE_TOPIC = 'TOPIC'
+const TYPE_INFO = 'INFO'
+
+const pageTitleText = '\u6211\u7684\u6536\u85cf'
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const emptyText = '\u6682\u65e0\u6536\u85cf\u5185\u5bb9'
+const loadFailedText = '\u52a0\u8f7d\u6536\u85cf\u5931\u8d25'
+const favoriteTimeText = '\u6536\u85cf\u65f6\u95f4:'
+const unsupportedOpenText = '\u6682\u4e0d\u652f\u6301\u6253\u5f00\u8be5\u6536\u85cf'
+const unknownText = '\u672a\u77e5'
 
 const tabs : FavoriteTab[] = [
-	{ key: TYPE_ALL, label: '全部' },
-	{ key: TYPE_AUDIO, label: '音频' },
-	{ key: TYPE_LIVE, label: '直播' },
-	{ key: TYPE_COURSE, label: '课程' },
-	{ key: TYPE_TOPIC, label: '资讯' }
+	{ key: TYPE_ALL, label: '\u5168\u90e8' },
+	{ key: TYPE_AUDIO, label: '\u97f3\u9891' },
+	{ key: TYPE_LIVE, label: '\u76f4\u64ad' },
+	{ key: TYPE_COURSE, label: '\u8bfe\u7a0b' },
+	{ key: TYPE_TOPIC, label: '\u4e13\u9898' },
+	{ key: TYPE_INFO, label: '\u8d44\u8baf' }
 ]
 
 const activeTab = ref(TYPE_ALL)
@@ -135,7 +150,7 @@ const safeText = (value : string | null) : string => {
 const formatOccurredAt = (value : string) : string => {
 	const text = safeText(value)
 	if (text.length == 0) {
-		return '未知'
+		return unknownText
 	}
 	return text.replace('T', ' ')
 }
@@ -151,8 +166,11 @@ const normalizeFavoriteType = (resourceType : string) : string => {
 	if (normalizedType == 'course') {
 		return TYPE_COURSE
 	}
-	if (normalizedType == 'topic' || normalizedType == 'article' || normalizedType == 'info') {
+	if (normalizedType == 'topic') {
 		return TYPE_TOPIC
+	}
+	if (normalizedType == 'article' || normalizedType == 'info') {
+		return TYPE_INFO
 	}
 	return safeText(resourceType).toUpperCase()
 }
@@ -160,18 +178,21 @@ const normalizeFavoriteType = (resourceType : string) : string => {
 const getTypeLabel = (resourceType : string) : string => {
 	const normalizedType = normalizeFavoriteType(resourceType)
 	if (normalizedType == TYPE_AUDIO) {
-		return '音频'
+		return '\u97f3\u9891'
 	}
 	if (normalizedType == TYPE_LIVE) {
-		return '直播'
+		return '\u76f4\u64ad'
 	}
 	if (normalizedType == TYPE_COURSE) {
-		return '课程'
+		return '\u8bfe\u7a0b'
 	}
 	if (normalizedType == TYPE_TOPIC) {
-		return '资讯'
+		return '\u4e13\u9898'
 	}
-	return '收藏'
+	if (normalizedType == TYPE_INFO) {
+		return '\u8d44\u8baf'
+	}
+	return '\u6536\u85cf'
 }
 
 const getCoverColor = (resourceType : string) : string => {
@@ -186,6 +207,9 @@ const getCoverColor = (resourceType : string) : string => {
 		return '#F3E3D8'
 	}
 	if (normalizedType == TYPE_TOPIC) {
+		return '#EDE3D4'
+	}
+	if (normalizedType == TYPE_INFO) {
 		return '#EFE2D0'
 	}
 	return '#F1F1F1'
@@ -222,7 +246,7 @@ const mapAudioFavorite = (record : AppResourceRecord, detail : AppPodcast) : Fav
 		resourceType: normalizeFavoriteType(record.resourceType),
 		resourceId: record.resourceId,
 		typeLabel: getTypeLabel(record.resourceType),
-		title: safeText(detail.title).length > 0 ? detail.title : '音频 #' + String(record.resourceId),
+		title: safeText(detail.title).length > 0 ? detail.title : '\u97f3\u9891 #' + String(record.resourceId),
 		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.publishedAt),
 		timeText: formatOccurredAt(safeText(record.occurredAt)),
 		coverUrl: sanitizeCoverUrl(detail.coverUrl),
@@ -236,7 +260,7 @@ const mapLiveFavorite = (record : AppResourceRecord, detail : LiveSession) : Fav
 		resourceType: normalizeFavoriteType(record.resourceType),
 		resourceId: record.resourceId,
 		typeLabel: getTypeLabel(record.resourceType),
-		title: safeText(detail.title).length > 0 ? detail.title : '直播 #' + String(record.resourceId),
+		title: safeText(detail.title).length > 0 ? detail.title : '\u76f4\u64ad #' + String(record.resourceId),
 		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.anchorName),
 		timeText: formatOccurredAt(safeText(record.occurredAt)),
 		coverUrl: sanitizeCoverUrl(detail.coverUrl),
@@ -250,7 +274,7 @@ const mapCourseFavorite = (record : AppResourceRecord, detail : Course) : Favori
 		resourceType: normalizeFavoriteType(record.resourceType),
 		resourceId: record.resourceId,
 		typeLabel: getTypeLabel(record.resourceType),
-		title: safeText(detail.courseName).length > 0 ? detail.courseName : '课程 #' + String(record.resourceId),
+		title: safeText(detail.courseName).length > 0 ? detail.courseName : '\u8bfe\u7a0b #' + String(record.resourceId),
 		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.lecturerName),
 		timeText: formatOccurredAt(safeText(record.occurredAt)),
 		coverUrl: sanitizeCoverUrl(detail.coverUrl),
@@ -264,8 +288,22 @@ const mapTopicFavorite = (record : AppResourceRecord, detail : Topic) : Favorite
 		resourceType: normalizeFavoriteType(record.resourceType),
 		resourceId: record.resourceId,
 		typeLabel: getTypeLabel(record.resourceType),
-		title: safeText(detail.title).length > 0 ? detail.title : '资讯 #' + String(record.resourceId),
+		title: safeText(detail.title).length > 0 ? detail.title : '\u4e13\u9898 #' + String(record.resourceId),
 		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.publishedAt),
+		timeText: formatOccurredAt(safeText(record.occurredAt)),
+		coverUrl: sanitizeCoverUrl(detail.coverUrl),
+		coverColor: getCoverColor(record.resourceType)
+	}
+}
+
+const mapArticleFavorite = (record : AppResourceRecord, detail : Article) : FavoriteDisplayItem => {
+	return {
+		id: String(record.id),
+		resourceType: normalizeFavoriteType(record.resourceType),
+		resourceId: record.resourceId,
+		typeLabel: getTypeLabel(record.resourceType),
+		title: safeText(detail.title).length > 0 ? detail.title : '\u8d44\u8baf #' + String(record.resourceId),
+		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.source),
 		timeText: formatOccurredAt(safeText(record.occurredAt)),
 		coverUrl: sanitizeCoverUrl(detail.coverUrl),
 		coverColor: getCoverColor(record.resourceType)
@@ -329,6 +367,19 @@ const enrichFavoriteItem = (
 		return
 	}
 
+	if (normalizedType == TYPE_INFO) {
+		fetchArticleDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapArticleFavorite(record, detail))
+			},
+			() => {
+				success(buildFallbackItem(record))
+			}
+		)
+		return
+	}
+
 	success(buildFallbackItem(record))
 }
 
@@ -367,7 +418,7 @@ const loadFavorites = () => {
 			})
 		},
 		(message) => {
-			errorText.value = message.length > 0 ? message : '加载收藏失败'
+			errorText.value = message.length > 0 ? message : loadFailedText
 			allItems.value = []
 			isLoading.value = false
 		}
@@ -406,20 +457,20 @@ const goToDetail = (item : FavoriteDisplayItem) => {
 	} else if (item.resourceType == TYPE_COURSE) {
 		url = '/pages/course/detail?id=' + String(item.resourceId)
 	} else if (item.resourceType == TYPE_TOPIC) {
+		url = '/pages/topics/detail?id=' + String(item.resourceId)
+	} else if (item.resourceType == TYPE_INFO) {
 		url = '/pages/news/detail?id=' + String(item.resourceId)
 	}
 
 	if (url.length == 0) {
 		uni.showToast({
-			title: '暂不支持打开该收藏',
+			title: unsupportedOpenText,
 			icon: 'none'
 		})
 		return
 	}
 
-	uni.navigateTo({
-		url
-	})
+	uni.navigateTo({ url })
 }
 
 const handleBack = () => {
@@ -540,16 +591,16 @@ onShow(() => {
 	margin-top: 28rpx;
 	width: 220rpx;
 	height: 76rpx;
-	line-height: 76rpx;
-	background-color: #10b66d;
-	color: #ffffff;
-	font-size: 28rpx;
 	border-radius: 12rpx;
-	border-width: 0;
+	background-color: #10b66d;
+	align-items: center;
+	justify-content: center;
 }
 
-.retry-btn-hover {
-	opacity: 0.92;
+.retry-btn-text {
+	font-size: 28rpx;
+	color: #ffffff;
+	font-weight: 600;
 }
 
 .favorite-card {

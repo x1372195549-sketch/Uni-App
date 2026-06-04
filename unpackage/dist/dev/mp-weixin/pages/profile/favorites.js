@@ -63,6 +63,15 @@ const TYPE_AUDIO = "AUDIO";
 const TYPE_LIVE = "LIVE";
 const TYPE_COURSE = "COURSE";
 const TYPE_TOPIC = "TOPIC";
+const TYPE_INFO = "INFO";
+const pageTitleText = "我的收藏";
+const loadingText = "加载中...";
+const retryText = "重新加载";
+const emptyText = "暂无收藏内容";
+const loadFailedText = "加载收藏失败";
+const favoriteTimeText = "收藏时间:";
+const unsupportedOpenText = "暂不支持打开该收藏";
+const unknownText = "未知";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "favorites",
   setup(__props) {
@@ -71,7 +80,8 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       new FavoriteTab({ key: TYPE_AUDIO, label: "音频" }),
       new FavoriteTab({ key: TYPE_LIVE, label: "直播" }),
       new FavoriteTab({ key: TYPE_COURSE, label: "课程" }),
-      new FavoriteTab({ key: TYPE_TOPIC, label: "资讯" })
+      new FavoriteTab({ key: TYPE_TOPIC, label: "专题" }),
+      new FavoriteTab({ key: TYPE_INFO, label: "资讯" })
     ];
     const activeTab = common_vendor.ref(TYPE_ALL);
     const isLoading = common_vendor.ref(true);
@@ -91,7 +101,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const formatOccurredAt = (value) => {
       const text = safeText(value);
       if (text.length == 0) {
-        return "未知";
+        return unknownText;
       }
       return text.replace("T", " ");
     };
@@ -106,8 +116,11 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (normalizedType == "course") {
         return TYPE_COURSE;
       }
-      if (normalizedType == "topic" || normalizedType == "article" || normalizedType == "info") {
+      if (normalizedType == "topic") {
         return TYPE_TOPIC;
+      }
+      if (normalizedType == "article" || normalizedType == "info") {
+        return TYPE_INFO;
       }
       return safeText(resourceType).toUpperCase();
     };
@@ -123,6 +136,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         return "课程";
       }
       if (normalizedType == TYPE_TOPIC) {
+        return "专题";
+      }
+      if (normalizedType == TYPE_INFO) {
         return "资讯";
       }
       return "收藏";
@@ -139,6 +155,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         return "#F3E3D8";
       }
       if (normalizedType == TYPE_TOPIC) {
+        return "#EDE3D4";
+      }
+      if (normalizedType == TYPE_INFO) {
         return "#EFE2D0";
       }
       return "#F1F1F1";
@@ -211,8 +230,21 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         resourceType: normalizeFavoriteType(record.resourceType),
         resourceId: record.resourceId,
         typeLabel: getTypeLabel(record.resourceType),
-        title: safeText(detail.title).length > 0 ? detail.title : "资讯 #" + String(record.resourceId),
+        title: safeText(detail.title).length > 0 ? detail.title : "专题 #" + String(record.resourceId),
         source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.publishedAt),
+        timeText: formatOccurredAt(safeText(record.occurredAt)),
+        coverUrl: sanitizeCoverUrl(detail.coverUrl),
+        coverColor: getCoverColor(record.resourceType)
+      });
+    };
+    const mapArticleFavorite = (record, detail) => {
+      return new FavoriteDisplayItem({
+        id: String(record.id),
+        resourceType: normalizeFavoriteType(record.resourceType),
+        resourceId: record.resourceId,
+        typeLabel: getTypeLabel(record.resourceType),
+        title: safeText(detail.title).length > 0 ? detail.title : "资讯 #" + String(record.resourceId),
+        source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.source),
         timeText: formatOccurredAt(safeText(record.occurredAt)),
         coverUrl: sanitizeCoverUrl(detail.coverUrl),
         coverColor: getCoverColor(record.resourceType)
@@ -252,6 +284,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         });
         return null;
       }
+      if (normalizedType == TYPE_INFO) {
+        utils_auth.fetchArticleDetail(String(record.resourceId), (detail) => {
+          success(mapArticleFavorite(record, detail));
+        }, () => {
+          success(buildFallbackItem(record));
+        });
+        return null;
+      }
       success(buildFallbackItem(record));
     };
     const loadFavorites = () => {
@@ -282,7 +322,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           });
         });
       }, (message) => {
-        errorText.value = message.length > 0 ? message : "加载收藏失败";
+        errorText.value = message.length > 0 ? message : loadFailedText;
         allItems.value = [];
         isLoading.value = false;
       });
@@ -317,18 +357,18 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       } else if (item.resourceType == TYPE_COURSE) {
         url = "/pages/course/detail?id=" + String(item.resourceId);
       } else if (item.resourceType == TYPE_TOPIC) {
+        url = "/pages/topics/detail?id=" + String(item.resourceId);
+      } else if (item.resourceType == TYPE_INFO) {
         url = "/pages/news/detail?id=" + String(item.resourceId);
       }
       if (url.length == 0) {
         common_vendor.index.showToast({
-          title: "暂不支持打开该收藏",
+          title: unsupportedOpenText,
           icon: "none"
         });
         return null;
       }
-      common_vendor.index.navigateTo({
-        url
-      });
+      common_vendor.index.navigateTo({ url });
     };
     const handleBack = () => {
       const pages = getCurrentPages();
@@ -349,7 +389,8 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const __returned__ = common_vendor.e({
         a: common_assets._imports_0$1,
         b: common_vendor.o(handleBack),
-        c: common_vendor.f(tabs, (tab, k0, i0) => {
+        c: common_vendor.t(pageTitleText),
+        d: common_vendor.f(tabs, (tab, k0, i0) => {
           return common_vendor.e({
             a: common_vendor.t(tab.label),
             b: common_vendor.n(activeTab.value == tab.key ? "top-tab-text-active" : ""),
@@ -361,12 +402,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, tab.key)
           });
         }),
-        d: isLoading.value
-      }, isLoading.value ? {} : errorText.value.length > 0 ? {
-        f: common_vendor.t(errorText.value),
-        g: common_vendor.o(loadFavorites)
-      } : filteredItems.value.length == 0 ? {} : {
-        i: common_vendor.f(filteredItems.value, (item, k0, i0) => {
+        e: isLoading.value
+      }, isLoading.value ? {
+        f: common_vendor.t(loadingText)
+      } : errorText.value.length > 0 ? {
+        h: common_vendor.t(errorText.value),
+        i: common_vendor.t(retryText),
+        j: common_vendor.o(loadFavorites)
+      } : filteredItems.value.length == 0 ? {
+        l: common_vendor.t(emptyText)
+      } : {
+        m: common_vendor.f(filteredItems.value, (item, k0, i0) => {
           return common_vendor.e({
             a: item.coverUrl.length > 0
           }, item.coverUrl.length > 0 ? {
@@ -390,11 +436,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
               return goToDetail(item);
             }, item.id)
           });
-        })
+        }),
+        n: common_vendor.t(favoriteTimeText)
       }, {
-        e: errorText.value.length > 0,
-        h: filteredItems.value.length == 0,
-        j: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        g: errorText.value.length > 0,
+        k: filteredItems.value.length == 0,
+        o: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

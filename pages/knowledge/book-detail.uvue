@@ -71,6 +71,7 @@
 import { ref } from 'vue'
 import { fetchKnowledgeEntryDetail, type KnowledgeEntry } from '../../utils/auth.uts'
 
+const KNOWLEDGE_DETAIL_ID_KEY = 'knowledge_detail_id'
 const detailId = ref('')
 const isLoading = ref(true)
 const errorText = ref('')
@@ -129,6 +130,10 @@ function applyDetail(detail : KnowledgeEntry) : void {
 function loadParams() : void {
 	const pages = getCurrentPages()
 	if (pages.length == 0) {
+		const cachedId = uni.getStorageSync(KNOWLEDGE_DETAIL_ID_KEY)
+		if (typeof cachedId == 'string' && cachedId.length > 0) {
+			detailId.value = cachedId
+		}
 		return
 	}
 
@@ -139,8 +144,33 @@ function loadParams() : void {
 
 	const options = currentPage.options as UTSJSONObject
 	const idValue = options['id']
+	const entryIdValue = options['entryId']
+	const knowledgeIdValue = options['knowledgeId']
+	const contentIdValue = options['contentId']
 	if (typeof idValue == 'string' && idValue.length > 0) {
 		detailId.value = idValue
+		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+		return
+	}
+	if (typeof entryIdValue == 'string' && entryIdValue.length > 0) {
+		detailId.value = entryIdValue
+		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+		return
+	}
+	if (typeof knowledgeIdValue == 'string' && knowledgeIdValue.length > 0) {
+		detailId.value = knowledgeIdValue
+		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+		return
+	}
+	if (typeof contentIdValue == 'string' && contentIdValue.length > 0) {
+		detailId.value = contentIdValue
+		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+		return
+	}
+
+	const cachedId = uni.getStorageSync(KNOWLEDGE_DETAIL_ID_KEY)
+	if (typeof cachedId == 'string' && cachedId.length > 0) {
+		detailId.value = cachedId
 	}
 }
 

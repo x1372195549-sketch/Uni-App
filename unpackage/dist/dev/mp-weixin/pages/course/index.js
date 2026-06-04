@@ -101,10 +101,11 @@ class Course extends UTS.UTSType {
     delete this.__props__;
   }
 }
+const PAGE_SIZE = 10;
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "index",
   setup(__props) {
-    const placeholderItems = [
+    [
       new UTSJSONObject({
         id: "1",
         coverTitle: "课程封面占位",
@@ -125,6 +126,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       })
     ];
     const courseItems = common_vendor.ref([]);
+    const keyword = common_vendor.ref("");
+    const page = common_vendor.ref(1);
+    const hasMore = common_vendor.ref(true);
+    const isLoading = common_vendor.ref(true);
+    const isListLoading = common_vendor.ref(false);
+    const errorText = common_vendor.ref("");
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
     };
@@ -142,21 +149,51 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         comments: String(item.videos != null ? item.videos.length : 0)
       });
     };
-    const loadCourseItems = () => {
-      utils_auth.fetchCourses((pageData) => {
-        if (pageData.records != null && pageData.records.length > 0) {
-          courseItems.value = pageData.records.map((item, index) => {
-            return mapCourseToCard(item, index);
-          });
+    const loadCourseItems = (loadMoreValue) => {
+      if (!loadMoreValue) {
+        page.value = 1;
+        hasMore.value = true;
+        errorText.value = "";
+        isLoading.value = true;
+      } else {
+        if (!hasMore.value || isListLoading.value) {
           return null;
         }
-        courseItems.value = placeholderItems;
-      }, () => {
-        courseItems.value = placeholderItems;
+        isListLoading.value = true;
+      }
+      utils_auth.fetchCourses(page.value, PAGE_SIZE, keyword.value, (pageData) => {
+        const records = pageData.records != null ? pageData.records : [];
+        const mapped = records.map((item, index) => {
+          return mapCourseToCard(item, index);
+        });
+        if (loadMoreValue) {
+          courseItems.value = courseItems.value.concat(mapped);
+        } else {
+          courseItems.value = mapped;
+        }
+        hasMore.value = mapped.length >= PAGE_SIZE;
+        if (hasMore.value) {
+          page.value += 1;
+        }
+        isLoading.value = false;
+        isListLoading.value = false;
+      }, (message) => {
+        errorText.value = message.length > 0 ? message : "课程加载失败";
+        isLoading.value = false;
+        isListLoading.value = false;
       });
+    };
+    const reloadList = () => {
+      loadCourseItems(false);
+    };
+    const loadMore = () => {
+      loadCourseItems(true);
     };
     const goLearningPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/index/index" });
+    };
+    const goTopicsPage = () => {
+      common_vendor.index.redirectTo({ url: "/pages/topics/list" });
     };
     const goAudioPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/audio/index" });
@@ -182,16 +219,28 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goConsultPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/consult/index" });
     };
-    loadCourseItems();
+    loadCourseItems(false);
     return (_ctx, _cache) => {
       "raw js";
-      const __returned__ = {
+      const __returned__ = common_vendor.e({
         a: common_assets._imports_0$3,
         b: common_vendor.o(goLearningPage),
-        c: common_vendor.o(goAudioPage),
-        d: common_vendor.o(goLivePage),
-        e: common_vendor.o(goNewsPage),
-        f: common_vendor.f(courseItems.value, (item, k0, i0) => {
+        c: common_vendor.o(goTopicsPage),
+        d: common_vendor.o(goAudioPage),
+        e: common_vendor.o(goLivePage),
+        f: common_vendor.o(goNewsPage),
+        g: common_vendor.o(reloadList),
+        h: keyword.value,
+        i: common_vendor.o(($event) => {
+          return keyword.value = $event.detail.value;
+        }),
+        j: common_vendor.o(reloadList),
+        k: isLoading.value
+      }, isLoading.value ? {} : errorText.value.length > 0 ? {
+        m: common_vendor.t(errorText.value),
+        n: common_vendor.o(reloadList)
+      } : courseItems.value.length == 0 ? {} : common_vendor.e({
+        p: common_vendor.f(courseItems.value, (item, k0, i0) => {
           return {
             a: common_vendor.t(item.coverTitle),
             b: common_vendor.t(item.coverSubtitle),
@@ -205,17 +254,24 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, item.id)
           };
         }),
-        g: common_assets._imports_1$4,
-        h: common_assets._imports_2,
-        i: common_vendor.o(goExamPage),
-        j: common_assets._imports_3,
-        k: common_vendor.o(goConsultPage),
-        l: common_assets._imports_4,
-        m: common_vendor.o(goKnowledgePage),
-        n: common_assets._imports_5,
-        o: common_vendor.o(goMinePage),
-        p: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
-      };
+        q: isListLoading.value
+      }, isListLoading.value ? {} : !hasMore.value ? {} : {}, {
+        r: !hasMore.value
+      }), {
+        l: errorText.value.length > 0,
+        o: courseItems.value.length == 0,
+        s: common_vendor.o(loadMore),
+        t: common_assets._imports_1$3,
+        v: common_assets._imports_2,
+        w: common_vendor.o(goExamPage),
+        x: common_assets._imports_3,
+        y: common_vendor.o(goConsultPage),
+        z: common_assets._imports_4,
+        A: common_vendor.o(goKnowledgePage),
+        B: common_assets._imports_5,
+        C: common_vendor.o(goMinePage),
+        D: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+      });
       return __returned__;
     };
   }

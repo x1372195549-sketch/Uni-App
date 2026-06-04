@@ -18,6 +18,9 @@ if (!Math) {
   "./pages/course/detail.js";
   "./pages/news/index.js";
   "./pages/news/detail.js";
+  "./pages/topics/list.js";
+  "./pages/topics/detail.js";
+  "./pages/topics/section.js";
   "./pages/knowledge/index.js";
   "./pages/knowledge/book-detail.js";
   "./pages/consult/index.js";

@@ -1,0 +1,240 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.page {
+	flex: 1;
+	background-color: #f7f7f2;
+}
+.hero-shell {
+	position: relative;
+	height: 226rpx;
+	overflow: hidden;
+}
+.hero-bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 750rpx;
+	height: 226rpx;
+}
+.header {
+	position: relative;
+	z-index: 1;
+	padding-top: 34rpx;
+	height: 118rpx;
+	align-items: center;
+	justify-content: center;
+}
+.header-title {
+	font-size: 20px;
+	line-height: 30px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+.top-tabs {
+	position: relative;
+	z-index: 1;
+	height: 108rpx;
+	padding-left: 18rpx;
+	padding-right: 18rpx;
+	background-color: rgba(251, 250, 246, 0.78);
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+.top-tab {
+	min-width: 78rpx;
+	height: 96rpx;
+	align-items: center;
+	justify-content: center;
+}
+.top-tab-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #333333;
+}
+.top-tab-text-active {
+	color: #b85d69;
+	font-weight: 600;
+}
+.top-tab-line {
+	margin-top: 12rpx;
+	width: 40rpx;
+	height: 6rpx;
+	border-radius: 4rpx;
+	background-color: #b85d69;
+}
+.search-bar {
+	margin: 0 20rpx 0;
+	padding-left: 18rpx;
+	padding-right: 10rpx;
+	height: 76rpx;
+	border-radius: 18rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	align-items: center;
+}
+.search-input {
+	flex: 1;
+	height: 76rpx;
+	font-size: 14px;
+	color: #2f2f2f;
+}
+.search-btn {
+	width: 108rpx;
+	height: 54rpx;
+	border-radius: 27rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+.search-btn-text {
+	font-size: 13px;
+	color: #ffffff;
+	font-weight: 600;
+}
+.content {
+	flex: 1;
+}
+.content-shell {
+	padding: 18rpx 20rpx 176rpx;
+}
+.state-wrap {
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+.topic-card {
+	margin-bottom: 18rpx;
+	padding: 16rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
+}
+.topic-cover {
+	width: 170rpx;
+	height: 170rpx;
+	border-radius: 18rpx;
+	background-color: #f3e6d6;
+}
+.topic-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+.topic-cover-text {
+	font-size: 16px;
+	color: #cc8e58;
+	font-weight: 700;
+}
+.topic-main {
+	flex: 1;
+	padding-left: 18rpx;
+}
+.topic-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #252525;
+	font-weight: 600;
+}
+.topic-summary {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8f8f8f;
+}
+.topic-requirement {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #907456;
+}
+.tag-row {
+	margin-top: 10rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+.tag-item {
+	margin-right: 10rpx;
+	margin-bottom: 8rpx;
+	padding-left: 12rpx;
+	padding-right: 12rpx;
+	height: 34rpx;
+	line-height: 34rpx;
+	border-radius: 18rpx;
+	background-color: #f5efe7;
+	font-size: 11px;
+	color: #907456;
+}
+.meta-row {
+	margin-top: 10rpx;
+	flex-direction: row;
+}
+.meta-text {
+	margin-right: 16rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+}
+.bottom-state {
+	padding-top: 10rpx;
+	align-items: center;
+}
+.bottom-state-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #b1b1b1;
+}
+.tabbar {
+	height: 120rpx;
+	padding-top: 10rpx;
+	padding-bottom: 10rpx;
+	background-color: #ffffff;
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: #ededed;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-around;
+}
+.tab-item {
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+.tab-item-active {
+	opacity: 1;
+}
+.tab-icon-image {
+	width: 42rpx;
+	height: 42rpx;
+}
+.tab-label {
+	margin-top: 6rpx;
+	font-size: 22rpx;
+	line-height: 30rpx;
+	color: #b8b8b8;
+}
+.tab-label-active {
+	color: #22b573;
+	font-weight: 600;
+}

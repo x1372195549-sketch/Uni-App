@@ -2,283 +2,153 @@
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
-class HomeCategory extends UTS.UTSType {
+class HomeTopicCard extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
       kind: 2,
       get fields() {
         return {
           id: { type: Number, optional: false },
-          parentId: { type: Number, optional: false },
-          categoryName: { type: String, optional: false },
-          categoryCode: { type: String, optional: false },
-          iconUrl: { type: String, optional: false },
-          description: { type: String, optional: false },
-          sortOrder: { type: Number, optional: false },
-          status: { type: String, optional: false }
+          title: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false },
+          viewCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false }
         };
       },
-      name: "HomeCategory"
+      name: "HomeTopicCard"
     };
   }
-  constructor(options, metadata = HomeCategory.get$UTSMetadata$(), isJSONParse = false) {
+  constructor(options, metadata = HomeTopicCard.get$UTSMetadata$(), isJSONParse = false) {
     super();
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
-    this.parentId = this.__props__.parentId;
-    this.categoryName = this.__props__.categoryName;
-    this.categoryCode = this.__props__.categoryCode;
-    this.iconUrl = this.__props__.iconUrl;
-    this.description = this.__props__.description;
-    this.sortOrder = this.__props__.sortOrder;
-    this.status = this.__props__.status;
+    this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
+    this.coverUrl = this.__props__.coverUrl;
+    this.tags = this.__props__.tags;
+    this.viewCount = this.__props__.viewCount;
+    this.favoriteCount = this.__props__.favoriteCount;
     delete this.__props__;
   }
 }
-class HomeContent extends UTS.UTSType {
+class HomeArticleCard extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
       kind: 2,
       get fields() {
         return {
           id: { type: Number, optional: false },
-          categoryId: { type: Number, optional: false },
-          contentType: { type: String, optional: false },
-          targetId: { type: Number, optional: false },
           title: { type: String, optional: false },
+          summary: { type: String, optional: false },
           coverUrl: { type: String, optional: false },
-          linkUrl: { type: String, optional: false },
-          sortOrder: { type: Number, optional: false },
-          startAt: { type: String, optional: false },
-          endAt: { type: String, optional: false },
-          status: { type: String, optional: false }
+          source: { type: String, optional: false },
+          publishedAt: { type: String, optional: false }
         };
       },
-      name: "HomeContent"
+      name: "HomeArticleCard"
     };
   }
-  constructor(options, metadata = HomeContent.get$UTSMetadata$(), isJSONParse = false) {
+  constructor(options, metadata = HomeArticleCard.get$UTSMetadata$(), isJSONParse = false) {
     super();
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
-    this.categoryId = this.__props__.categoryId;
-    this.contentType = this.__props__.contentType;
-    this.targetId = this.__props__.targetId;
     this.title = this.__props__.title;
+    this.summary = this.__props__.summary;
     this.coverUrl = this.__props__.coverUrl;
-    this.linkUrl = this.__props__.linkUrl;
-    this.sortOrder = this.__props__.sortOrder;
-    this.startAt = this.__props__.startAt;
-    this.endAt = this.__props__.endAt;
-    this.status = this.__props__.status;
+    this.source = this.__props__.source;
+    this.publishedAt = this.__props__.publishedAt;
     delete this.__props__;
   }
 }
-class HomeSection extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          sectionKey: { type: String, optional: false },
-          contentType: { type: String, optional: false },
-          typeLabel: { type: String, optional: false },
-          typeShort: { type: String, optional: false },
-          title: { type: String, optional: false },
-          subtitle: { type: String, optional: false },
-          description: { type: String, optional: false },
-          coverUrl: { type: String, optional: false },
-          targetId: { type: String, optional: false }
-        };
-      },
-      name: "HomeSection"
-    };
-  }
-  constructor(options, metadata = HomeSection.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.sectionKey = this.__props__.sectionKey;
-    this.contentType = this.__props__.contentType;
-    this.typeLabel = this.__props__.typeLabel;
-    this.typeShort = this.__props__.typeShort;
-    this.title = this.__props__.title;
-    this.subtitle = this.__props__.subtitle;
-    this.description = this.__props__.description;
-    this.coverUrl = this.__props__.coverUrl;
-    this.targetId = this.__props__.targetId;
-    delete this.__props__;
-  }
-}
+const appTitleText = "江苏中医在线";
+const homeTabText = "首页";
+const topicTabText = "专题";
+const audioTabText = "音频";
+const liveTabText = "直播";
+const courseTabText = "课程";
+const newsTabText = "资讯";
+const learningTabText = "学习";
+const examTabText = "考核";
+const consultTabText = "咨询";
+const knowledgeTabText = "知识库";
+const mineTabText = "我的";
+const heroKickerText = "学习专题";
+const heroTitleText = "分场景、分资源的中医学习设计";
+const heroSubtitleText = "用专题把图书、课程、音频串成完整学习路径。";
+const heroActionText = "进入专题";
+const recommendTopicTitle = "热门专题";
+const recommendNewsTitle = "最新资讯";
+const moreText = "更多";
+const viewText = "浏览";
+const favoriteText = "收藏";
+const fallbackTopicSummary = "更适合按主题化学习的内容组合。";
+const fallbackArticleSummary = "暂无摘要";
+const TOPIC_DETAIL_ID_KEY = "topic_detail_id";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "index",
   setup(__props) {
-    const homeSections = common_vendor.ref([
-      new HomeSection({
-        sectionKey: "audio",
-        contentType: "podcast",
-        typeLabel: "音频内容",
-        typeShort: "音频",
-        title: "音频内容占位",
-        subtitle: "等待首页内容接口返回",
-        description: "点击进入音频详情页",
-        coverUrl: "",
-        targetId: ""
-      }),
-      new HomeSection({
-        sectionKey: "live",
-        contentType: "live",
-        typeLabel: "直播内容",
-        typeShort: "直播",
-        title: "直播内容占位",
-        subtitle: "等待首页内容接口返回",
-        description: "点击进入直播详情页",
-        coverUrl: "",
-        targetId: ""
-      }),
-      new HomeSection({
-        sectionKey: "course",
-        contentType: "course",
-        typeLabel: "课程内容",
-        typeShort: "课程",
-        title: "课程内容占位",
-        subtitle: "等待首页内容接口返回",
-        description: "点击进入课程详情页",
-        coverUrl: "",
-        targetId: ""
-      }),
-      new HomeSection({
-        sectionKey: "news",
-        contentType: "topic",
-        typeLabel: "资讯内容",
-        typeShort: "资讯",
-        title: "资讯内容占位",
-        subtitle: "等待首页内容接口返回",
-        description: "点击进入资讯详情页",
-        coverUrl: "",
-        targetId: ""
-      })
-    ]);
+    const topicItems = common_vendor.ref([]);
+    const articleItems = common_vendor.ref([]);
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
     };
-    const normalizeContentType = (value) => {
-      const type = value.toLowerCase();
-      if (type == "podcast" || type == "audio") {
-        return "podcast";
+    const formatDate = (value) => {
+      const text = safeText(value);
+      if (text.length == 0) {
+        return "";
       }
-      if (type == "live" || type == "live_session") {
-        return "live";
-      }
-      if (type == "course") {
-        return "course";
-      }
-      if (type == "topic" || type == "article" || type == "news") {
-        return "topic";
-      }
-      return type;
+      return text.replace("T", " ").substring(0, 16);
     };
-    const buildFallbackSections = () => {
-      return [...homeSections.value];
-    };
-    const mapHomeContentToSection = (item, categories) => {
-      const normalizedType = normalizeContentType(safeText(item.contentType));
-      if (normalizedType != "podcast" && normalizedType != "live" && normalizedType != "course" && normalizedType != "topic") {
-        return null;
-      }
-      const category = UTS.arrayFind(categories, (entry) => {
-        return entry.id == item.categoryId;
-      });
-      const categoryName = category != null ? safeText(category.categoryName) : "";
-      let typeLabel = "首页内容";
-      let typeShort = "内容";
-      let subtitle = "首页配置内容";
-      let description = "点击进入详情页";
-      if (normalizedType == "podcast") {
-        typeLabel = "音频内容";
-        typeShort = "音频";
-        subtitle = categoryName.length > 0 ? categoryName : "音频推荐";
-        description = "点击进入音频详情页";
-      }
-      if (normalizedType == "live") {
-        typeLabel = "直播内容";
-        typeShort = "直播";
-        subtitle = categoryName.length > 0 ? categoryName : "直播推荐";
-        description = "点击进入直播详情页";
-      }
-      if (normalizedType == "course") {
-        typeLabel = "课程内容";
-        typeShort = "课程";
-        subtitle = categoryName.length > 0 ? categoryName : "课程推荐";
-        description = "点击进入课程详情页";
-      }
-      if (normalizedType == "topic") {
-        typeLabel = "资讯内容";
-        typeShort = "资讯";
-        subtitle = categoryName.length > 0 ? categoryName : "资讯推荐";
-        description = "点击进入资讯详情页";
-      }
-      return {
-        sectionKey: normalizedType,
-        contentType: normalizedType,
-        typeLabel,
-        typeShort,
-        title: safeText(item.title).length > 0 ? item.title : typeLabel,
-        subtitle,
-        description,
+    const mapTopic = (item) => {
+      return new HomeTopicCard({
+        id: item.id,
+        title: safeText(item.title),
+        summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackTopicSummary,
         coverUrl: safeText(item.coverUrl),
-        targetId: String(item.targetId)
-      };
-    };
-    const applyHomeData = (categories, contents) => {
-      const fallbackMap = /* @__PURE__ */ new Map();
-      const fallbacks = buildFallbackSections();
-      for (let i = 0; i < fallbacks.length; i++) {
-        fallbackMap.set(fallbacks[i].sectionKey, fallbacks[i]);
-      }
-      const sortedContents = [...contents].sort((left, right) => {
-        return (left.sortOrder || 0) - (right.sortOrder || 0);
+        tags: item.tags != null ? item.tags.slice(0, 2) : [],
+        viewCount: item.viewCount,
+        favoriteCount: item.favoriteCount
       });
-      for (let i = 0; i < sortedContents.length; i++) {
-        const mapped = mapHomeContentToSection(sortedContents[i], categories);
-        if (mapped != null && fallbackMap.has(mapped.sectionKey)) {
-          fallbackMap.set(mapped.sectionKey, mapped);
-        }
-      }
-      homeSections.value = [
-        UTS.mapGet(fallbackMap, "podcast"),
-        UTS.mapGet(fallbackMap, "live"),
-        UTS.mapGet(fallbackMap, "course"),
-        UTS.mapGet(fallbackMap, "topic")
-      ];
+    };
+    const mapArticle = (item) => {
+      return new HomeArticleCard({
+        id: item.id,
+        title: safeText(item.title),
+        summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackArticleSummary,
+        coverUrl: safeText(item.coverUrl),
+        source: safeText(item.source),
+        publishedAt: formatDate(item.publishedAt)
+      });
     };
     const loadHomeData = () => {
-      utils_auth.fetchHomeCategories((categoryPage) => {
-        utils_auth.fetchHomeContents((contentPage) => {
-          applyHomeData(categoryPage.records || [], contentPage.records || []);
-        }, () => {
+      utils_auth.fetchTopicCards(1, 6, "", (pageData) => {
+        const records = pageData.records != null ? pageData.records : [];
+        topicItems.value = records.map((item) => {
+          return mapTopic(item);
         });
       }, () => {
+        topicItems.value = [];
+      });
+      utils_auth.fetchArticles(1, 5, "", (pageData) => {
+        const records = pageData.records != null ? pageData.records : [];
+        articleItems.value = records.map((item) => {
+          return mapArticle(item);
+        });
+      }, () => {
+        articleItems.value = [];
       });
     };
-    const goHomeDetail = (item) => {
-      if (item.targetId.length == 0) {
-        return null;
-      }
-      if (item.contentType == "podcast") {
-        common_vendor.index.navigateTo({ url: "/pages/audio/detail?id=" + item.targetId });
-        return null;
-      }
-      if (item.contentType == "live") {
-        common_vendor.index.navigateTo({ url: "/pages/live/detail?id=" + item.targetId });
-        return null;
-      }
-      if (item.contentType == "course") {
-        common_vendor.index.navigateTo({ url: "/pages/course/detail?id=" + item.targetId });
-        return null;
-      }
-      if (item.contentType == "topic") {
-        common_vendor.index.navigateTo({ url: "/pages/news/detail?id=" + item.targetId });
-      }
+    const goTopicsPage = () => {
+      common_vendor.index.redirectTo({ url: "/pages/topics/list" });
+    };
+    const goTopicDetail = (id) => {
+      common_vendor.index.setStorageSync(TOPIC_DETAIL_ID_KEY, String(id));
+      common_vendor.index.navigateTo({ url: "/pages/topics/detail?id=" + String(id) });
+    };
+    const goArticleDetail = (id) => {
+      common_vendor.index.navigateTo({ url: "/pages/news/detail?id=" + String(id) });
     };
     const goAudioPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/audio/index" });
@@ -304,46 +174,91 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goConsultPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/consult/index" });
     };
-    common_vendor.onMounted(() => {
-      loadHomeData();
-    });
+    loadHomeData();
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = {
         a: common_assets._imports_0$3,
-        b: common_vendor.o(goAudioPage),
-        c: common_vendor.o(goLivePage),
-        d: common_vendor.o(goCoursePage),
-        e: common_vendor.o(goNewsPage),
-        f: common_assets._imports_1$3,
-        g: common_vendor.f(homeSections.value, (item, k0, i0) => {
+        b: common_vendor.t(appTitleText),
+        c: common_vendor.t(homeTabText),
+        d: common_vendor.t(topicTabText),
+        e: common_vendor.o(goTopicsPage),
+        f: common_vendor.t(audioTabText),
+        g: common_vendor.o(goAudioPage),
+        h: common_vendor.t(liveTabText),
+        i: common_vendor.o(goLivePage),
+        j: common_vendor.t(courseTabText),
+        k: common_vendor.o(goCoursePage),
+        l: common_vendor.t(newsTabText),
+        m: common_vendor.o(goNewsPage),
+        n: common_vendor.t(heroKickerText),
+        o: common_vendor.t(heroTitleText),
+        p: common_vendor.t(heroSubtitleText),
+        q: common_vendor.t(heroActionText),
+        r: common_vendor.o(goTopicsPage),
+        s: common_vendor.t(recommendTopicTitle),
+        t: common_vendor.t(moreText),
+        v: common_vendor.o(goTopicsPage),
+        w: common_vendor.f(topicItems.value, (item, k0, i0) => {
           return common_vendor.e({
-            a: common_vendor.t(item.typeLabel),
-            b: common_vendor.t(item.title),
-            c: common_vendor.t(item.subtitle),
-            d: item.coverUrl.length > 0
+            a: item.coverUrl.length > 0
           }, item.coverUrl.length > 0 ? {
-            e: item.coverUrl
+            b: item.coverUrl
           } : {
-            f: common_vendor.t(item.typeShort)
+            c: common_vendor.t(topicTabText)
           }, {
-            g: common_vendor.t(item.description),
-            h: item.sectionKey,
-            i: common_vendor.o(($event) => {
-              return goHomeDetail(item);
-            }, item.sectionKey)
+            d: common_vendor.t(item.title),
+            e: common_vendor.t(item.summary),
+            f: common_vendor.f(item.tags, (tag, k1, i1) => {
+              return {
+                a: common_vendor.t(tag),
+                b: tag
+              };
+            }),
+            g: common_vendor.t(item.viewCount),
+            h: common_vendor.t(item.favoriteCount),
+            i: item.id,
+            j: common_vendor.o(($event) => {
+              return goTopicDetail(item.id);
+            }, item.id)
           });
         }),
-        h: common_assets._imports_1$4,
-        i: common_assets._imports_2,
-        j: common_vendor.o(goExamPage),
-        k: common_assets._imports_3,
-        l: common_vendor.o(goConsultPage),
-        m: common_assets._imports_4,
-        n: common_vendor.o(goKnowledgePage),
-        o: common_assets._imports_5,
-        p: common_vendor.o(goMinePage),
-        q: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        x: common_vendor.t(viewText),
+        y: common_vendor.t(favoriteText),
+        z: common_vendor.t(recommendNewsTitle),
+        A: common_vendor.t(moreText),
+        B: common_vendor.o(goNewsPage),
+        C: common_vendor.f(articleItems.value, (item, k0, i0) => {
+          return common_vendor.e({
+            a: item.coverUrl.length > 0
+          }, item.coverUrl.length > 0 ? {
+            b: item.coverUrl
+          } : {}, {
+            c: common_vendor.t(item.title),
+            d: common_vendor.t(item.summary),
+            e: common_vendor.t(item.source),
+            f: common_vendor.t(item.publishedAt),
+            g: item.id,
+            h: common_vendor.o(($event) => {
+              return goArticleDetail(item.id);
+            }, item.id)
+          });
+        }),
+        D: common_assets._imports_1$3,
+        E: common_vendor.t(learningTabText),
+        F: common_assets._imports_2,
+        G: common_vendor.t(examTabText),
+        H: common_vendor.o(goExamPage),
+        I: common_assets._imports_3,
+        J: common_vendor.t(consultTabText),
+        K: common_vendor.o(goConsultPage),
+        L: common_assets._imports_4,
+        M: common_vendor.t(knowledgeTabText),
+        N: common_vendor.o(goKnowledgePage),
+        O: common_assets._imports_5,
+        P: common_vendor.t(mineTabText),
+        Q: common_vendor.o(goMinePage),
+        R: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       };
       return __returned__;
     };

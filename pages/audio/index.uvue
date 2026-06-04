@@ -11,6 +11,9 @@
         <view class="top-tab" @click="goLearningPage">
           <text class="top-tab-text">首页</text>
         </view>
+        <view class="top-tab" @click="goTopicsPage">
+          <text class="top-tab-text">专题</text>
+        </view>
         <view class="top-tab top-tab-active">
           <text class="top-tab-text top-tab-text-active">音频</text>
           <view class="top-tab-line"></view>
@@ -27,8 +30,37 @@
       </view>
     </view>
 
-    <scroll-view class="content" scroll-y="true">
+    <view class="search-bar">
+      <input
+        v-model="keyword"
+        class="search-input"
+        placeholder="搜索标题、讲师、摘要"
+        confirm-type="search"
+        @confirm="reloadList"
+      />
+      <view class="search-btn" @tap="reloadList">
+        <text class="search-btn-text">搜索</text>
+      </view>
+    </view>
+
+    <scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
       <view class="content-shell">
+        <view v-if="isLoading" class="state-wrap">
+          <text class="state-text">加载中...</text>
+        </view>
+
+        <view v-else-if="errorText.length > 0" class="state-wrap">
+          <text class="state-text">{{ errorText }}</text>
+          <view class="search-btn retry-btn" @tap="reloadList">
+            <text class="search-btn-text">重新加载</text>
+          </view>
+        </view>
+
+        <view v-else-if="audioItems.length == 0" class="state-wrap">
+          <text class="state-text">暂无音频</text>
+        </view>
+
+        <view v-else class="list-wrap">
         <view class="audio-card" v-for="item in audioItems" :key="item.id" @click="goAudioDetail(item.id)">
           <view class="audio-cover-shell">
             <view class="audio-cover">
@@ -50,6 +82,13 @@
               </view>
             </view>
           </view>
+        </view>
+        <view v-if="isListLoading" class="bottom-state">
+          <text class="bottom-state-text">加载更多中...</text>
+        </view>
+        <view v-else-if="!hasMore" class="bottom-state">
+          <text class="bottom-state-text">没有更多了</text>
+        </view>
         </view>
       </view>
     </scroll-view>
@@ -129,6 +168,7 @@ type AudioCardItem = {
 const BASE_URL = 'https://api-test.arez.cc.cd'
 const ACCESS_TOKEN_KEY = 'app_auth_access_token'
 const TOKEN_TYPE_KEY = 'app_auth_token_type'
+const PAGE_SIZE = 10
 
 const placeholderItems: AudioCardItem[] = [
   {
@@ -152,6 +192,12 @@ const placeholderItems: AudioCardItem[] = [
 ]
 
 const audioItems = ref<AudioCardItem[]>([])
+const keyword = ref('')
+const page = ref(1)
+const hasMore = ref(true)
+const isLoading = ref(true)
+const isListLoading = ref(false)
+const errorText = ref('')
 
 function safeText(value: string | null): string {
   return value == null || value.length == 0 ? '' : value
@@ -189,7 +235,18 @@ function mapPodcastToCard(item: AppPodcast, index: number): AudioCardItem {
   }
 }
 
-function fetchAudioItems(): void {
+function fetchAudioItems(loadMoreValue: boolean): void {
+  if (!loadMoreValue) {
+    page.value = 1
+    hasMore.value = true
+    errorText.value = ''
+    isLoading.value = true
+  } else {
+    if (!hasMore.value || isListLoading.value) {
+      return
+    }
+    isListLoading.value = true
+  }
   const headers: UTSJSONObject = {
     'Content-Type': 'application/json'
   }
@@ -199,7 +256,7 @@ function fetchAudioItems(): void {
   }
 
   uni.request({
-    url: BASE_URL + '/api/v1/app/learning/podcasts?page=1&size=20',
+    url: BASE_URL + '/api/v1/app/learning/podcasts?page=' + String(page.value) + '&size=' + String(PAGE_SIZE) + (keyword.value.length > 0 ? '&keyword=' + encodeURIComponent(keyword.value) : ''),
     method: 'GET',
     header: headers,
     success: (res) => {
@@ -209,24 +266,54 @@ function fetchAudioItems(): void {
         data != null &&
         data.success &&
         data.data != null &&
-        data.data.records != null &&
-        data.data.records!.length > 0
+        data.data.records != null
       ) {
-        audioItems.value = data.data.records!.map((item: AppPodcast, index: number): AudioCardItem => {
+        const mapped = data.data.records!.map((item: AppPodcast, index: number): AudioCardItem => {
           return mapPodcastToCard(item, index)
         })
+        if (loadMoreValue) {
+          audioItems.value = audioItems.value.concat(mapped)
+        } else {
+          audioItems.value = mapped
+        }
+        hasMore.value = mapped.length >= PAGE_SIZE
+        if (hasMore.value) {
+          page.value += 1
+        }
       } else {
-        audioItems.value = placeholderItems
+        if (!loadMoreValue) {
+          audioItems.value = []
+        }
+        hasMore.value = false
+        errorText.value = data != null && data.message != null && data.message!.length > 0
+          ? data.message!
+          : '闊抽鍔犺浇澶辫触'
       }
+      isLoading.value = false
+      isListLoading.value = false
     },
     fail: () => {
-      audioItems.value = placeholderItems
+      errorText.value = '音频加载失败'
+      isLoading.value = false
+      isListLoading.value = false
     }
   })
 }
 
+function reloadList(): void {
+  fetchAudioItems(false)
+}
+
+function loadMore(): void {
+  fetchAudioItems(true)
+}
+
 function goLearningPage() {
   uni.redirectTo({ url: '/pages/index/index' })
+}
+
+function goTopicsPage() {
+  uni.redirectTo({ url: '/pages/topics/list' })
 }
 
 function goLivePage() {
@@ -261,7 +348,7 @@ function goConsultPage() {
 	uni.redirectTo({ url: '/pages/consult/index' })
 }
 
-fetchAudioItems()
+fetchAudioItems(false)
 </script>
 
 <style>
@@ -272,7 +359,7 @@ fetchAudioItems()
 
 .hero-shell {
   position: relative;
-  height: 236rpx;
+  height: 226rpx;
   overflow: hidden;
 }
 
@@ -281,7 +368,7 @@ fetchAudioItems()
   top: 0;
   left: 0;
   width: 750rpx;
-  height: 236rpx;
+  height: 226rpx;
 }
 
 .header {
@@ -303,10 +390,9 @@ fetchAudioItems()
 .top-tabs {
   position: relative;
   z-index: 1;
-  height: 96rpx;
-  margin-top: 18rpx;
-  padding-left: 28rpx;
-  padding-right: 28rpx;
+  height: 108rpx;
+  padding-left: 18rpx;
+  padding-right: 18rpx;
   background-color: rgba(251, 250, 246, 0.78);
   flex-direction: row;
   align-items: flex-end;
@@ -317,7 +403,7 @@ fetchAudioItems()
 }
 
 .top-tab {
-  min-width: 88rpx;
+  min-width: 78rpx;
   height: 96rpx;
   align-items: center;
   justify-content: center;
@@ -328,8 +414,8 @@ fetchAudioItems()
 }
 
 .top-tab-text {
-  font-size: 18px;
-  line-height: 26px;
+  font-size: 15px;
+  line-height: 22px;
   color: #333333;
 }
 
@@ -347,6 +433,39 @@ fetchAudioItems()
   background-color: #b85d69;
 }
 
+.search-bar {
+  margin: 0 20rpx 0;
+  padding-left: 18rpx;
+  padding-right: 10rpx;
+  height: 76rpx;
+  border-radius: 18rpx;
+  background-color: #ffffff;
+  flex-direction: row;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  height: 76rpx;
+  font-size: 14px;
+  color: #2f2f2f;
+}
+
+.search-btn {
+  width: 108rpx;
+  height: 54rpx;
+  border-radius: 27rpx;
+  background-color: #18b775;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-btn-text {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
 .content {
   flex: 1;
   padding-bottom: 110rpx;
@@ -355,8 +474,36 @@ fetchAudioItems()
 .content-shell {
   padding-left: 20rpx;
   padding-right: 20rpx;
-  padding-top: 24rpx;
+  padding-top: 8rpx;
   padding-bottom: 40rpx;
+}
+
+.state-wrap {
+  padding: 120rpx 30rpx;
+  align-items: center;
+}
+
+.state-text {
+  font-size: 14px;
+  line-height: 22px;
+  color: #9b9b9b;
+  text-align: center;
+}
+
+.retry-btn {
+  margin-top: 24rpx;
+  width: 220rpx;
+  height: 70rpx;
+  border-radius: 14rpx;
+  background-color: #18b775;
+  align-items: center;
+  justify-content: center;
+}
+
+.retry-btn-text {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .audio-card {
@@ -365,6 +512,17 @@ fetchAudioItems()
   background-color: #ffffff;
   overflow: hidden;
   box-shadow: 0 12rpx 24rpx rgba(110, 100, 80, 0.05);
+}
+
+.bottom-state {
+  padding-top: 10rpx;
+  align-items: center;
+}
+
+.bottom-state-text {
+  font-size: 12px;
+  line-height: 18px;
+  color: #b1b1b1;
 }
 
 .audio-cover-shell {

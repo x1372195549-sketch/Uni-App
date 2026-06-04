@@ -2,107 +2,44 @@
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
-class CatalogItem extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          id: { type: String, optional: false },
-          title: { type: String, optional: false },
-          duration: { type: String, optional: false }
-        };
-      },
-      name: "CatalogItem"
-    };
-  }
-  constructor(options, metadata = CatalogItem.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
-    this.title = this.__props__.title;
-    this.duration = this.__props__.duration;
-    delete this.__props__;
-  }
-}
-const RESOURCE_TYPE = "topic";
+const PRIMARY_RESOURCE_TYPE = "article";
+const FALLBACK_RESOURCE_TYPE = "info";
+const detailTitleText = "资讯详情";
+const summaryTitle = "摘要";
+const contentTitle = "正文";
+const favoriteBtnText = "收藏";
+const favoritedText = "已收藏";
+const viewText = "浏览";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "detail",
   setup(__props) {
-    const topicId = common_vendor.ref("");
-    const activeTab = common_vendor.ref("intro");
-    const topicTitle = common_vendor.ref("资讯详情");
-    const topicViews = common_vendor.ref("0");
-    const topicFavoriteCount = common_vendor.ref("0");
-    const topicIntro = common_vendor.ref("这里展示专题简介、学习要求和补充说明。");
+    const articleId = common_vendor.ref("");
+    const title = common_vendor.ref("");
+    const summary = common_vendor.ref("");
+    const content = common_vendor.ref("");
+    const coverUrl = common_vendor.ref("");
+    const source = common_vendor.ref("");
+    const publishedAt = common_vendor.ref("");
+    const viewCount = common_vendor.ref("0");
+    const tags = common_vendor.ref([]);
+    const isHtmlContent = common_vendor.ref(false);
     const isFavorited = common_vendor.ref(false);
     const isFavoriteLoading = common_vendor.ref(false);
-    const catalogItems = common_vendor.ref([]);
-    function safeText(value = null) {
+    const favoriteResourceType = common_vendor.ref(PRIMARY_RESOURCE_TYPE);
+    const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
-    }
-    function loadFavoriteStatus() {
-      if (topicId.value.length == 0) {
-        return null;
+    };
+    const formatDate = (value) => {
+      const text = safeText(value);
+      if (text.length == 0) {
+        return "";
       }
-      utils_auth.checkFavoriteStatus(RESOURCE_TYPE, Number(topicId.value), (favorited) => {
-        isFavorited.value = favorited;
-      }, () => {
-        isFavorited.value = false;
-      });
-    }
-    function toggleFavorite() {
-      if (topicId.value.length == 0 || isFavoriteLoading.value) {
-        return null;
-      }
-      isFavoriteLoading.value = true;
-      utils_auth.updateFavoriteStatus(new utils_auth.AppFavoriteRequest({
-        resourceType: RESOURCE_TYPE,
-        resourceId: Number(topicId.value),
-        favorited: !isFavorited.value
-      }), (result) => {
-        isFavorited.value = result.favorited;
-        topicFavoriteCount.value = String(result.favoriteCount != null ? result.favoriteCount : 0);
-        isFavoriteLoading.value = false;
-        common_vendor.index.showToast({
-          title: result.favorited ? "收藏成功" : "已取消收藏",
-          icon: "success"
-        });
-      }, (message) => {
-        isFavoriteLoading.value = false;
-        common_vendor.index.showToast({
-          title: message,
-          icon: "none"
-        });
-      });
-    }
-    function applyTopicDetail(detail) {
-      const titleText = safeText(detail.title);
-      if (titleText.length > 0) {
-        topicTitle.value = titleText;
-      }
-      const introText = safeText(detail.learningRequirements).length > 0 ? safeText(detail.learningRequirements) : safeText(detail.summary);
-      if (introText.length > 0) {
-        topicIntro.value = introText;
-      }
-      topicViews.value = String(detail.viewCount != null ? detail.viewCount : 0);
-      if (detail.items != null && detail.items.length > 0) {
-        catalogItems.value = detail.items.map((item, index) => {
-          const itemType = safeText(item.itemType);
-          return new CatalogItem({
-            id: String(item.id),
-            title: itemType.length > 0 ? itemType + " " + String(index + 1) : "条目 " + String(index + 1),
-            duration: ""
-          });
-        });
-      } else {
-        catalogItems.value = [];
-      }
-    }
-    function goBack() {
-      common_vendor.index.navigateBack();
-    }
-    function loadParams() {
+      return text.replace("T", " ").substring(0, 16);
+    };
+    const detectHtml = (value) => {
+      return value.indexOf("<p") >= 0 || value.indexOf("<div") >= 0 || value.indexOf("<br") >= 0;
+    };
+    const loadParams = () => {
       const pages = getCurrentPages();
       if (pages.length == 0) {
         return null;
@@ -113,32 +50,119 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       const options = current.options;
       const idValue = options["id"];
-      const tabValue = options["tab"];
       if (typeof idValue == "string" && idValue.length > 0) {
-        topicId.value = idValue;
+        articleId.value = idValue;
       }
-      if (typeof tabValue == "string" && tabValue.length > 0) {
-        activeTab.value = tabValue;
-      }
-    }
-    function loadTopicDetail() {
-      if (topicId.value.length == 0) {
+    };
+    const applyDetail = (detail) => {
+      title.value = safeText(detail.title);
+      summary.value = safeText(detail.summary);
+      content.value = safeText(detail.content);
+      coverUrl.value = safeText(detail.coverUrl);
+      source.value = safeText(detail.source);
+      publishedAt.value = formatDate(detail.publishedAt);
+      viewCount.value = String(detail.viewCount);
+      tags.value = detail.tags != null ? detail.tags : [];
+      isHtmlContent.value = detectHtml(content.value);
+    };
+    const setFavoriteStatusByType = (resourceType, next) => {
+      utils_auth.checkFavoriteStatus(resourceType, Number(articleId.value), (favorited) => {
+        if (favorited) {
+          isFavorited.value = true;
+          favoriteResourceType.value = resourceType;
+          return null;
+        }
+        next();
+      }, () => {
+        next();
+      });
+    };
+    const loadFavoriteStatus = () => {
+      if (articleId.value.length == 0) {
         return null;
       }
-      utils_auth.fetchTopicDetail(topicId.value, (detail) => {
-        applyTopicDetail(detail);
+      isFavorited.value = false;
+      favoriteResourceType.value = PRIMARY_RESOURCE_TYPE;
+      setFavoriteStatusByType(PRIMARY_RESOURCE_TYPE, () => {
+        setFavoriteStatusByType(FALLBACK_RESOURCE_TYPE, () => {
+          isFavorited.value = false;
+          favoriteResourceType.value = PRIMARY_RESOURCE_TYPE;
+        });
+      });
+    };
+    const reportBrowse = () => {
+      if (articleId.value.length == 0) {
+        return null;
+      }
+      utils_auth.reportBrowseHistory(new utils_auth.BrowseHistoryRequest({
+        resourceType: PRIMARY_RESOURCE_TYPE,
+        resourceId: Number(articleId.value)
+      }), () => {
+      }, () => {
+      });
+    };
+    const loadDetail = () => {
+      if (articleId.value.length == 0) {
+        return null;
+      }
+      utils_auth.fetchArticleDetail(articleId.value, (detail) => {
+        applyDetail(detail);
+        reportBrowse();
       }, (message) => {
         common_vendor.index.showToast({
           title: message,
           icon: "none"
         });
       });
-    }
-    common_vendor.onMounted(() => {
-      loadParams();
-      loadTopicDetail();
-      loadFavoriteStatus();
-    });
+    };
+    const submitFavoriteRequest = (resourceType, favorited, success, fail) => {
+      utils_auth.updateFavoriteStatus(new utils_auth.AppFavoriteRequest({
+        resourceType,
+        resourceId: Number(articleId.value),
+        favorited
+      }), (result) => {
+        favoriteResourceType.value = resourceType;
+        isFavorited.value = result.favorited;
+        success();
+      }, (message) => {
+        fail(message);
+      });
+    };
+    const toggleFavorite = () => {
+      if (articleId.value.length == 0 || isFavoriteLoading.value) {
+        return null;
+      }
+      isFavoriteLoading.value = true;
+      const nextFavorited = !isFavorited.value;
+      const primaryType = nextFavorited ? PRIMARY_RESOURCE_TYPE : favoriteResourceType.value;
+      const backupType = primaryType == PRIMARY_RESOURCE_TYPE ? FALLBACK_RESOURCE_TYPE : PRIMARY_RESOURCE_TYPE;
+      submitFavoriteRequest(primaryType, nextFavorited, () => {
+        isFavoriteLoading.value = false;
+        common_vendor.index.showToast({
+          title: isFavorited.value ? "收藏成功" : "已取消收藏",
+          icon: "none"
+        });
+      }, (message) => {
+        submitFavoriteRequest(backupType, nextFavorited, () => {
+          isFavoriteLoading.value = false;
+          common_vendor.index.showToast({
+            title: isFavorited.value ? "收藏成功" : "已取消收藏",
+            icon: "none"
+          });
+        }, (fallbackMessage) => {
+          isFavoriteLoading.value = false;
+          common_vendor.index.showToast({
+            title: fallbackMessage.length > 0 ? fallbackMessage : message,
+            icon: "none"
+          });
+        });
+      });
+    };
+    const goBack = () => {
+      common_vendor.index.navigateBack();
+    };
+    loadParams();
+    loadDetail();
     common_vendor.onShow(() => {
       loadFavoriteStatus();
     });
@@ -147,37 +171,37 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const __returned__ = common_vendor.e({
         a: common_assets._imports_0$1,
         b: common_vendor.o(goBack),
-        c: common_vendor.n(activeTab.value == "intro" ? "tab-text tab-text-active" : "tab-text"),
-        d: activeTab.value == "intro"
-      }, activeTab.value == "intro" ? {} : {}, {
-        e: common_vendor.o(($event) => {
-          return activeTab.value = "intro";
-        }),
-        f: common_vendor.n(activeTab.value == "catalog" ? "tab-text tab-text-active" : "tab-text"),
-        g: activeTab.value == "catalog"
-      }, activeTab.value == "catalog" ? {} : {}, {
-        h: common_vendor.o(($event) => {
-          return activeTab.value = "catalog";
-        }),
-        i: common_vendor.t(isFavorited.value ? "已收藏" : "收藏"),
-        j: common_vendor.n(isFavorited.value ? "favorite-text-active" : ""),
-        k: common_vendor.o(toggleFavorite),
-        l: activeTab.value == "intro"
-      }, activeTab.value == "intro" ? {
-        m: common_vendor.t(topicTitle.value),
-        n: common_vendor.t(topicViews.value),
-        o: common_vendor.t(topicFavoriteCount.value),
-        p: common_vendor.t(topicIntro.value)
-      } : {
-        q: common_vendor.f(catalogItems.value, (item, k0, i0) => {
+        c: common_vendor.t(detailTitleText),
+        d: coverUrl.value.length > 0
+      }, coverUrl.value.length > 0 ? {
+        e: coverUrl.value
+      } : {}, {
+        f: common_vendor.t(title.value),
+        g: common_vendor.t(source.value),
+        h: common_vendor.t(publishedAt.value),
+        i: common_vendor.t(viewText),
+        j: common_vendor.t(viewCount.value),
+        k: common_vendor.f(tags.value, (tag, k0, i0) => {
           return {
-            a: common_vendor.t(item.title),
-            b: common_vendor.t(item.duration),
-            c: item.id
+            a: common_vendor.t(tag),
+            b: tag
           };
-        })
+        }),
+        l: summary.value.length > 0
+      }, summary.value.length > 0 ? {
+        m: common_vendor.t(summaryTitle),
+        n: common_vendor.t(summary.value)
+      } : {}, {
+        o: common_vendor.t(contentTitle),
+        p: common_vendor.t(isFavorited.value ? favoritedText : favoriteBtnText),
+        q: common_vendor.o(toggleFavorite),
+        r: isHtmlContent.value
+      }, isHtmlContent.value ? {
+        s: content.value
+      } : {
+        t: common_vendor.t(content.value)
       }, {
-        r: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        v: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

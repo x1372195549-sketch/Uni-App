@@ -4,53 +4,96 @@
 			<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
 
 			<view class="header">
-				<text class="header-title">江苏中医在线</text>
+				<text class="header-title">{{ appTitleText }}</text>
 			</view>
 
 			<view class="top-tabs">
 				<view class="top-tab top-tab-active">
-					<text class="top-tab-text top-tab-text-active">首页</text>
+					<text class="top-tab-text top-tab-text-active">{{ homeTabText }}</text>
 					<view class="top-tab-line"></view>
 				</view>
-				<view class="top-tab" @click="goAudioPage">
-					<text class="top-tab-text">音频</text>
+				<view class="top-tab" @tap="goTopicsPage">
+					<text class="top-tab-text">{{ topicTabText }}</text>
 				</view>
-				<view class="top-tab" @click="goLivePage">
-					<text class="top-tab-text">直播</text>
+				<view class="top-tab" @tap="goAudioPage">
+					<text class="top-tab-text">{{ audioTabText }}</text>
 				</view>
-				<view class="top-tab" @click="goCoursePage">
-					<text class="top-tab-text">课程</text>
+				<view class="top-tab" @tap="goLivePage">
+					<text class="top-tab-text">{{ liveTabText }}</text>
 				</view>
-				<view class="top-tab" @click="goNewsPage">
-					<text class="top-tab-text">资讯</text>
+				<view class="top-tab" @tap="goCoursePage">
+					<text class="top-tab-text">{{ courseTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goNewsPage">
+					<text class="top-tab-text">{{ newsTabText }}</text>
 				</view>
 			</view>
 		</view>
 
 		<scroll-view class="content" scroll-y="true">
 			<view class="content-shell">
-				<view class="search-wrap">
-					<view class="search-box">
-						<image class="search-icon" src="/static/home/icon_search.png" mode="aspectFit"></image>
-						<text class="search-placeholder">请输入关键字搜索</text>
+				<view class="hero-card hero-card-top" @tap="goTopicsPage">
+					<text class="hero-kicker">{{ heroKickerText }}</text>
+					<text class="hero-title">{{ heroTitleText }}</text>
+					<text class="hero-subtitle">{{ heroSubtitleText }}</text>
+					<view class="hero-action">
+						<text class="hero-action-text">{{ heroActionText }}</text>
 					</view>
 				</view>
 
-				<view class="home-list">
-					<view class="home-card" v-for="item in homeSections" :key="item.sectionKey" @click="goHomeDetail(item)">
-						<view class="card-head">
-							<view>
-								<text class="card-type">{{ item.typeLabel }}</text>
-								<text class="card-title">{{ item.title }}</text>
-								<text class="card-subtitle">{{ item.subtitle }}</text>
+				<view class="section-head">
+					<text class="section-title">{{ recommendTopicTitle }}</text>
+					<text class="section-more" @tap="goTopicsPage">{{ moreText }}</text>
+				</view>
+
+				<scroll-view class="topic-scroll" scroll-x="true" show-scrollbar="false">
+					<view class="topic-row">
+						<view
+							v-for="item in topicItems"
+							:key="item.id"
+							class="topic-card"
+							@tap="goTopicDetail(item.id)"
+						>
+							<image v-if="item.coverUrl.length > 0" class="topic-cover" :src="item.coverUrl" mode="aspectFill"></image>
+							<view v-else class="topic-cover topic-cover-placeholder">
+								<text class="topic-cover-text">{{ topicTabText }}</text>
 							</view>
-							<image v-if="item.coverUrl.length > 0" class="card-cover" :src="item.coverUrl" mode="aspectFill"></image>
-							<view v-else class="card-cover card-cover-placeholder">
-								<text class="card-cover-text">{{ item.typeShort }}</text>
+							<text class="topic-title">{{ item.title }}</text>
+							<text class="topic-summary">{{ item.summary }}</text>
+							<view class="topic-tags">
+								<text v-for="tag in item.tags" :key="tag" class="topic-tag">{{ tag }}</text>
+							</view>
+							<view class="topic-meta">
+								<text class="topic-meta-text">{{ viewText }} {{ item.viewCount }}</text>
+								<text class="topic-meta-text">{{ favoriteText }} {{ item.favoriteCount }}</text>
 							</view>
 						</view>
-						<view class="card-foot">
-							<text class="card-desc">{{ item.description }}</text>
+					</view>
+				</scroll-view>
+
+				<view class="section-head section-gap">
+					<text class="section-title">{{ recommendNewsTitle }}</text>
+					<text class="section-more" @tap="goNewsPage">{{ moreText }}</text>
+				</view>
+
+				<view class="article-list">
+					<view
+						v-for="item in articleItems"
+						:key="item.id"
+						class="article-card"
+						@tap="goArticleDetail(item.id)"
+					>
+						<image v-if="item.coverUrl.length > 0" class="article-cover" :src="item.coverUrl" mode="aspectFill"></image>
+						<view v-else class="article-cover article-cover-placeholder">
+							<text class="article-cover-text">NEWS</text>
+						</view>
+						<view class="article-main">
+							<text class="article-title">{{ item.title }}</text>
+							<text class="article-summary">{{ item.summary }}</text>
+							<view class="article-meta">
+								<text class="article-meta-text">{{ item.source }}</text>
+								<text class="article-meta-text">{{ item.publishedAt }}</text>
+							</view>
 						</view>
 					</view>
 				</view>
@@ -60,253 +103,157 @@
 		<view class="tabbar">
 			<view class="tab-item tab-item-active">
 				<image class="tab-icon-image" src="/static/tabbar/icon_xuexidianji.png" mode="aspectFit"></image>
-				<text class="tab-label tab-label-active">学习</text>
+				<text class="tab-label tab-label-active">{{ learningTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goExamPage">
+			<view class="tab-item" @tap="goExamPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">考核</text>
+				<text class="tab-label">{{ examTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goConsultPage">
+			<view class="tab-item" @tap="goConsultPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
-				<text class="tab-label">咨询</text>
+				<text class="tab-label">{{ consultTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goKnowledgePage">
+			<view class="tab-item" @tap="goKnowledgePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">知识库</text>
+				<text class="tab-label">{{ knowledgeTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goMinePage">
+			<view class="tab-item" @tap="goMinePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">我的</text>
+				<text class="tab-label">{{ mineTabText }}</text>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
-import { ref, onMounted } from 'vue'
-import { fetchHomeCategories, fetchHomeContents } from '../../utils/auth.uts'
+import { ref } from 'vue'
+import { fetchArticles, fetchTopicCards, type Article, type TopicCard } from '../../utils/auth.uts'
 
-type HomeCategory = {
+type HomeTopicCard = {
 	id : number
-	parentId : number
-	categoryName : string
-	categoryCode : string
-	iconUrl : string
-	description : string
-	sortOrder : number
-	status : string
+	title : string
+	summary : string
+	coverUrl : string
+	tags : string[]
+	viewCount : number
+	favoriteCount : number
 }
 
-type HomeContent = {
+type HomeArticleCard = {
 	id : number
-	categoryId : number
-	contentType : string
-	targetId : number
 	title : string
+	summary : string
 	coverUrl : string
-	linkUrl : string
-	sortOrder : number
-	startAt : string
-	endAt : string
-	status : string
+	source : string
+	publishedAt : string
 }
 
-type HomeSection = {
-	sectionKey : string
-	contentType : string
-	typeLabel : string
-	typeShort : string
-	title : string
-	subtitle : string
-	description : string
-	coverUrl : string
-	targetId : string
-}
+const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
+const homeTabText = '\u9996\u9875'
+const topicTabText = '\u4e13\u9898'
+const audioTabText = '\u97f3\u9891'
+const liveTabText = '\u76f4\u64ad'
+const courseTabText = '\u8bfe\u7a0b'
+const newsTabText = '\u8d44\u8baf'
+const learningTabText = '\u5b66\u4e60'
+const examTabText = '\u8003\u6838'
+const consultTabText = '\u54a8\u8be2'
+const knowledgeTabText = '\u77e5\u8bc6\u5e93'
+const mineTabText = '\u6211\u7684'
+const heroKickerText = '\u5b66\u4e60\u4e13\u9898'
+const heroTitleText = '\u5206\u573a\u666f\u3001\u5206\u8d44\u6e90\u7684\u4e2d\u533b\u5b66\u4e60\u8bbe\u8ba1'
+const heroSubtitleText = '\u7528\u4e13\u9898\u628a\u56fe\u4e66\u3001\u8bfe\u7a0b\u3001\u97f3\u9891\u4e32\u6210\u5b8c\u6574\u5b66\u4e60\u8def\u5f84\u3002'
+const heroActionText = '\u8fdb\u5165\u4e13\u9898'
+const recommendTopicTitle = '\u70ed\u95e8\u4e13\u9898'
+const recommendNewsTitle = '\u6700\u65b0\u8d44\u8baf'
+const moreText = '\u66f4\u591a'
+const viewText = '\u6d4f\u89c8'
+const favoriteText = '\u6536\u85cf'
+const fallbackTopicSummary = '\u66f4\u9002\u5408\u6309\u4e3b\u9898\u5316\u5b66\u4e60\u7684\u5185\u5bb9\u7ec4\u5408\u3002'
+const fallbackArticleSummary = '\u6682\u65e0\u6458\u8981'
+const TOPIC_DETAIL_ID_KEY = 'topic_detail_id'
 
-const homeSections = ref<HomeSection[]>([
-	{
-		sectionKey: 'audio',
-		contentType: 'podcast',
-		typeLabel: '音频内容',
-		typeShort: '音频',
-		title: '音频内容占位',
-		subtitle: '等待首页内容接口返回',
-		description: '点击进入音频详情页',
-		coverUrl: '',
-		targetId: ''
-	},
-	{
-		sectionKey: 'live',
-		contentType: 'live',
-		typeLabel: '直播内容',
-		typeShort: '直播',
-		title: '直播内容占位',
-		subtitle: '等待首页内容接口返回',
-		description: '点击进入直播详情页',
-		coverUrl: '',
-		targetId: ''
-	},
-	{
-		sectionKey: 'course',
-		contentType: 'course',
-		typeLabel: '课程内容',
-		typeShort: '课程',
-		title: '课程内容占位',
-		subtitle: '等待首页内容接口返回',
-		description: '点击进入课程详情页',
-		coverUrl: '',
-		targetId: ''
-	},
-	{
-		sectionKey: 'news',
-		contentType: 'topic',
-		typeLabel: '资讯内容',
-		typeShort: '资讯',
-		title: '资讯内容占位',
-		subtitle: '等待首页内容接口返回',
-		description: '点击进入资讯详情页',
-		coverUrl: '',
-		targetId: ''
-	}
-])
+const topicItems = ref<HomeTopicCard[]>([])
+const articleItems = ref<HomeArticleCard[]>([])
 
 const safeText = (value : string | null) : string => {
 	return value == null || value.length == 0 ? '' : value
 }
 
-const normalizeContentType = (value : string) : string => {
-	const type = value.toLowerCase()
-	if (type == 'podcast' || type == 'audio') {
-		return 'podcast'
+const formatDate = (value : string) : string => {
+	const text = safeText(value)
+	if (text.length == 0) {
+		return ''
 	}
-	if (type == 'live' || type == 'live_session') {
-		return 'live'
-	}
-	if (type == 'course') {
-		return 'course'
-	}
-	if (type == 'topic' || type == 'article' || type == 'news') {
-		return 'topic'
-	}
-	return type
+	return text.replace('T', ' ').substring(0, 16)
 }
 
-const buildFallbackSections = () : HomeSection[] => {
-	return [...homeSections.value]
-}
-
-const mapHomeContentToSection = (item : HomeContent, categories : HomeCategory[]) : HomeSection | null => {
-	const normalizedType = normalizeContentType(safeText(item.contentType))
-	if (normalizedType != 'podcast' && normalizedType != 'live' && normalizedType != 'course' && normalizedType != 'topic') {
-		return null
-	}
-
-	const category = categories.find((entry : HomeCategory) : boolean => entry.id == item.categoryId)
-	const categoryName = category != null ? safeText(category.categoryName) : ''
-
-	let typeLabel = '首页内容'
-	let typeShort = '内容'
-	let subtitle = '首页配置内容'
-	let description = '点击进入详情页'
-
-	if (normalizedType == 'podcast') {
-		typeLabel = '音频内容'
-		typeShort = '音频'
-		subtitle = categoryName.length > 0 ? categoryName : '音频推荐'
-		description = '点击进入音频详情页'
-	}
-	if (normalizedType == 'live') {
-		typeLabel = '直播内容'
-		typeShort = '直播'
-		subtitle = categoryName.length > 0 ? categoryName : '直播推荐'
-		description = '点击进入直播详情页'
-	}
-	if (normalizedType == 'course') {
-		typeLabel = '课程内容'
-		typeShort = '课程'
-		subtitle = categoryName.length > 0 ? categoryName : '课程推荐'
-		description = '点击进入课程详情页'
-	}
-	if (normalizedType == 'topic') {
-		typeLabel = '资讯内容'
-		typeShort = '资讯'
-		subtitle = categoryName.length > 0 ? categoryName : '资讯推荐'
-		description = '点击进入资讯详情页'
-	}
-
+const mapTopic = (item : TopicCard) : HomeTopicCard => {
 	return {
-		sectionKey: normalizedType,
-		contentType: normalizedType,
-		typeLabel,
-		typeShort,
-		title: safeText(item.title).length > 0 ? item.title : typeLabel,
-		subtitle,
-		description,
+		id: item.id,
+		title: safeText(item.title),
+		summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackTopicSummary,
 		coverUrl: safeText(item.coverUrl),
-		targetId: String(item.targetId)
+		tags: item.tags != null ? item.tags.slice(0, 2) : [],
+		viewCount: item.viewCount,
+		favoriteCount: item.favoriteCount
 	}
 }
 
-const applyHomeData = (categories : HomeCategory[], contents : HomeContent[]) => {
-	const fallbackMap = new Map<string, HomeSection>()
-	const fallbacks = buildFallbackSections()
-	for (let i = 0; i < fallbacks.length; i++) {
-		fallbackMap.set(fallbacks[i].sectionKey, fallbacks[i])
+const mapArticle = (item : Article) : HomeArticleCard => {
+	return {
+		id: item.id,
+		title: safeText(item.title),
+		summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackArticleSummary,
+		coverUrl: safeText(item.coverUrl),
+		source: safeText(item.source),
+		publishedAt: formatDate(item.publishedAt)
 	}
-
-	const sortedContents = [...contents].sort((left : HomeContent, right : HomeContent) : number => {
-		return (left.sortOrder || 0) - (right.sortOrder || 0)
-	})
-
-	for (let i = 0; i < sortedContents.length; i++) {
-		const mapped = mapHomeContentToSection(sortedContents[i], categories)
-		if (mapped != null && fallbackMap.has(mapped.sectionKey)) {
-			fallbackMap.set(mapped.sectionKey, mapped)
-		}
-	}
-
-	homeSections.value = [
-		fallbackMap.get('podcast') as HomeSection,
-		fallbackMap.get('live') as HomeSection,
-		fallbackMap.get('course') as HomeSection,
-		fallbackMap.get('topic') as HomeSection
-	]
 }
 
 const loadHomeData = () => {
-	fetchHomeCategories(
-		(categoryPage) => {
-			fetchHomeContents(
-				(contentPage) => {
-					applyHomeData(categoryPage.records || [], contentPage.records || [])
-				},
-				() => {}
-			)
+	fetchTopicCards(
+		1,
+		6,
+		'',
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			topicItems.value = records.map((item : TopicCard) : HomeTopicCard => {
+				return mapTopic(item)
+			})
 		},
-		() => {}
+		() => {
+			topicItems.value = []
+		}
+	)
+
+	fetchArticles(
+		1,
+		5,
+		'',
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			articleItems.value = records.map((item : Article) : HomeArticleCard => {
+				return mapArticle(item)
+			})
+		},
+		() => {
+			articleItems.value = []
+		}
 	)
 }
 
-const goHomeDetail = (item : HomeSection) => {
-	if (item.targetId.length == 0) {
-		return
-	}
+const goTopicsPage = () => {
+	uni.redirectTo({ url: '/pages/topics/list' })
+}
 
-	if (item.contentType == 'podcast') {
-		uni.navigateTo({ url: '/pages/audio/detail?id=' + item.targetId })
-		return
-	}
-	if (item.contentType == 'live') {
-		uni.navigateTo({ url: '/pages/live/detail?id=' + item.targetId })
-		return
-	}
-	if (item.contentType == 'course') {
-		uni.navigateTo({ url: '/pages/course/detail?id=' + item.targetId })
-		return
-	}
-	if (item.contentType == 'topic') {
-		uni.navigateTo({ url: '/pages/news/detail?id=' + item.targetId })
-	}
+const goTopicDetail = (id : number) => {
+	uni.setStorageSync(TOPIC_DETAIL_ID_KEY, String(id))
+	uni.navigateTo({ url: '/pages/topics/detail?id=' + String(id) })
+}
+
+const goArticleDetail = (id : number) => {
+	uni.navigateTo({ url: '/pages/news/detail?id=' + String(id) })
 }
 
 const goAudioPage = () => {
@@ -341,9 +288,7 @@ const goConsultPage = () => {
 	uni.redirectTo({ url: '/pages/consult/index' })
 }
 
-onMounted(() => {
-	loadHomeData()
-})
+loadHomeData()
 </script>
 
 <style>
@@ -354,7 +299,7 @@ onMounted(() => {
 
 .hero-shell {
 	position: relative;
-	height: 236rpx;
+	height: 218rpx;
 	overflow: hidden;
 }
 
@@ -363,14 +308,14 @@ onMounted(() => {
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 236rpx;
+	height: 218rpx;
 }
 
 .header {
 	position: relative;
 	z-index: 1;
 	padding-top: 34rpx;
-	height: 118rpx;
+	height: 110rpx;
 	align-items: center;
 	justify-content: center;
 }
@@ -385,10 +330,9 @@ onMounted(() => {
 .top-tabs {
 	position: relative;
 	z-index: 1;
-	height: 96rpx;
-	margin-top: 18rpx;
-	padding-left: 28rpx;
-	padding-right: 28rpx;
+	height: 108rpx;
+	padding-left: 18rpx;
+	padding-right: 18rpx;
 	background-color: rgba(251, 250, 246, 0.78);
 	flex-direction: row;
 	align-items: flex-end;
@@ -399,7 +343,7 @@ onMounted(() => {
 }
 
 .top-tab {
-	min-width: 88rpx;
+	min-width: 78rpx;
 	height: 96rpx;
 	align-items: center;
 	justify-content: center;
@@ -410,8 +354,8 @@ onMounted(() => {
 }
 
 .top-tab-text {
-	font-size: 18px;
-	line-height: 26px;
+	font-size: 15px;
+	line-height: 22px;
 	color: #333333;
 }
 
@@ -422,8 +366,8 @@ onMounted(() => {
 
 .top-tab-line {
 	position: absolute;
-	bottom: 10rpx;
-	width: 48rpx;
+	bottom: 12rpx;
+	width: 42rpx;
 	height: 6rpx;
 	border-radius: 4rpx;
 	background-color: #b85d69;
@@ -437,113 +381,228 @@ onMounted(() => {
 .content-shell {
 	padding-left: 20rpx;
 	padding-right: 20rpx;
-	padding-bottom: 40rpx;
-}
-
-.search-wrap {
 	padding-bottom: 20rpx;
-	background-color: #f7f7f2;
 }
 
-.search-box {
-	height: 72rpx;
-	padding-left: 24rpx;
-	padding-right: 24rpx;
-	border-radius: 36rpx;
-	background-color: rgba(255, 255, 255, 0.94);
-	border-width: 1px;
-	border-style: solid;
-	border-color: rgba(191, 214, 195, 0.9);
-	flex-direction: row;
-	align-items: center;
+.hero-card-top {
+	margin-top: 0;
 }
 
-.search-icon {
-	width: 30rpx;
-	height: 30rpx;
-	margin-right: 18rpx;
-	opacity: 0.78;
+.hero-card {
+	padding: 28rpx;
+	border-radius: 24rpx;
+	background: linear-gradient(135deg, #f7e4c8 0%, #f3efe7 100%);
+	box-shadow: 0 12rpx 28rpx rgba(152, 118, 72, 0.12);
 }
 
-.search-placeholder {
+.hero-kicker {
+	font-size: 12px;
+	line-height: 18px;
+	color: #b85d69;
+	font-weight: 600;
+}
+
+.hero-title {
+	margin-top: 12rpx;
+	font-size: 21px;
+	line-height: 30px;
+	color: #8a5a28;
+	font-weight: 700;
+}
+
+.hero-subtitle {
+	margin-top: 14rpx;
 	font-size: 14px;
 	line-height: 22px;
-	color: #b0b8ad;
+	color: #7c6e58;
 }
 
-.home-list {
-	padding-top: 4rpx;
+.hero-action {
+	margin-top: 22rpx;
+	width: 170rpx;
+	height: 60rpx;
+	border-radius: 30rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
 }
 
-.home-card {
-	margin-bottom: 24rpx;
-	border-radius: 20rpx;
-	background-color: #ffffff;
-	overflow: hidden;
-	box-shadow: 0 10rpx 24rpx rgba(207, 201, 186, 0.28);
+.hero-action-text {
+	font-size: 14px;
+	line-height: 20px;
+	color: #ffffff;
+	font-weight: 600;
 }
 
-.card-head {
-	min-height: 220rpx;
-	padding: 30rpx;
-	background-color: #f8e8ce;
+.section-head {
+	margin-top: 30rpx;
+	margin-bottom: 18rpx;
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
 }
 
-.card-type {
-	font-size: 12px;
-	line-height: 18px;
-	color: #b85d69;
+.section-gap {
+	margin-top: 36rpx;
+}
+
+.section-title {
+	font-size: 18px;
+	line-height: 26px;
+	color: #2f2f2f;
 	font-weight: 600;
-	margin-bottom: 10rpx;
 }
 
-.card-title {
-	width: 380rpx;
-	font-size: 22px;
-	line-height: 32px;
-	color: #d0832e;
-	font-weight: 700;
+.section-more {
+	font-size: 13px;
+	line-height: 20px;
+	color: #b85d69;
 }
 
-.card-subtitle {
-	margin-top: 10rpx;
-	width: 380rpx;
-	font-size: 14px;
-	line-height: 22px;
-	color: #8d6f45;
+.topic-scroll {
+	white-space: nowrap;
 }
 
-.card-cover {
-	width: 140rpx;
-	height: 140rpx;
-	border-radius: 24rpx;
+.topic-row {
+	flex-direction: row;
+}
+
+.topic-card {
+	width: 280rpx;
+	margin-right: 18rpx;
+	padding: 18rpx;
+	border-radius: 20rpx;
 	background-color: #ffffff;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.06);
 }
 
-.card-cover-placeholder {
+.topic-cover {
+	width: 244rpx;
+	height: 156rpx;
+	border-radius: 16rpx;
+	background-color: #f4e4cf;
+}
+
+.topic-cover-placeholder {
 	align-items: center;
 	justify-content: center;
 }
 
-.card-cover-text {
-	font-size: 22px;
-	line-height: 30px;
-	color: #dfc2a3;
+.topic-cover-text {
+	font-size: 16px;
+	color: #cbad88;
 	font-weight: 600;
 }
 
-.card-foot {
-	padding: 26rpx 30rpx;
-}
-
-.card-desc {
-	font-size: 18px;
-	line-height: 28px;
+.topic-title {
+	margin-top: 14rpx;
+	font-size: 16px;
+	line-height: 24px;
 	color: #2f2f2f;
 	font-weight: 600;
+}
+
+.topic-summary {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8e8e8e;
+	height: 54rpx;
+	overflow: hidden;
+}
+
+.topic-tags {
+	margin-top: 12rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+.topic-tag {
+	margin-right: 10rpx;
+	margin-bottom: 8rpx;
+	padding-left: 12rpx;
+	padding-right: 12rpx;
+	height: 34rpx;
+	line-height: 34rpx;
+	border-radius: 18rpx;
+	background-color: #f5efe7;
+	font-size: 11px;
+	color: #907456;
+}
+
+.topic-meta {
+	margin-top: 12rpx;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.topic-meta-text {
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+}
+
+.article-list {
+	padding-bottom: 16rpx;
+}
+
+.article-card {
+	margin-bottom: 18rpx;
+	padding: 16rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
+}
+
+.article-cover {
+	width: 156rpx;
+	height: 156rpx;
+	border-radius: 16rpx;
+	background-color: #f3e6d6;
+}
+
+.article-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+
+.article-cover-text {
+	font-size: 18px;
+	color: #c88a54;
+	font-weight: 700;
+}
+
+.article-main {
+	flex: 1;
+	padding-left: 18rpx;
+}
+
+.article-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #252525;
+	font-weight: 600;
+}
+
+.article-summary {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8f8f8f;
+	height: 54rpx;
+	overflow: hidden;
+}
+
+.article-meta {
+	margin-top: 16rpx;
+}
+
+.article-meta-text {
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+	margin-top: 4rpx;
 }
 
 .tabbar {

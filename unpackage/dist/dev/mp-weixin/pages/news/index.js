@@ -2,36 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
-class TopicItem extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          id: { type: Number, optional: false },
-          topicId: { type: Number, optional: false },
-          itemType: { type: String, optional: false },
-          itemId: { type: Number, optional: false },
-          sortOrder: { type: Number, optional: false },
-          resource: { type: "Unknown", optional: true }
-        };
-      },
-      name: "TopicItem"
-    };
-  }
-  constructor(options, metadata = TopicItem.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
-    this.topicId = this.__props__.topicId;
-    this.itemType = this.__props__.itemType;
-    this.itemId = this.__props__.itemId;
-    this.sortOrder = this.__props__.sortOrder;
-    this.resource = this.__props__.resource;
-    delete this.__props__;
-  }
-}
-class Topic extends UTS.UTSType {
+class ArticleCard extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
       kind: 2,
@@ -40,116 +11,130 @@ class Topic extends UTS.UTSType {
           id: { type: Number, optional: false },
           title: { type: String, optional: false },
           summary: { type: String, optional: false },
-          learningRequirements: { type: String, optional: false },
           coverUrl: { type: String, optional: false },
-          viewCount: { type: Number, optional: false },
+          source: { type: String, optional: false },
           publishedAt: { type: String, optional: false },
-          items: { type: UTS.UTSType.withGenerics(Array, [TopicItem]), optional: false }
+          viewCount: { type: Number, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false }
         };
       },
-      name: "Topic"
+      name: "ArticleCard"
     };
   }
-  constructor(options, metadata = Topic.get$UTSMetadata$(), isJSONParse = false) {
+  constructor(options, metadata = ArticleCard.get$UTSMetadata$(), isJSONParse = false) {
     super();
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
     this.title = this.__props__.title;
     this.summary = this.__props__.summary;
-    this.learningRequirements = this.__props__.learningRequirements;
     this.coverUrl = this.__props__.coverUrl;
-    this.viewCount = this.__props__.viewCount;
-    this.publishedAt = this.__props__.publishedAt;
-    this.items = this.__props__.items;
-    delete this.__props__;
-  }
-}
-class NewsItem extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          id: { type: String, optional: false },
-          coverTitle: { type: String, optional: false },
-          coverSubtitle: { type: String, optional: false },
-          title: { type: String, optional: false },
-          source: { type: String, optional: false },
-          views: { type: String, optional: false },
-          comments: { type: String, optional: false }
-        };
-      },
-      name: "NewsItem"
-    };
-  }
-  constructor(options, metadata = NewsItem.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
-    this.coverTitle = this.__props__.coverTitle;
-    this.coverSubtitle = this.__props__.coverSubtitle;
-    this.title = this.__props__.title;
     this.source = this.__props__.source;
-    this.views = this.__props__.views;
-    this.comments = this.__props__.comments;
+    this.publishedAt = this.__props__.publishedAt;
+    this.viewCount = this.__props__.viewCount;
+    this.tags = this.__props__.tags;
     delete this.__props__;
   }
 }
+const PAGE_SIZE = 10;
+const appTitleText = "江苏中医在线";
+const homeTabText = "首页";
+const topicTabText = "专题";
+const audioTabText = "音频";
+const liveTabText = "直播";
+const courseTabText = "课程";
+const newsTabText = "资讯";
+const learningTabText = "学习";
+const examTabText = "考核";
+const consultTabText = "咨询";
+const knowledgeTabText = "知识库";
+const mineTabText = "我的";
+const searchPlaceholder = "搜索标题、来源或摘要";
+const searchText = "搜索";
+const loadingText = "加载中...";
+const retryText = "重新加载";
+const emptyText = "暂无资讯";
+const loadingMoreText = "加载更多中...";
+const noMoreText = "没有更多了";
+const loadFailedText = "资讯加载失败";
+const viewText = "浏览";
+const fallbackSummaryText = "暂无摘要";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "index",
   setup(__props) {
-    const placeholderItems = [
-      new NewsItem({
-        id: "1",
-        coverTitle: "资讯封面占位",
-        coverSubtitle: "第一条资讯",
-        title: "资讯标题占位一，点击进入资讯详情页面",
-        source: "来源占位",
-        views: "3200",
-        comments: "3"
-      }),
-      new NewsItem({
-        id: "2",
-        coverTitle: "资讯封面占位",
-        coverSubtitle: "第二条资讯",
-        title: "资讯标题占位二，点击进入资讯详情页面",
-        source: "来源占位",
-        views: "3200",
-        comments: "3"
-      })
-    ];
-    const newsItems = common_vendor.ref([]);
+    const keyword = common_vendor.ref("");
+    const articleItems = common_vendor.ref([]);
+    const page = common_vendor.ref(1);
+    const hasMore = common_vendor.ref(true);
+    const isLoading = common_vendor.ref(true);
+    const isListLoading = common_vendor.ref(false);
+    const errorText = common_vendor.ref("");
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
     };
-    const mapTopicToNews = (item, index) => {
-      const title = safeText(item.title);
-      const summary = safeText(item.summary);
-      return new NewsItem({
-        id: String(item.id),
-        coverTitle: title.length > 0 ? title : "资讯封面占位",
-        coverSubtitle: summary.length > 0 ? summary : "第" + String(index + 1) + "条资讯",
-        title: title.length > 0 ? title : "资讯标题占位",
-        source: safeText(item.publishedAt).length > 0 ? item.publishedAt : "专题来源",
-        views: String(item.viewCount != null ? item.viewCount : 0),
-        comments: String(item.items != null ? item.items.length : 0)
+    const formatDate = (value) => {
+      const text = safeText(value);
+      if (text.length == 0) {
+        return "";
+      }
+      return text.replace("T", " ").substring(0, 16);
+    };
+    const mapArticle = (item) => {
+      return new ArticleCard({
+        id: item.id,
+        title: safeText(item.title),
+        summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryText,
+        coverUrl: safeText(item.coverUrl),
+        source: safeText(item.source),
+        publishedAt: formatDate(item.publishedAt),
+        viewCount: item.viewCount,
+        tags: item.tags != null ? item.tags.slice(0, 2) : []
       });
     };
-    const loadNewsItems = () => {
-      utils_auth.fetchTopics((pageData) => {
-        if (pageData.records != null && pageData.records.length > 0) {
-          newsItems.value = pageData.records.map((item, index) => {
-            return mapTopicToNews(item, index);
-          });
+    const loadArticles = (loadMoreValue) => {
+      if (!loadMoreValue) {
+        page.value = 1;
+        hasMore.value = true;
+        errorText.value = "";
+        isLoading.value = true;
+      } else {
+        if (!hasMore.value || isListLoading.value) {
           return null;
         }
-        newsItems.value = placeholderItems;
-      }, () => {
-        newsItems.value = placeholderItems;
+        isListLoading.value = true;
+      }
+      utils_auth.fetchArticles(page.value, PAGE_SIZE, keyword.value, (pageData) => {
+        const records = pageData.records != null ? pageData.records : [];
+        const mapped = records.map((item) => {
+          return mapArticle(item);
+        });
+        if (loadMoreValue) {
+          articleItems.value = articleItems.value.concat(mapped);
+        } else {
+          articleItems.value = mapped;
+        }
+        hasMore.value = mapped.length >= PAGE_SIZE;
+        if (hasMore.value) {
+          page.value += 1;
+        }
+        isLoading.value = false;
+        isListLoading.value = false;
+      }, (message) => {
+        errorText.value = message.length > 0 ? message : loadFailedText;
+        isLoading.value = false;
+        isListLoading.value = false;
       });
+    };
+    const reloadList = () => {
+      loadArticles(false);
+    };
+    const loadMore = () => {
+      loadArticles(true);
     };
     const goLearningPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/index/index" });
+    };
+    const goTopicsPage = () => {
+      common_vendor.index.redirectTo({ url: "/pages/topics/list" });
     };
     const goAudioPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/audio/index" });
@@ -167,7 +152,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       common_vendor.index.redirectTo({ url: "/pages/exam/index" });
     };
     const goNewsDetail = (id) => {
-      common_vendor.index.navigateTo({ url: "/pages/news/detail?id=" + id });
+      common_vendor.index.navigateTo({ url: "/pages/news/detail?id=" + String(id) });
     };
     const goKnowledgePage = () => {
       common_vendor.index.redirectTo({ url: "/pages/knowledge/index" });
@@ -175,40 +160,92 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goConsultPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/consult/index" });
     };
-    loadNewsItems();
+    loadArticles(false);
     return (_ctx, _cache) => {
       "raw js";
-      const __returned__ = {
+      const __returned__ = common_vendor.e({
         a: common_assets._imports_0$3,
-        b: common_vendor.o(goLearningPage),
-        c: common_vendor.o(goAudioPage),
-        d: common_vendor.o(goLivePage),
-        e: common_vendor.o(goCoursePage),
-        f: common_vendor.f(newsItems.value, (item, k0, i0) => {
-          return {
-            a: common_vendor.t(item.coverTitle),
-            b: common_vendor.t(item.coverSubtitle),
+        b: common_vendor.t(appTitleText),
+        c: common_vendor.t(homeTabText),
+        d: common_vendor.o(goLearningPage),
+        e: common_vendor.t(topicTabText),
+        f: common_vendor.o(goTopicsPage),
+        g: common_vendor.t(audioTabText),
+        h: common_vendor.o(goAudioPage),
+        i: common_vendor.t(liveTabText),
+        j: common_vendor.o(goLivePage),
+        k: common_vendor.t(courseTabText),
+        l: common_vendor.o(goCoursePage),
+        m: common_vendor.t(newsTabText),
+        n: searchPlaceholder,
+        o: common_vendor.o(reloadList),
+        p: keyword.value,
+        q: common_vendor.o(($event) => {
+          return keyword.value = $event.detail.value;
+        }),
+        r: common_vendor.t(searchText),
+        s: common_vendor.o(reloadList),
+        t: isLoading.value
+      }, isLoading.value ? {
+        v: common_vendor.t(loadingText)
+      } : errorText.value.length > 0 ? {
+        x: common_vendor.t(errorText.value),
+        y: common_vendor.t(retryText),
+        z: common_vendor.o(reloadList)
+      } : articleItems.value.length == 0 ? {
+        B: common_vendor.t(emptyText)
+      } : common_vendor.e({
+        C: common_vendor.f(articleItems.value, (item, k0, i0) => {
+          return common_vendor.e({
+            a: item.coverUrl.length > 0
+          }, item.coverUrl.length > 0 ? {
+            b: item.coverUrl
+          } : {}, {
             c: common_vendor.t(item.title),
-            d: common_vendor.t(item.source),
-            e: common_vendor.t(item.views),
-            f: common_vendor.t(item.comments),
-            g: item.id,
-            h: common_vendor.o(($event) => {
+            d: common_vendor.t(item.summary),
+            e: common_vendor.f(item.tags, (tag, k1, i1) => {
+              return {
+                a: common_vendor.t(tag),
+                b: tag
+              };
+            }),
+            f: common_vendor.t(item.source),
+            g: common_vendor.t(item.publishedAt),
+            h: common_vendor.t(item.viewCount),
+            i: item.id,
+            j: common_vendor.o(($event) => {
               return goNewsDetail(item.id);
             }, item.id)
-          };
+          });
         }),
-        g: common_assets._imports_1$4,
-        h: common_assets._imports_2,
-        i: common_vendor.o(goExamPage),
-        j: common_assets._imports_3,
-        k: common_vendor.o(goConsultPage),
-        l: common_assets._imports_4,
-        m: common_vendor.o(goKnowledgePage),
-        n: common_assets._imports_5,
-        o: common_vendor.o(goMinePage),
-        p: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
-      };
+        D: common_vendor.t(viewText),
+        E: isListLoading.value
+      }, isListLoading.value ? {
+        F: common_vendor.t(loadingMoreText)
+      } : !hasMore.value ? {
+        H: common_vendor.t(noMoreText)
+      } : {}, {
+        G: !hasMore.value
+      }), {
+        w: errorText.value.length > 0,
+        A: articleItems.value.length == 0,
+        I: common_vendor.o(loadMore),
+        J: common_assets._imports_1$3,
+        K: common_vendor.t(learningTabText),
+        L: common_assets._imports_2,
+        M: common_vendor.t(examTabText),
+        N: common_vendor.o(goExamPage),
+        O: common_assets._imports_3,
+        P: common_vendor.t(consultTabText),
+        Q: common_vendor.o(goConsultPage),
+        R: common_assets._imports_4,
+        S: common_vendor.t(knowledgeTabText),
+        T: common_vendor.o(goKnowledgePage),
+        U: common_assets._imports_5,
+        V: common_vendor.t(mineTabText),
+        W: common_vendor.o(goMinePage),
+        X: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+      });
       return __returned__;
     };
   }

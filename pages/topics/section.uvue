@@ -1,0 +1,368 @@
+<template>
+	<view class="page">
+		<view class="header">
+			<view class="back-btn" @tap="goBack">
+				<image class="back-icon-image" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+			</view>
+			<text class="header-title">{{ titleText }}</text>
+		</view>
+
+		<scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
+			<view class="content-shell">
+				<view v-if="isLoading" class="state-wrap">
+					<text class="state-text">{{ loadingText }}</text>
+				</view>
+
+				<view v-else-if="errorText.length > 0" class="state-wrap">
+					<text class="state-text">{{ errorText }}</text>
+					<view class="retry-btn" @tap="reloadList">
+						<text class="retry-btn-text">{{ retryText }}</text>
+					</view>
+				</view>
+
+				<view v-else-if="resourceItems.length == 0" class="state-wrap">
+					<text class="state-text">{{ emptyText }}</text>
+				</view>
+
+				<view v-else class="resource-list">
+					<view
+						v-for="item in resourceItems"
+						:key="item.resourceType + '-' + item.resourceId"
+						class="resource-card"
+						@tap="goResourceDetail(item)"
+					>
+						<image v-if="item.coverUrl.length > 0" class="resource-cover" :src="item.coverUrl" mode="aspectFill"></image>
+						<view v-else class="resource-cover resource-cover-placeholder">
+							<text class="resource-cover-text">{{ item.resourceType }}</text>
+						</view>
+						<view class="resource-main">
+							<text class="resource-title">{{ item.title }}</text>
+							<text class="resource-subtitle">{{ item.subtitle.length > 0 ? item.subtitle : item.summary }}</text>
+							<view class="resource-meta">
+								<text class="resource-meta-text">{{ viewText }} {{ item.browseCount }}</text>
+								<text class="resource-meta-text">{{ favoriteText }} {{ item.favoriteCount }}</text>
+							</view>
+						</view>
+					</view>
+
+					<view v-if="isListLoading" class="bottom-state">
+						<text class="bottom-state-text">{{ loadingMoreText }}</text>
+					</view>
+					<view v-else-if="!hasMore" class="bottom-state">
+						<text class="bottom-state-text">{{ noMoreText }}</text>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { ref } from 'vue'
+import { fetchTopicSectionResources, type TopicSectionResource } from '../../utils/auth.uts'
+
+const PAGE_SIZE = 10
+const KNOWLEDGE_DETAIL_ID_KEY = 'knowledge_detail_id'
+
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const emptyText = '\u6682\u65e0\u5185\u5bb9'
+const loadingMoreText = '\u52a0\u8f7d\u66f4\u591a\u4e2d...'
+const noMoreText = '\u6ca1\u6709\u66f4\u591a\u4e86'
+const loadFailedText = '\u5206\u533a\u5185\u5bb9\u52a0\u8f7d\u5931\u8d25'
+const viewText = '\u6d4f\u89c8'
+const favoriteText = '\u6536\u85cf'
+
+const topicId = ref('')
+const sectionType = ref('')
+const titleText = ref('\u5206\u533a\u5185\u5bb9')
+const resourceItems = ref<TopicSectionResource[]>([])
+const page = ref(1)
+const hasMore = ref(true)
+const isLoading = ref(true)
+const isListLoading = ref(false)
+const errorText = ref('')
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const normalizeResourceType = (value : string) : string => {
+	const type = safeText(value).toLowerCase()
+	if (type == 'learning' || type == 'book') {
+		return 'book'
+	}
+	if (type == 'video' || type == 'course') {
+		return 'course'
+	}
+	if (type == 'audio' || type == 'podcast') {
+		return 'podcast'
+	}
+	return type
+}
+
+const loadParams = () => {
+	const pages = getCurrentPages()
+	if (pages.length == 0) {
+		return
+	}
+	const current = pages[pages.length - 1]
+	if (current == null || current.options == null) {
+		return
+	}
+	const options = current.options as UTSJSONObject
+	const topicValue = options['topicId']
+	const sectionValue = options['sectionType']
+	const titleValue = options['title']
+	if (typeof topicValue == 'string' && topicValue.length > 0) {
+		topicId.value = topicValue
+	}
+	if (typeof sectionValue == 'string' && sectionValue.length > 0) {
+		sectionType.value = decodeURIComponent(sectionValue)
+	}
+	if (typeof titleValue == 'string' && titleValue.length > 0) {
+		titleText.value = decodeURIComponent(titleValue)
+	}
+}
+
+const loadResources = (loadMoreValue : boolean) => {
+	if (topicId.value.length == 0 || sectionType.value.length == 0) {
+		return
+	}
+
+	if (!loadMoreValue) {
+		page.value = 1
+		hasMore.value = true
+		errorText.value = ''
+		isLoading.value = true
+	} else {
+		if (!hasMore.value || isListLoading.value) {
+			return
+		}
+		isListLoading.value = true
+	}
+
+	fetchTopicSectionResources(
+		topicId.value,
+		sectionType.value,
+		page.value,
+		PAGE_SIZE,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			if (loadMoreValue) {
+				resourceItems.value = resourceItems.value.concat(records)
+			} else {
+				resourceItems.value = records
+			}
+			hasMore.value = records.length >= PAGE_SIZE
+			if (hasMore.value) {
+				page.value += 1
+			}
+			isLoading.value = false
+			isListLoading.value = false
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : loadFailedText
+			isLoading.value = false
+			isListLoading.value = false
+		}
+	)
+}
+
+const reloadList = () => {
+	loadResources(false)
+}
+
+const loadMore = () => {
+	loadResources(true)
+}
+
+const goResourceDetail = (item : TopicSectionResource) => {
+	const type = normalizeResourceType(item.resourceType)
+	if (type == 'book') {
+		if (item.resourceId <= 0) {
+			uni.showToast({
+				title: '\u7f3a\u5c11\u56fe\u4e66\u6761\u76ee ID',
+				icon: 'none'
+			})
+			return
+		}
+		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, String(item.resourceId))
+		uni.navigateTo({ url: '/pages/knowledge/book-detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (type == 'course') {
+		uni.navigateTo({ url: '/pages/course/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (type == 'podcast') {
+		uni.navigateTo({ url: '/pages/audio/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (type == 'live') {
+		uni.navigateTo({ url: '/pages/live/detail?id=' + String(item.resourceId) })
+	}
+}
+
+const goBack = () => {
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack({ delta: 1 })
+		return
+	}
+	if (topicId.value.length > 0) {
+		uni.redirectTo({ url: '/pages/topics/detail?id=' + topicId.value })
+		return
+	}
+	uni.redirectTo({ url: '/pages/topics/list' })
+}
+
+loadParams()
+loadResources(false)
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f7f7f2;
+}
+
+.header {
+	height: 96rpx;
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	background-color: #ffffff;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #ece9e1;
+}
+
+.back-btn {
+	position: absolute;
+	left: 20rpx;
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.back-icon-image {
+	width: 24rpx;
+	height: 24rpx;
+}
+
+.header-title {
+	font-size: 18px;
+	line-height: 28px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.content {
+	flex: 1;
+}
+
+.content-shell {
+	padding: 18rpx 20rpx 36rpx;
+}
+
+.state-wrap {
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.resource-card {
+	margin-bottom: 18rpx;
+	padding: 16rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
+}
+
+.resource-cover {
+	width: 156rpx;
+	height: 156rpx;
+	border-radius: 16rpx;
+	background-color: #f3e6d6;
+}
+
+.resource-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+
+.resource-cover-text {
+	font-size: 12px;
+	color: #c88a54;
+}
+
+.resource-main {
+	flex: 1;
+	padding-left: 18rpx;
+}
+
+.resource-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #252525;
+	font-weight: 600;
+}
+
+.resource-subtitle {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8f8f8f;
+}
+
+.resource-meta {
+	margin-top: 12rpx;
+	flex-direction: row;
+}
+
+.resource-meta-text {
+	margin-right: 16rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+}
+
+.bottom-state {
+	padding-top: 10rpx;
+	align-items: center;
+}
+
+.bottom-state-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #b1b1b1;
+}
+</style>

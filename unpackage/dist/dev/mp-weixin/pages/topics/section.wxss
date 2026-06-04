@@ -1,0 +1,125 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.page {
+	flex: 1;
+	background-color: #f7f7f2;
+}
+.header {
+	height: 96rpx;
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	background-color: #ffffff;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #ece9e1;
+}
+.back-btn {
+	position: absolute;
+	left: 20rpx;
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+.back-icon-image {
+	width: 24rpx;
+	height: 24rpx;
+}
+.header-title {
+	font-size: 18px;
+	line-height: 28px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+.content {
+	flex: 1;
+}
+.content-shell {
+	padding: 18rpx 20rpx 36rpx;
+}
+.state-wrap {
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+.resource-card {
+	margin-bottom: 18rpx;
+	padding: 16rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
+}
+.resource-cover {
+	width: 156rpx;
+	height: 156rpx;
+	border-radius: 16rpx;
+	background-color: #f3e6d6;
+}
+.resource-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+.resource-cover-text {
+	font-size: 12px;
+	color: #c88a54;
+}
+.resource-main {
+	flex: 1;
+	padding-left: 18rpx;
+}
+.resource-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #252525;
+	font-weight: 600;
+}
+.resource-subtitle {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8f8f8f;
+}
+.resource-meta {
+	margin-top: 12rpx;
+	flex-direction: row;
+}
+.resource-meta-text {
+	margin-right: 16rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+}
+.bottom-state {
+	padding-top: 10rpx;
+	align-items: center;
+}
+.bottom-state-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #b1b1b1;
+}

@@ -4,54 +4,93 @@
 			<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
 
 			<view class="header">
-				<text class="header-title">江苏中医在线</text>
+				<text class="header-title">{{ appTitleText }}</text>
 			</view>
 
 			<view class="top-tabs">
-				<view class="top-tab" @click="goLearningPage">
-					<text class="top-tab-text">首页</text>
+				<view class="top-tab" @tap="goLearningPage">
+					<text class="top-tab-text">{{ homeTabText }}</text>
 				</view>
-				<view class="top-tab" @click="goAudioPage">
-					<text class="top-tab-text">音频</text>
+				<view class="top-tab" @tap="goTopicsPage">
+					<text class="top-tab-text">{{ topicTabText }}</text>
 				</view>
-				<view class="top-tab" @click="goLivePage">
-					<text class="top-tab-text">直播</text>
+				<view class="top-tab" @tap="goAudioPage">
+					<text class="top-tab-text">{{ audioTabText }}</text>
 				</view>
-				<view class="top-tab" @click="goCoursePage">
-					<text class="top-tab-text">课程</text>
+				<view class="top-tab" @tap="goLivePage">
+					<text class="top-tab-text">{{ liveTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goCoursePage">
+					<text class="top-tab-text">{{ courseTabText }}</text>
 				</view>
 				<view class="top-tab top-tab-active">
-					<text class="top-tab-text top-tab-text-active">资讯</text>
+					<text class="top-tab-text top-tab-text-active">{{ newsTabText }}</text>
 					<view class="top-tab-line"></view>
 				</view>
 			</view>
 		</view>
 
-		<scroll-view class="content" scroll-y="true">
+		<view class="search-bar">
+			<input
+				v-model="keyword"
+				class="search-input"
+				:placeholder="searchPlaceholder"
+				confirm-type="search"
+				@confirm="reloadList"
+			/>
+			<view class="search-btn" @tap="reloadList">
+				<text class="search-btn-text">{{ searchText }}</text>
+			</view>
+		</view>
+
+		<scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
 			<view class="content-shell">
-				<view class="news-card" v-for="item in newsItems" :key="item.id" @click="goNewsDetail(item.id)">
-					<view class="news-cover-shell">
-						<view class="news-cover">
-							<text class="cover-badge">NEWS</text>
-							<text class="cover-title">{{ item.coverTitle }}</text>
-							<text class="cover-subtitle">{{ item.coverSubtitle }}</text>
-							<view class="cover-paper">
-								<view class="paper-line"></view>
-								<view class="paper-line"></view>
-								<view class="paper-line"></view>
+				<view v-if="isLoading" class="state-wrap">
+					<text class="state-text">{{ loadingText }}</text>
+				</view>
+
+				<view v-else-if="errorText.length > 0" class="state-wrap">
+					<text class="state-text">{{ errorText }}</text>
+					<view class="retry-btn" @tap="reloadList">
+						<text class="retry-btn-text">{{ retryText }}</text>
+					</view>
+				</view>
+
+				<view v-else-if="articleItems.length == 0" class="state-wrap">
+					<text class="state-text">{{ emptyText }}</text>
+				</view>
+
+				<view v-else class="article-list">
+					<view
+						v-for="item in articleItems"
+						:key="item.id"
+						class="article-card"
+						@tap="goNewsDetail(item.id)"
+					>
+						<image v-if="item.coverUrl.length > 0" class="article-cover" :src="item.coverUrl" mode="aspectFill"></image>
+						<view v-else class="article-cover article-cover-placeholder">
+							<text class="article-cover-text">NEWS</text>
+						</view>
+
+						<view class="article-main">
+							<text class="article-title">{{ item.title }}</text>
+							<text class="article-summary">{{ item.summary }}</text>
+							<view class="article-tags">
+								<text v-for="tag in item.tags" :key="tag" class="article-tag">{{ tag }}</text>
+							</view>
+							<view class="article-meta">
+								<text class="article-meta-text">{{ item.source }}</text>
+								<text class="article-meta-text">{{ item.publishedAt }}</text>
+								<text class="article-meta-text">{{ viewText }} {{ item.viewCount }}</text>
 							</view>
 						</view>
 					</view>
 
-					<view class="news-info">
-						<text class="news-title">{{ item.title }}</text>
-						<view class="news-meta">
-							<text class="teacher-name">{{ item.source }}</text>
-							<view class="stats">
-								<text class="stat-text">浏览 {{ item.views }}</text>
-								<text class="stat-text">目录 {{ item.comments }}</text>
-							</view>
-						</view>
+					<view v-if="isListLoading" class="bottom-state">
+						<text class="bottom-state-text">{{ loadingMoreText }}</text>
+					</view>
+					<view v-else-if="!hasMore" class="bottom-state">
+						<text class="bottom-state-text">{{ noMoreText }}</text>
 					</view>
 				</view>
 			</view>
@@ -60,23 +99,23 @@
 		<view class="tabbar">
 			<view class="tab-item tab-item-active">
 				<image class="tab-icon-image" src="/static/tabbar/icon_xuexidianji.png" mode="aspectFit"></image>
-				<text class="tab-label tab-label-active">学习</text>
+				<text class="tab-label tab-label-active">{{ learningTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goExamPage">
+			<view class="tab-item" @tap="goExamPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">考核</text>
+				<text class="tab-label">{{ examTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goConsultPage">
+			<view class="tab-item" @tap="goConsultPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
-				<text class="tab-label">咨询</text>
+				<text class="tab-label">{{ consultTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goKnowledgePage">
+			<view class="tab-item" @tap="goKnowledgePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">知识库</text>
+				<text class="tab-label">{{ knowledgeTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goMinePage">
+			<view class="tab-item" @tap="goMinePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">我的</text>
+				<text class="tab-label">{{ mineTabText }}</text>
 			</view>
 		</view>
 	</view>
@@ -84,98 +123,136 @@
 
 <script setup lang="uts">
 import { ref } from 'vue'
-import { fetchTopics } from '../../utils/auth.uts'
+import { fetchArticles, type Article } from '../../utils/auth.uts'
 
-type TopicItem = {
-	id : number
-	topicId : number
-	itemType : string
-	itemId : number
-	sortOrder : number
-	resource : UTSJSONObject | null
-}
-
-type Topic = {
+type ArticleCard = {
 	id : number
 	title : string
 	summary : string
-	learningRequirements : string
 	coverUrl : string
-	viewCount : number
-	publishedAt : string
-	items : TopicItem[]
-}
-
-type NewsItem = {
-	id : string
-	coverTitle : string
-	coverSubtitle : string
-	title : string
 	source : string
-	views : string
-	comments : string
+	publishedAt : string
+	viewCount : number
+	tags : string[]
 }
 
-const placeholderItems : NewsItem[] = [
-	{
-		id: '1',
-		coverTitle: '资讯封面占位',
-		coverSubtitle: '第一条资讯',
-		title: '资讯标题占位一，点击进入资讯详情页面',
-		source: '来源占位',
-		views: '3200',
-		comments: '3'
-	},
-	{
-		id: '2',
-		coverTitle: '资讯封面占位',
-		coverSubtitle: '第二条资讯',
-		title: '资讯标题占位二，点击进入资讯详情页面',
-		source: '来源占位',
-		views: '3200',
-		comments: '3'
-	}
-]
+const PAGE_SIZE = 10
 
-const newsItems = ref<NewsItem[]>([])
+const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
+const homeTabText = '\u9996\u9875'
+const topicTabText = '\u4e13\u9898'
+const audioTabText = '\u97f3\u9891'
+const liveTabText = '\u76f4\u64ad'
+const courseTabText = '\u8bfe\u7a0b'
+const newsTabText = '\u8d44\u8baf'
+const learningTabText = '\u5b66\u4e60'
+const examTabText = '\u8003\u6838'
+const consultTabText = '\u54a8\u8be2'
+const knowledgeTabText = '\u77e5\u8bc6\u5e93'
+const mineTabText = '\u6211\u7684'
+const searchPlaceholder = '\u641c\u7d22\u6807\u9898\u3001\u6765\u6e90\u6216\u6458\u8981'
+const searchText = '\u641c\u7d22'
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const emptyText = '\u6682\u65e0\u8d44\u8baf'
+const loadingMoreText = '\u52a0\u8f7d\u66f4\u591a\u4e2d...'
+const noMoreText = '\u6ca1\u6709\u66f4\u591a\u4e86'
+const loadFailedText = '\u8d44\u8baf\u52a0\u8f7d\u5931\u8d25'
+const viewText = '\u6d4f\u89c8'
+const fallbackSummaryText = '\u6682\u65e0\u6458\u8981'
+
+const keyword = ref('')
+const articleItems = ref<ArticleCard[]>([])
+const page = ref(1)
+const hasMore = ref(true)
+const isLoading = ref(true)
+const isListLoading = ref(false)
+const errorText = ref('')
 
 const safeText = (value : string | null) : string => {
 	return value == null || value.length == 0 ? '' : value
 }
 
-const mapTopicToNews = (item : Topic, index : number) : NewsItem => {
-	const title = safeText(item.title)
-	const summary = safeText(item.summary)
+const formatDate = (value : string) : string => {
+	const text = safeText(value)
+	if (text.length == 0) {
+		return ''
+	}
+	return text.replace('T', ' ').substring(0, 16)
+}
+
+const mapArticle = (item : Article) : ArticleCard => {
 	return {
-		id: String(item.id),
-		coverTitle: title.length > 0 ? title : '资讯封面占位',
-		coverSubtitle: summary.length > 0 ? summary : '第' + String(index + 1) + '条资讯',
-		title: title.length > 0 ? title : '资讯标题占位',
-		source: safeText(item.publishedAt).length > 0 ? item.publishedAt : '专题来源',
-		views: String(item.viewCount != null ? item.viewCount : 0),
-		comments: String(item.items != null ? item.items.length : 0)
+		id: item.id,
+		title: safeText(item.title),
+		summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryText,
+		coverUrl: safeText(item.coverUrl),
+		source: safeText(item.source),
+		publishedAt: formatDate(item.publishedAt),
+		viewCount: item.viewCount,
+		tags: item.tags != null ? item.tags.slice(0, 2) : []
 	}
 }
 
-const loadNewsItems = () => {
-	fetchTopics(
+const loadArticles = (loadMoreValue : boolean) => {
+	if (!loadMoreValue) {
+		page.value = 1
+		hasMore.value = true
+		errorText.value = ''
+		isLoading.value = true
+	} else {
+		if (!hasMore.value || isListLoading.value) {
+			return
+		}
+		isListLoading.value = true
+	}
+
+	fetchArticles(
+		page.value,
+		PAGE_SIZE,
+		keyword.value,
 		(pageData) => {
-			if (pageData.records != null && pageData.records.length > 0) {
-				newsItems.value = pageData.records.map((item : Topic, index : number) : NewsItem => {
-					return mapTopicToNews(item, index)
-				})
-				return
+			const records = pageData.records != null ? pageData.records : []
+			const mapped = records.map((item : Article) : ArticleCard => {
+				return mapArticle(item)
+			})
+
+			if (loadMoreValue) {
+				articleItems.value = articleItems.value.concat(mapped)
+			} else {
+				articleItems.value = mapped
 			}
-			newsItems.value = placeholderItems
+
+			hasMore.value = mapped.length >= PAGE_SIZE
+			if (hasMore.value) {
+				page.value += 1
+			}
+
+			isLoading.value = false
+			isListLoading.value = false
 		},
-		() => {
-			newsItems.value = placeholderItems
+		(message) => {
+			errorText.value = message.length > 0 ? message : loadFailedText
+			isLoading.value = false
+			isListLoading.value = false
 		}
 	)
 }
 
+const reloadList = () => {
+	loadArticles(false)
+}
+
+const loadMore = () => {
+	loadArticles(true)
+}
+
 const goLearningPage = () => {
 	uni.redirectTo({ url: '/pages/index/index' })
+}
+
+const goTopicsPage = () => {
+	uni.redirectTo({ url: '/pages/topics/list' })
 }
 
 const goAudioPage = () => {
@@ -198,8 +275,8 @@ const goExamPage = () => {
 	uni.redirectTo({ url: '/pages/exam/index' })
 }
 
-const goNewsDetail = (id : string) => {
-	uni.navigateTo({ url: '/pages/news/detail?id=' + id })
+const goNewsDetail = (id : number) => {
+	uni.navigateTo({ url: '/pages/news/detail?id=' + String(id) })
 }
 
 const goKnowledgePage = () => {
@@ -210,7 +287,7 @@ const goConsultPage = () => {
 	uni.redirectTo({ url: '/pages/consult/index' })
 }
 
-loadNewsItems()
+loadArticles(false)
 </script>
 
 <style>
@@ -221,7 +298,7 @@ loadNewsItems()
 
 .hero-shell {
 	position: relative;
-	height: 236rpx;
+	height: 218rpx;
 	overflow: hidden;
 }
 
@@ -230,14 +307,14 @@ loadNewsItems()
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 236rpx;
+	height: 218rpx;
 }
 
 .header {
 	position: relative;
 	z-index: 1;
 	padding-top: 34rpx;
-	height: 118rpx;
+	height: 110rpx;
 	align-items: center;
 	justify-content: center;
 }
@@ -252,10 +329,9 @@ loadNewsItems()
 .top-tabs {
 	position: relative;
 	z-index: 1;
-	height: 96rpx;
-	margin-top: 18rpx;
-	padding-left: 28rpx;
-	padding-right: 28rpx;
+	height: 108rpx;
+	padding-left: 18rpx;
+	padding-right: 18rpx;
 	background-color: rgba(251, 250, 246, 0.78);
 	flex-direction: row;
 	align-items: flex-end;
@@ -266,7 +342,7 @@ loadNewsItems()
 }
 
 .top-tab {
-	min-width: 88rpx;
+	min-width: 78rpx;
 	height: 96rpx;
 	align-items: center;
 	justify-content: center;
@@ -277,8 +353,8 @@ loadNewsItems()
 }
 
 .top-tab-text {
-	font-size: 18px;
-	line-height: 26px;
+	font-size: 15px;
+	line-height: 22px;
 	color: #333333;
 }
 
@@ -289,11 +365,44 @@ loadNewsItems()
 
 .top-tab-line {
 	position: absolute;
-	bottom: 10rpx;
-	width: 48rpx;
+	bottom: 12rpx;
+	width: 42rpx;
 	height: 6rpx;
 	border-radius: 4rpx;
 	background-color: #b85d69;
+}
+
+.search-bar {
+	margin: 18rpx 20rpx 0;
+	padding-left: 18rpx;
+	padding-right: 10rpx;
+	height: 76rpx;
+	border-radius: 18rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	align-items: center;
+}
+
+.search-input {
+	flex: 1;
+	height: 76rpx;
+	font-size: 14px;
+	color: #2f2f2f;
+}
+
+.search-btn {
+	width: 108rpx;
+	height: 54rpx;
+	border-radius: 27rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-btn-text {
+	font-size: 13px;
+	color: #ffffff;
+	font-weight: 600;
 }
 
 .content {
@@ -302,119 +411,128 @@ loadNewsItems()
 }
 
 .content-shell {
-	padding-left: 20rpx;
-	padding-right: 20rpx;
-	padding-top: 24rpx;
-	padding-bottom: 40rpx;
+	padding: 8rpx 20rpx 36rpx;
 }
 
-.news-card {
-	margin-bottom: 22rpx;
+.state-wrap {
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.article-list {
+	padding-top: 2rpx;
+}
+
+.article-card {
+	margin-bottom: 18rpx;
+	padding: 16rpx;
 	border-radius: 20rpx;
 	background-color: #ffffff;
+	flex-direction: row;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
+}
+
+.article-cover {
+	width: 156rpx;
+	height: 156rpx;
+	border-radius: 16rpx;
+	background-color: #f3e6d6;
+}
+
+.article-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+
+.article-cover-text {
+	font-size: 18px;
+	color: #c88a54;
+	font-weight: 700;
+}
+
+.article-main {
+	flex: 1;
+	padding-left: 18rpx;
+}
+
+.article-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #252525;
+	font-weight: 600;
+}
+
+.article-summary {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8f8f8f;
+	height: 54rpx;
 	overflow: hidden;
-	box-shadow: 0 12rpx 24rpx rgba(110, 100, 80, 0.05);
 }
 
-.news-cover-shell {
-	padding: 0;
-	background-color: #f1e3cf;
+.article-tags {
+	margin-top: 10rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
 }
 
-.news-cover {
-	height: 260rpx;
-	position: relative;
-	padding-left: 44rpx;
-	padding-top: 48rpx;
-	background-color: #f4e4cf;
-}
-
-.cover-badge {
+.article-tag {
+	margin-right: 10rpx;
+	margin-bottom: 8rpx;
 	padding-left: 12rpx;
 	padding-right: 12rpx;
 	height: 34rpx;
 	line-height: 34rpx;
 	border-radius: 18rpx;
-	background-color: #bf5d68;
-	color: #ffffff;
+	background-color: #f5efe7;
+	font-size: 11px;
+	color: #907456;
+}
+
+.article-meta {
+	margin-top: 10rpx;
+}
+
+.article-meta-text {
+	font-size: 11px;
+	line-height: 16px;
+	color: #b1b1b1;
+	margin-top: 4rpx;
+}
+
+.bottom-state {
+	padding-top: 10rpx;
+	align-items: center;
+}
+
+.bottom-state-text {
 	font-size: 12px;
-	font-weight: 600;
-	align-self: flex-start;
-	text-align: center;
-}
-
-.cover-title {
-	margin-top: 16rpx;
-	font-size: 28px;
-	line-height: 38px;
-	color: #b9702f;
-	font-weight: 600;
-}
-
-.cover-subtitle {
-	margin-top: 16rpx;
-	font-size: 18px;
-	line-height: 26px;
-	color: #8d6e4d;
-}
-
-.cover-paper {
-	position: absolute;
-	right: 54rpx;
-	top: 42rpx;
-	width: 148rpx;
-	height: 148rpx;
-	border-radius: 18rpx;
-	background-color: rgba(255, 255, 255, 0.8);
-	padding-left: 22rpx;
-	padding-right: 22rpx;
-	padding-top: 30rpx;
-}
-
-.paper-line {
-	height: 12rpx;
-	border-radius: 8rpx;
-	background-color: rgba(185, 112, 47, 0.25);
-	margin-bottom: 18rpx;
-}
-
-.news-info {
-	padding-left: 24rpx;
-	padding-right: 24rpx;
-	padding-top: 22rpx;
-	padding-bottom: 22rpx;
-}
-
-.news-title {
-	font-size: 18px;
-	line-height: 28px;
-	color: #252525;
-	font-weight: 600;
-}
-
-.news-meta {
-	margin-top: 18rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.teacher-name {
-	font-size: 15px;
-	line-height: 22px;
-	color: #a8a8a8;
-}
-
-.stats {
-	flex-direction: row;
-	align-items: center;
-}
-
-.stat-text {
-	font-size: 13px;
-	line-height: 20px;
-	color: #a0a0a0;
-	margin-left: 18rpx;
+	line-height: 18px;
+	color: #b1b1b1;
 }
 
 .tabbar {

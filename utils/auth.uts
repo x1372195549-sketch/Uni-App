@@ -185,6 +185,79 @@ export type Topic = {
 	items : TopicItem[]
 }
 
+export type TopicTag = {
+	id : number
+	tagName : string
+}
+
+export type TopicSectionResource = {
+	resourceType : string
+	resourceId : number
+	title : string
+	subtitle : string
+	summary : string
+	coverUrl : string
+	browseCount : number
+	favoriteCount : number
+	favorited : boolean
+	progressPercent : number
+}
+
+export type TopicSection = {
+	sectionType : string
+	sectionLabel : string
+	total : number
+	hasMore : boolean
+	previewItems : TopicSectionResource[]
+}
+
+export type TopicCard = {
+	id : number
+	title : string
+	summary : string
+	learningRequirements : string
+	coverUrl : string
+	tags : string[]
+	viewCount : number
+	publishedAt : string
+	favoriteCount : number
+	favorited : boolean
+}
+
+export type TopicDetail = {
+	id : number
+	title : string
+	summary : string
+	learningRequirements : string
+	coverUrl : string
+	tags : string[]
+	viewCount : number
+	publishedAt : string
+	favoriteCount : number
+	favorited : boolean
+	sections : TopicSection[]
+}
+
+export type Article = {
+	id : number
+	title : string
+	summary : string
+	coverUrl : string
+	content : string
+	authorName : string
+	source : string
+	tags : string[]
+	viewCount : number
+	favoriteCount : number
+	favorited : boolean
+	publishedAt : string
+}
+
+export type BrowseHistoryRequest = {
+	resourceType : string
+	resourceId : number
+}
+
 export type KnowledgeCategory = {
 	id : number
 	parentId : number
@@ -551,11 +624,18 @@ export function submitCertification(
 }
 
 export function fetchLiveSessions(
+	page : number,
+	size : number,
+	keyword : string,
 	success : (pageData : PageResponse<LiveSession>) => void,
 	fail : (message : string) => void
 ) {
+	let path = '/api/v1/app/live-sessions?page=' + String(page) + '&size=' + String(size)
+	if (keyword != null && keyword.length > 0) {
+		path += '&keyword=' + encodeURIComponent(keyword)
+	}
 	request<PageResponse<LiveSession>>(
-		'/api/v1/app/live-sessions?page=1&size=20',
+		path,
 		'GET',
 		null,
 		true,
@@ -590,11 +670,18 @@ export function fetchLiveSessionDetail(
 }
 
 export function fetchCourses(
+	page : number,
+	size : number,
+	keyword : string,
 	success : (pageData : PageResponse<Course>) => void,
 	fail : (message : string) => void
 ) {
+	let path = '/api/v1/app/learning/courses?page=' + String(page) + '&size=' + String(size)
+	if (keyword != null && keyword.length > 0) {
+		path += '&keyword=' + encodeURIComponent(keyword)
+	}
 	request<PageResponse<Course>>(
-		'/api/v1/app/learning/courses?page=1&size=20',
+		path,
 		'GET',
 		null,
 		true,
@@ -944,6 +1031,159 @@ function readNumberField(raw : UTSJSONObject, key : string) : number {
 	return typeof value == 'number' ? (value as number) : 0
 }
 
+function readLooseNumberField(raw : UTSJSONObject, key : string) : number {
+	const value = raw[key]
+	if (typeof value == 'number') {
+		return value as number
+	}
+	if (typeof value == 'string') {
+		const text = value as string
+		if (text.length > 0) {
+			return Number(text)
+		}
+	}
+	return 0
+}
+
+function readBooleanField(raw : UTSJSONObject, key : string) : boolean {
+	const value = raw[key]
+	return typeof value == 'boolean' ? (value as boolean) : false
+}
+
+function readStringArrayField(raw : UTSJSONObject, key : string) : string[] {
+	const value = raw[key]
+	if (value == null || !(value instanceof Array)) {
+		return []
+	}
+	return (value as Array<any>).filter((item : any) : boolean => typeof item == 'string').map((item : any) : string => item as string)
+}
+
+function normalizeTopicSectionResource(raw : UTSJSONObject) : TopicSectionResource {
+	const resourceId = readLooseNumberField(raw, 'resourceId')
+	const itemId = readLooseNumberField(raw, 'itemId')
+	const entryId = readLooseNumberField(raw, 'entryId')
+	const knowledgeId = readLooseNumberField(raw, 'knowledgeId')
+	const contentId = readLooseNumberField(raw, 'contentId')
+	const id = readLooseNumberField(raw, 'id')
+	const resourceValue = raw['resource']
+	const nestedResource = resourceValue != null && resourceValue instanceof UTSJSONObject ? (resourceValue as UTSJSONObject) : null
+	const nestedId = nestedResource != null ? readLooseNumberField(nestedResource, 'id') : 0
+	const nestedEntryId = nestedResource != null ? readLooseNumberField(nestedResource, 'entryId') : 0
+	const nestedKnowledgeId = nestedResource != null ? readLooseNumberField(nestedResource, 'knowledgeId') : 0
+	const nestedContentId = nestedResource != null ? readLooseNumberField(nestedResource, 'contentId') : 0
+	const resolvedResourceType = readStringField(raw, 'resourceType').length > 0
+		? readStringField(raw, 'resourceType')
+		: (readStringField(raw, 'itemType').length > 0
+			? readStringField(raw, 'itemType')
+			: (nestedResource != null ? readStringField(nestedResource, 'resourceType') : ''))
+	const resolvedTitle = readStringField(raw, 'title').length > 0
+		? readStringField(raw, 'title')
+		: (nestedResource != null ? readStringField(nestedResource, 'title') : '')
+	const resolvedSubtitle = readStringField(raw, 'subtitle').length > 0
+		? readStringField(raw, 'subtitle')
+		: (nestedResource != null ? readStringField(nestedResource, 'subtitle') : '')
+	const resolvedSummary = readStringField(raw, 'summary').length > 0
+		? readStringField(raw, 'summary')
+		: (nestedResource != null ? readStringField(nestedResource, 'summary') : '')
+	const resolvedCoverUrl = readStringField(raw, 'coverUrl').length > 0
+		? readStringField(raw, 'coverUrl')
+		: (nestedResource != null ? readStringField(nestedResource, 'coverUrl') : '')
+	return {
+		resourceType: resolvedResourceType,
+		resourceId: resourceId > 0
+			? resourceId
+			: (itemId > 0
+				? itemId
+				: (entryId > 0
+					? entryId
+					: (knowledgeId > 0
+						? knowledgeId
+						: (contentId > 0
+							? contentId
+							: (nestedEntryId > 0
+								? nestedEntryId
+								: (nestedKnowledgeId > 0
+									? nestedKnowledgeId
+									: (nestedContentId > 0
+										? nestedContentId
+										: (nestedId > 0 ? nestedId : id)))))))),
+		title: resolvedTitle,
+		subtitle: resolvedSubtitle,
+		summary: resolvedSummary,
+		coverUrl: normalizeAppUrl(resolvedCoverUrl),
+		browseCount: readNumberField(raw, 'browseCount') > 0 ? readNumberField(raw, 'browseCount') : (nestedResource != null ? readNumberField(nestedResource, 'browseCount') : 0),
+		favoriteCount: readNumberField(raw, 'favoriteCount') > 0 ? readNumberField(raw, 'favoriteCount') : (nestedResource != null ? readNumberField(nestedResource, 'favoriteCount') : 0),
+		favorited: readBooleanField(raw, 'favorited') || (nestedResource != null ? readBooleanField(nestedResource, 'favorited') : false),
+		progressPercent: readNumberField(raw, 'progressPercent') > 0 ? readNumberField(raw, 'progressPercent') : (nestedResource != null ? readNumberField(nestedResource, 'progressPercent') : 0)
+	}
+}
+
+function normalizeTopicSection(raw : UTSJSONObject) : TopicSection {
+	const previewValue = raw['previewItems'] != null ? raw['previewItems'] : raw['items']
+	const previewItems = previewValue != null && previewValue instanceof Array ? (previewValue as UTSJSONObject[]) : []
+	return {
+		sectionType: readStringField(raw, 'sectionType'),
+		sectionLabel: readStringField(raw, 'sectionLabel'),
+		total: readNumberField(raw, 'total'),
+		hasMore: readBooleanField(raw, 'hasMore'),
+		previewItems: previewItems.map((item : UTSJSONObject) : TopicSectionResource => {
+			return normalizeTopicSectionResource(item)
+		})
+	}
+}
+
+function normalizeTopicCard(raw : UTSJSONObject) : TopicCard {
+	return {
+		id: readNumberField(raw, 'id'),
+		title: readStringField(raw, 'title'),
+		summary: readStringField(raw, 'summary'),
+		learningRequirements: readStringField(raw, 'learningRequirements'),
+		coverUrl: normalizeAppUrl(readStringField(raw, 'coverUrl')),
+		tags: readStringArrayField(raw, 'tags'),
+		viewCount: readNumberField(raw, 'viewCount'),
+		publishedAt: readStringField(raw, 'publishedAt'),
+		favoriteCount: readNumberField(raw, 'favoriteCount'),
+		favorited: readBooleanField(raw, 'favorited')
+	}
+}
+
+function normalizeTopicDetail(raw : UTSJSONObject) : TopicDetail {
+	const sectionsValue = raw['sections']
+	const sections = sectionsValue != null && sectionsValue instanceof Array ? (sectionsValue as UTSJSONObject[]) : []
+	return {
+		id: readNumberField(raw, 'id'),
+		title: readStringField(raw, 'title'),
+		summary: readStringField(raw, 'summary'),
+		learningRequirements: readStringField(raw, 'learningRequirements'),
+		coverUrl: normalizeAppUrl(readStringField(raw, 'coverUrl')),
+		tags: readStringArrayField(raw, 'tags'),
+		viewCount: readNumberField(raw, 'viewCount'),
+		publishedAt: readStringField(raw, 'publishedAt'),
+		favoriteCount: readNumberField(raw, 'favoriteCount'),
+		favorited: readBooleanField(raw, 'favorited'),
+		sections: sections.map((item : UTSJSONObject) : TopicSection => {
+			return normalizeTopicSection(item)
+		})
+	}
+}
+
+function normalizeArticle(raw : UTSJSONObject) : Article {
+	return {
+		id: readNumberField(raw, 'id'),
+		title: readStringField(raw, 'title'),
+		summary: readStringField(raw, 'summary'),
+		coverUrl: normalizeAppUrl(readStringField(raw, 'coverUrl')),
+		content: readStringField(raw, 'content'),
+		authorName: readStringField(raw, 'authorName'),
+		source: readStringField(raw, 'source'),
+		tags: readStringArrayField(raw, 'tags'),
+		viewCount: readNumberField(raw, 'viewCount'),
+		favoriteCount: readNumberField(raw, 'favoriteCount'),
+		favorited: readBooleanField(raw, 'favorited'),
+		publishedAt: readStringField(raw, 'publishedAt')
+	}
+}
+
 function normalizeKnowledgeCategory(raw : UTSJSONObject) : KnowledgeCategory {
 	const childrenValue = raw['children']
 	const rawChildren = childrenValue != null && childrenValue instanceof Array ? (childrenValue as UTSJSONObject[]) : []
@@ -1139,6 +1379,170 @@ export function fetchProfileFavorites(
 		false,
 		(pageData) => {
 			success(pageData)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchTopicCards(
+	page : number,
+	size : number,
+	keyword : string,
+	success : (pageData : PageResponse<TopicCard>) => void,
+	fail : (message : string) => void
+) {
+	let path = '/api/v1/app/learning/topics?page=' + String(page) + '&size=' + String(size)
+	if (keyword != null && keyword.length > 0) {
+		path += '&keyword=' + encodeURIComponent(keyword)
+	}
+
+	request<UTSJSONObject>(
+		path,
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			const recordsValue = pageData['records']
+			const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+			success({
+				records: records.map((item : UTSJSONObject) : TopicCard => {
+					return normalizeTopicCard(item)
+				}),
+				total: readNumberField(pageData, 'total'),
+				page: readNumberField(pageData, 'page') > 0 ? readNumberField(pageData, 'page') : page,
+				size: readNumberField(pageData, 'size') > 0 ? readNumberField(pageData, 'size') : size
+			})
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchTopicDetailV2(
+	id : string,
+	success : (detail : TopicDetail) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/learning/topics/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(normalizeTopicDetail(detail))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchTopicSectionResources(
+	topicId : string,
+	sectionType : string,
+	page : number,
+	size : number,
+	success : (pageData : PageResponse<TopicSectionResource>) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/learning/topics/' + topicId + '/sections/' + sectionType + '?page=' + String(page) + '&size=' + String(size),
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			const recordsValue = pageData['records']
+			const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+			success({
+				records: records.map((item : UTSJSONObject) : TopicSectionResource => {
+					return normalizeTopicSectionResource(item)
+				}),
+				total: readNumberField(pageData, 'total'),
+				page: readNumberField(pageData, 'page') > 0 ? readNumberField(pageData, 'page') : page,
+				size: readNumberField(pageData, 'size') > 0 ? readNumberField(pageData, 'size') : size
+			})
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchArticles(
+	page : number,
+	size : number,
+	keyword : string,
+	success : (pageData : PageResponse<Article>) => void,
+	fail : (message : string) => void
+) {
+	let path = '/api/v1/app/content/articles?page=' + String(page) + '&size=' + String(size)
+	if (keyword != null && keyword.length > 0) {
+		path += '&keyword=' + encodeURIComponent(keyword)
+	}
+
+	request<UTSJSONObject>(
+		path,
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			const recordsValue = pageData['records']
+			const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+			success({
+				records: records.map((item : UTSJSONObject) : Article => {
+					return normalizeArticle(item)
+				}),
+				total: readNumberField(pageData, 'total'),
+				page: readNumberField(pageData, 'page') > 0 ? readNumberField(pageData, 'page') : page,
+				size: readNumberField(pageData, 'size') > 0 ? readNumberField(pageData, 'size') : size
+			})
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchArticleDetail(
+	id : string,
+	success : (detail : Article) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/content/articles/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(normalizeArticle(detail))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function reportBrowseHistory(
+	data : BrowseHistoryRequest,
+	success : () => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/interaction/browse-histories',
+		'POST',
+		data as UTSJSONObject,
+		true,
+		true,
+		() => {
+			success()
 		},
 		(message) => {
 			fail(message)
