@@ -24,7 +24,6 @@
 	padding-top: 34rpx;
 	align-items: center;
 	justify-content: center;
-	background-color: transparent;
 }
 .header-title {
 	font-size: 18px;
@@ -131,6 +130,30 @@
 	line-height: 20px;
 	color: #2f2f2f;
 }
+.state-wrap {
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
 .paper-list {
 	padding-left: 24rpx;
 	padding-right: 24rpx;
@@ -153,11 +176,23 @@
 	color: #2f2f2f;
 	font-weight: 600;
 }
+.paper-desc {
+	margin-top: 10rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #777777;
+}
 .paper-subtitle {
 	margin-top: 12rpx;
 	font-size: 14px;
 	line-height: 20px;
 	color: #9b9b9b;
+}
+.paper-meta {
+	margin-top: 8rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #b1b1b1;
 }
 .paper-action {
 	margin-left: 18rpx;
@@ -197,12 +232,12 @@
 	height: 36rpx;
 }
 .tab-text {
-	margin-top: 6rpx;
+	margin-top: 8rpx;
 	font-size: 12px;
 	line-height: 18px;
-	color: #b5b5b5;
+	color: #b7b7b7;
 }
 .tab-text-active {
-	color: #18b775;
+	color: #12b368;
 	font-weight: 600;
 }

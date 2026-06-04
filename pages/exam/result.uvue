@@ -1,60 +1,251 @@
 <template>
 	<view class="page">
 		<view class="header">
-			<view class="header-back" @click="goBack">
+			<view class="header-back" @tap="goBack">
 				<image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
 			</view>
-			<text class="header-title">答题结果</text>
+			<text class="header-title">{{ pageTitleText }}</text>
 		</view>
 
-		<view class="result-body">
-			<view class="trophy-box">
-				<view class="trophy-left"></view>
-				<view class="trophy-cup">
-					<view class="trophy-star"></view>
-				</view>
-				<view class="trophy-right"></view>
-				<view class="trophy-stem"></view>
-				<view class="trophy-base"></view>
-			</view>
-			<text class="result-text">共{{ totalCount }}道题，您答对了{{ correctCount }}道题</text>
-			<view class="home-btn" @click="goHome">
-				<text class="home-btn-text">返回首页</text>
+		<view v-if="isLoading" class="state-wrap">
+			<text class="state-text">{{ loadingText }}</text>
+		</view>
+
+		<view v-else-if="errorText.length > 0" class="state-wrap">
+			<text class="state-text">{{ errorText }}</text>
+			<view class="retry-btn" @tap="loadResult">
+				<text class="retry-btn-text">{{ retryText }}</text>
 			</view>
 		</view>
+
+		<scroll-view v-else class="result-scroll" scroll-y="true">
+			<view class="result-body">
+				<view class="trophy-box">
+					<view class="trophy-left"></view>
+					<view class="trophy-cup">
+						<view class="trophy-star"></view>
+					</view>
+					<view class="trophy-right"></view>
+					<view class="trophy-stem"></view>
+					<view class="trophy-base"></view>
+				</view>
+
+				<text class="paper-name">{{ paperName }}</text>
+				<text class="score-text">{{ scoreText }} {{ score }} / {{ totalScore }}</text>
+				<text class="result-text">{{ correctCountText }} {{ correctCount }} {{ questionUnitText }}，{{ passed ? passedText : notPassedText }}</text>
+
+				<view class="answer-list">
+					<view v-for="item in answerItems" :key="item.questionId" class="answer-card">
+						<view class="answer-head">
+							<text class="answer-title">{{ item.title }}</text>
+							<text class="answer-status" :class="item.correct == 1 ? 'answer-status-correct' : 'answer-status-wrong'">
+								{{ item.correct == 1 ? correctText : wrongText }}
+							</text>
+						</view>
+						<text class="answer-meta">{{ myAnswerText }} {{ item.answerContent.length > 0 ? item.answerContent : emptyAnswerText }}</text>
+						<text class="answer-meta">{{ correctAnswerText }} {{ item.correctAnswer }}</text>
+						<text v-if="item.analysis.length > 0" class="answer-analysis">{{ analysisText }} {{ item.analysis }}</text>
+					</view>
+				</view>
+
+				<view class="action-row">
+					<view class="action-btn action-btn-light" @tap="goExamHome">
+						<text class="action-btn-light-text">{{ backListText }}</text>
+					</view>
+					<view class="action-btn action-btn-primary" @tap="retryExam">
+						<text class="action-btn-primary-text">{{ retryExamText }}</text>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
 	</view>
 </template>
 
 <script setup lang="uts">
-const currentPages = getCurrentPages()
-let totalValue = '10'
-let correctValue = '1'
+import { ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { fetchExamRecordDetail, type ExamAnswerResult, type ExamRecord } from '../../utils/auth.uts'
 
-if (currentPages.length > 0) {
-	const currentPage = currentPages[currentPages.length - 1]
-	const options = currentPage.options
-	if (options != null) {
-		if (options['total'] != null) {
-			totalValue = options['total'] as string
-		}
-		if (options['correct'] != null) {
-			correctValue = options['correct'] as string
-		}
+const pageTitleText = '\u7b54\u9898\u7ed3\u679c'
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const loadFailedText = '\u8003\u6838\u7ed3\u679c\u52a0\u8f7d\u5931\u8d25'
+const scoreText = '\u5f97\u5206:'
+const correctCountText = '\u7b54\u5bf9'
+const questionUnitText = '\u9898'
+const passedText = '\u5df2\u53ca\u683c'
+const notPassedText = '\u672a\u53ca\u683c'
+const correctText = '\u6b63\u786e'
+const wrongText = '\u9519\u8bef'
+const myAnswerText = '\u6211\u7684\u7b54\u6848:'
+const correctAnswerText = '\u6b63\u786e\u7b54\u6848:'
+const analysisText = '\u89e3\u6790:'
+const emptyAnswerText = '\u672a\u4f5c\u7b54'
+const backListText = '\u8fd4\u56de\u5217\u8868'
+const retryExamText = '\u518d\u7ec3\u4e00\u6b21'
+const EXAM_RECORD_ID_KEY = 'exam_record_id'
+const EXAM_PAPER_ID_KEY = 'exam_paper_id'
+const EXAM_PAPER_TITLE_KEY = 'exam_paper_title'
+
+const recordId = ref('')
+const paperId = ref('')
+const paperName = ref('')
+const score = ref(0)
+const totalScore = ref(0)
+const correctCount = ref(0)
+const passed = ref(false)
+const answerItems = ref<ExamAnswerResult[]>([])
+const isLoading = ref(true)
+const errorText = ref('')
+let lastLoadedRecordId = ''
+let routeRecordId = ''
+let routePaperId = ''
+let routePaperTitle = ''
+
+const readPageOption = (key : string) : string => {
+	const pages = getCurrentPages()
+	if (pages.length == 0) {
+		return ''
+	}
+	const currentPage = pages[pages.length - 1]
+	if (currentPage == null || currentPage.options == null) {
+		return ''
+	}
+	const options = currentPage.options as UTSJSONObject
+	const rawValue = options[key]
+	return typeof rawValue == 'string' ? rawValue : ''
+}
+
+const readCachedText = (key : string) : string => {
+	const value = uni.getStorageSync(key)
+	return typeof value == 'string' ? value : ''
+}
+
+const resolveResultContext = () => {
+	const optionRecordId = routeRecordId.length > 0 ? routeRecordId : readPageOption('recordId')
+	const optionId = routeRecordId.length > 0 ? '' : readPageOption('id')
+	const cachedRecordId = readCachedText(EXAM_RECORD_ID_KEY)
+	const nextRecordId = optionRecordId.length > 0 ? optionRecordId : (optionId.length > 0 ? optionId : cachedRecordId)
+	if (nextRecordId.length > 0) {
+		recordId.value = nextRecordId
+		uni.setStorageSync(EXAM_RECORD_ID_KEY, nextRecordId)
+	} else {
+		recordId.value = ''
+	}
+
+	const cachedPaperId = readCachedText(EXAM_PAPER_ID_KEY)
+	const nextPaperId = routePaperId.length > 0 ? routePaperId : cachedPaperId
+	if (nextPaperId.length > 0) {
+		paperId.value = nextPaperId
+		uni.setStorageSync(EXAM_PAPER_ID_KEY, nextPaperId)
+	}
+
+	const optionTitle = routePaperTitle.length > 0 ? routePaperTitle : readPageOption('title')
+	const decodedTitle = optionTitle.length > 0 ? decodeURIComponent(optionTitle) : ''
+	const cachedPaperTitle = readCachedText(EXAM_PAPER_TITLE_KEY)
+	const nextTitle = decodedTitle.length > 0 ? decodedTitle : cachedPaperTitle
+	if (nextTitle.length > 0) {
+		paperName.value = nextTitle
+		uni.setStorageSync(EXAM_PAPER_TITLE_KEY, nextTitle)
 	}
 }
 
-const totalCount = ref(totalValue)
-const correctCount = ref(correctValue)
+const loadResult = () => {
+	resolveResultContext()
+	if (recordId.value.length == 0) {
+		errorText.value = '\u7f3a\u5c11\u8003\u8bd5\u8bb0\u5f55ID'
+		isLoading.value = false
+		return
+	}
+	if (lastLoadedRecordId == recordId.value && answerItems.value.length > 0 && errorText.value.length == 0) {
+		return
+	}
+	isLoading.value = true
+	errorText.value = ''
+	fetchExamRecordDetail(
+		recordId.value,
+		(record : ExamRecord) => {
+			lastLoadedRecordId = recordId.value
+			paperId.value = String(record.paperId)
+			paperName.value = record.paperName
+			if (paperId.value.length > 0) {
+				uni.setStorageSync(EXAM_PAPER_ID_KEY, paperId.value)
+			}
+			if (paperName.value.length > 0) {
+				uni.setStorageSync(EXAM_PAPER_TITLE_KEY, paperName.value)
+			}
+			score.value = record.score
+			totalScore.value = record.totalScore
+			passed.value = record.passed == 1
+			answerItems.value = record.answers != null ? record.answers : []
+			correctCount.value = answerItems.value.filter((item : ExamAnswerResult) : boolean => item.correct == 1).length
+			isLoading.value = false
+		},
+		(message) => {
+			lastLoadedRecordId = ''
+			errorText.value = message.length > 0 ? message : loadFailedText
+			isLoading.value = false
+		}
+	)
+}
 
-const goHome = () => {
-	uni.reLaunch({
-		url: '/pages/index/index'
+const goExamHome = () => {
+	uni.redirectTo({ url: '/pages/exam/index' })
+}
+
+const retryExam = () => {
+	resolveResultContext()
+	if (paperId.value.length == 0) {
+		const cachedPaperId = uni.getStorageSync(EXAM_PAPER_ID_KEY)
+		if (typeof cachedPaperId == 'string' && cachedPaperId.length > 0) {
+			paperId.value = cachedPaperId
+		}
+	}
+	if (paperName.value.length == 0) {
+		const cachedPaperTitle = uni.getStorageSync(EXAM_PAPER_TITLE_KEY)
+		if (typeof cachedPaperTitle == 'string' && cachedPaperTitle.length > 0) {
+			paperName.value = cachedPaperTitle
+		}
+	}
+	if (paperId.value.length == 0) {
+		goExamHome()
+		return
+	}
+	uni.redirectTo({
+		url: '/pages/exam/paper?id=' + paperId.value + '&title=' + encodeURIComponent(paperName.value)
 	})
 }
 
 const goBack = () => {
 	uni.navigateBack()
 }
+
+onLoad((options) => {
+	if (options == null) {
+		return
+	}
+	const rawRecordId = options['recordId']
+	if (typeof rawRecordId == 'string' && rawRecordId.length > 0) {
+		routeRecordId = rawRecordId
+	}
+	const rawId = options['id']
+	if (routeRecordId.length == 0 && typeof rawId == 'string' && rawId.length > 0) {
+		routeRecordId = rawId
+	}
+	const rawPaperId = options['paperId']
+	if (typeof rawPaperId == 'string' && rawPaperId.length > 0) {
+		routePaperId = rawPaperId
+	}
+	const rawTitle = options['title']
+	if (typeof rawTitle == 'string' && rawTitle.length > 0) {
+		routePaperTitle = rawTitle
+	}
+	resolveResultContext()
+})
+
+onShow(() => {
+	loadResult()
+})
 </script>
 
 <style>
@@ -95,10 +286,42 @@ const goBack = () => {
 	font-weight: 500;
 }
 
-.result-body {
+.state-wrap {
 	flex: 1;
+	padding: 120rpx 30rpx;
 	align-items: center;
-	padding-top: 110rpx;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.result-scroll {
+	flex: 1;
+}
+
+.result-body {
+	padding: 40rpx 24rpx 48rpx;
+	align-items: center;
 }
 
 .trophy-box {
@@ -171,27 +394,119 @@ const goBack = () => {
 	background-color: #bf7c09;
 }
 
-.result-text {
-	margin-top: 34rpx;
+.paper-name {
+	margin-top: 12rpx;
 	font-size: 18px;
 	line-height: 28px;
+	color: #2f2f2f;
+	font-weight: 600;
+	text-align: center;
+}
+
+.score-text {
+	margin-top: 18rpx;
+	font-size: 22px;
+	line-height: 32px;
 	color: #e04f36;
+	font-weight: 700;
+}
+
+.result-text {
+	margin-top: 16rpx;
+	font-size: 16px;
+	line-height: 24px;
+	color: #555555;
+}
+
+.answer-list {
+	width: 100%;
+	margin-top: 28rpx;
+}
+
+.answer-card {
+	padding: 22rpx;
+	margin-bottom: 16rpx;
+	border-radius: 20rpx;
+	background-color: #f8f6f1;
+}
+
+.answer-head {
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+.answer-title {
+	flex: 1;
+	font-size: 15px;
+	line-height: 24px;
+	color: #2f2f2f;
 	font-weight: 600;
 }
 
-.home-btn {
-	margin-top: 40rpx;
-	width: 220rpx;
-	height: 70rpx;
-	border-radius: 8rpx;
-	background-color: #12b368;
+.answer-status {
+	margin-left: 18rpx;
+	font-size: 13px;
+	line-height: 20px;
+	font-weight: 600;
+}
+
+.answer-status-correct {
+	color: #16a34a;
+}
+
+.answer-status-wrong {
+	color: #d14d41;
+}
+
+.answer-meta {
+	margin-top: 10rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #666666;
+}
+
+.answer-analysis {
+	margin-top: 10rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #8a6a4c;
+}
+
+.action-row {
+	width: 100%;
+	margin-top: 16rpx;
+	flex-direction: row;
+}
+
+.action-btn {
+	flex: 1;
+	height: 76rpx;
+	border-radius: 16rpx;
 	align-items: center;
 	justify-content: center;
 }
 
-.home-btn-text {
-	font-size: 18px;
-	line-height: 26px;
+.action-btn-light {
+	margin-right: 12rpx;
+	background-color: #eef0f2;
+}
+
+.action-btn-primary {
+	margin-left: 12rpx;
+	background-color: #12b368;
+}
+
+.action-btn-light-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.action-btn-primary-text {
+	font-size: 15px;
+	line-height: 22px;
 	color: #ffffff;
 	font-weight: 600;
 }

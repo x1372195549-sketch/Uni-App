@@ -253,6 +253,71 @@ export type Article = {
 	publishedAt : string
 }
 
+export type ExamQuestionOption = {
+	id : number
+	optionKey : string
+	optionContent : string
+	sortOrder : number
+}
+
+export type ExamQuestion = {
+	questionId : number
+	questionType : string
+	title : string
+	analysis : string
+	difficulty : string
+	score : number
+	sortOrder : number
+	options : ExamQuestionOption[]
+}
+
+export type ExamPaper = {
+	id : number
+	paperName : string
+	description : string
+	totalScore : number
+	passScore : number
+	durationMinutes : number
+	status : string
+	questionCount : number
+	questions : ExamQuestion[]
+}
+
+export type ExamAnswerSubmitItem = {
+	questionId : number
+	answerContent : string
+}
+
+export type ExamSubmitRequest = {
+	sourceType? : string
+	sourceId? : number
+	answers : ExamAnswerSubmitItem[]
+}
+
+export type ExamAnswerResult = {
+	questionId : number
+	questionType : string
+	title : string
+	answerContent : string
+	correctAnswer : string
+	analysis : string
+	score : number
+	correct : number
+	options : ExamQuestionOption[]
+}
+
+export type ExamRecord = {
+	id : number
+	paperId : number
+	paperName : string
+	score : number
+	passed : number
+	totalScore : number
+	passScore : number
+	submittedAt : string
+	answers : ExamAnswerResult[]
+}
+
 export type BrowseHistoryRequest = {
 	resourceType : string
 	resourceId : number
@@ -1184,6 +1249,163 @@ function normalizeArticle(raw : UTSJSONObject) : Article {
 	}
 }
 
+function normalizeExamQuestionOption(raw : UTSJSONObject) : ExamQuestionOption {
+	const optionKey = readStringField(raw, 'optionKey').length > 0
+		? readStringField(raw, 'optionKey')
+		: (readStringField(raw, 'key').length > 0
+			? readStringField(raw, 'key')
+			: readStringField(raw, 'label'))
+	const optionContent = readStringField(raw, 'optionContent').length > 0
+		? readStringField(raw, 'optionContent')
+		: (readStringField(raw, 'content').length > 0
+			? readStringField(raw, 'content')
+			: (readStringField(raw, 'optionText').length > 0
+				? readStringField(raw, 'optionText')
+				: readStringField(raw, 'label')))
+	return {
+		id: readNumberField(raw, 'id'),
+		optionKey,
+		optionContent,
+		sortOrder: readNumberField(raw, 'sortOrder') > 0 ? readNumberField(raw, 'sortOrder') : readNumberField(raw, 'orderNum')
+	}
+}
+
+function readObjectArrayField(raw : UTSJSONObject, key : string) : UTSJSONObject[] {
+	const value = raw[key]
+	if (value == null || !(value instanceof Array)) {
+		return []
+	}
+	return (value as Array<any>).filter((item : any) : boolean => item != null && typeof item == 'object').map((item : any) : UTSJSONObject => item as UTSJSONObject)
+}
+
+function normalizeExamQuestionTypeValue(value : any) : string {
+	if (typeof value == 'number') {
+		const typeCode = value as number
+		if (typeCode == 1) {
+			return 'SINGLE_CHOICE'
+		}
+		if (typeCode == 2) {
+			return 'MULTIPLE_CHOICE'
+		}
+		if (typeCode == 3) {
+			return 'TRUE_FALSE'
+		}
+		if (typeCode == 4) {
+			return 'SHORT_ANSWER'
+		}
+		return ''
+	}
+	if (typeof value == 'string') {
+		const text = (value as string).toUpperCase()
+		if (text == '1' || text == 'SINGLE_CHOICE' || text == 'SINGLE' || text == 'RADIO') {
+			return 'SINGLE_CHOICE'
+		}
+		if (text == '2' || text == 'MULTIPLE_CHOICE' || text == 'MULTIPLE' || text == 'CHECKBOX') {
+			return 'MULTIPLE_CHOICE'
+		}
+		if (text == '3' || text == 'TRUE_FALSE' || text == 'JUDGE' || text == 'BOOLEAN') {
+			return 'TRUE_FALSE'
+		}
+		if (text == '4' || text == 'SHORT_ANSWER' || text == 'TEXT' || text == 'ESSAY' || text == 'FILL_BLANK') {
+			return 'SHORT_ANSWER'
+		}
+	}
+	return ''
+}
+
+function readExamQuestionType(raw : UTSJSONObject, key : string) : string {
+	return normalizeExamQuestionTypeValue(raw[key])
+}
+
+function normalizeExamQuestion(raw : UTSJSONObject) : ExamQuestion {
+	const options = readObjectArrayField(raw, 'options')
+	const questionRaw = raw['question'] != null ? (raw['question'] as UTSJSONObject) : raw
+	const questionId = readNumberField(raw, 'questionId') > 0 ? readNumberField(raw, 'questionId') : readNumberField(questionRaw, 'id')
+	const score = readNumberField(raw, 'score') > 0 ? readNumberField(raw, 'score') : readNumberField(questionRaw, 'score')
+	const sortOrder = readNumberField(raw, 'sortOrder')
+	const nestedOptions = readObjectArrayField(questionRaw, 'options')
+	const questionOptions = readObjectArrayField(questionRaw, 'questionOptions')
+	const optionList = readObjectArrayField(questionRaw, 'optionList')
+	const answerOptions = readObjectArrayField(questionRaw, 'answers')
+	const normalizedOptionsSource = options.length > 0
+		? options
+		: (nestedOptions.length > 0
+			? nestedOptions
+			: (questionOptions.length > 0
+				? questionOptions
+				: (optionList.length > 0 ? optionList : answerOptions)))
+	const questionType = readExamQuestionType(questionRaw, 'questionType').length > 0
+		? readExamQuestionType(questionRaw, 'questionType')
+		: readExamQuestionType(raw, 'questionType')
+	return {
+		questionId,
+		questionType,
+		title: readStringField(questionRaw, 'title'),
+		analysis: readStringField(questionRaw, 'analysis'),
+		difficulty: readStringField(questionRaw, 'difficulty'),
+		score,
+		sortOrder,
+		options: normalizedOptionsSource.map((item : UTSJSONObject) : ExamQuestionOption => {
+			return normalizeExamQuestionOption(item)
+		})
+	}
+}
+
+function normalizeExamPaper(raw : UTSJSONObject) : ExamPaper {
+	const questionsValue = raw['questions']
+	const questions = questionsValue != null && questionsValue instanceof Array ? (questionsValue as UTSJSONObject[]) : []
+	const questionCountValue = readNumberField(raw, 'questionCount')
+	return {
+		id: readNumberField(raw, 'id'),
+		paperName: readStringField(raw, 'paperName'),
+		description: readStringField(raw, 'description'),
+		totalScore: readNumberField(raw, 'totalScore'),
+		passScore: readNumberField(raw, 'passScore'),
+		durationMinutes: readNumberField(raw, 'durationMinutes'),
+		status: readStringField(raw, 'status'),
+		questionCount: questionCountValue > 0 ? questionCountValue : questions.length,
+		questions: questions.map((item : UTSJSONObject) : ExamQuestion => {
+			return normalizeExamQuestion(item)
+		})
+	}
+}
+
+function normalizeExamAnswerResult(raw : UTSJSONObject) : ExamAnswerResult {
+	const optionsValue = raw['options']
+	const options = optionsValue != null && optionsValue instanceof Array ? (optionsValue as UTSJSONObject[]) : []
+	return {
+		questionId: readNumberField(raw, 'questionId'),
+		questionType: readExamQuestionType(raw, 'questionType'),
+		title: readStringField(raw, 'title'),
+		answerContent: readStringField(raw, 'answerContent'),
+		correctAnswer: readStringField(raw, 'correctAnswer'),
+		analysis: readStringField(raw, 'analysis'),
+		score: readNumberField(raw, 'score'),
+		correct: readNumberField(raw, 'correct'),
+		options: options.map((item : UTSJSONObject) : ExamQuestionOption => {
+			return normalizeExamQuestionOption(item)
+		})
+	}
+}
+
+function normalizeExamRecord(raw : UTSJSONObject) : ExamRecord {
+	const answersValue = raw['answers']
+	const answers = answersValue != null && answersValue instanceof Array ? (answersValue as UTSJSONObject[]) : []
+	return {
+		id: readNumberField(raw, 'id'),
+		paperId: readNumberField(raw, 'paperId'),
+		paperName: readStringField(raw, 'paperName'),
+		score: readNumberField(raw, 'score'),
+		passed: readNumberField(raw, 'passed'),
+		totalScore: readNumberField(raw, 'totalScore'),
+		passScore: readNumberField(raw, 'passScore'),
+		submittedAt: readStringField(raw, 'submittedAt'),
+		answers: answers.map((item : UTSJSONObject) : ExamAnswerResult => {
+			return normalizeExamAnswerResult(item)
+		})
+	}
+}
+
 function normalizeKnowledgeCategory(raw : UTSJSONObject) : KnowledgeCategory {
 	const childrenValue = raw['children']
 	const rawChildren = childrenValue != null && childrenValue instanceof Array ? (childrenValue as UTSJSONObject[]) : []
@@ -1523,6 +1745,97 @@ export function fetchArticleDetail(
 		false,
 		(detail) => {
 			success(normalizeArticle(detail))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchExamPapers(
+	page : number,
+	size : number,
+	success : (pageData : PageResponse<ExamPaper>) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/learning/exam-papers?page=' + String(page) + '&size=' + String(size),
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			const recordsValue = pageData['records']
+			const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+			success({
+				records: records.map((item : UTSJSONObject) : ExamPaper => {
+					return normalizeExamPaper(item)
+				}),
+				total: readNumberField(pageData, 'total'),
+				page: readNumberField(pageData, 'page') > 0 ? readNumberField(pageData, 'page') : page,
+				size: readNumberField(pageData, 'size') > 0 ? readNumberField(pageData, 'size') : size
+			})
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchExamPaperDetail(
+	id : string,
+	success : (paper : ExamPaper) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/learning/exam-papers/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(normalizeExamPaper(detail))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function submitExamPaper(
+	id : string,
+	data : ExamSubmitRequest,
+	success : (record : ExamRecord) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/learning/exam-papers/' + id + '/submit',
+		'POST',
+		data as UTSJSONObject,
+		true,
+		false,
+		(record) => {
+			success(normalizeExamRecord(record))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchExamRecordDetail(
+	id : string,
+	success : (record : ExamRecord) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/learning/exam-records/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(record) => {
+			success(normalizeExamRecord(record))
 		},
 		(message) => {
 			fail(message)

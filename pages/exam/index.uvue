@@ -3,15 +3,15 @@
 		<view class="hero-shell">
 			<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
 			<view class="header">
-				<text class="header-title">中医知识考核</text>
+				<text class="header-title">{{ pageTitleText }}</text>
 			</view>
 		</view>
 
 		<scroll-view class="content" scroll-y="true">
 			<view class="banner">
 				<view class="banner-left">
-					<text class="banner-title">中医</text>
-					<text class="banner-title">知识考核</text>
+					<text class="banner-title">{{ bannerTitleLineOne }}</text>
+					<text class="banner-title">{{ bannerTitleLineTwo }}</text>
 				</view>
 				<view class="banner-illustration">
 					<view class="banner-figure-body"></view>
@@ -22,117 +22,187 @@
 			<view class="banner-note">
 				<view class="banner-note-row">
 					<view class="banner-dot"></view>
-					<text class="banner-note-text">熟读相关知识点</text>
+					<text class="banner-note-text">{{ noteTextOne }}</text>
 				</view>
 				<view class="banner-note-row">
 					<view class="banner-dot"></view>
-					<text class="banner-note-text">了解书本知识和考核的关系</text>
+					<text class="banner-note-text">{{ noteTextTwo }}</text>
 				</view>
 				<view class="banner-note-row">
 					<view class="banner-dot"></view>
-					<text class="banner-note-text">第一时间获取相关知识点的运用</text>
+					<text class="banner-note-text">{{ noteTextThree }}</text>
 				</view>
 			</view>
 
 			<view v-if="sourceName.length > 0" class="source-box">
-				<text class="source-label">来源：</text>
+				<text class="source-label">{{ sourceLabelText }}</text>
 				<text class="source-text">{{ sourceName }}</text>
 			</view>
 
-			<view class="paper-list">
+			<view v-if="isLoading" class="state-wrap">
+				<text class="state-text">{{ loadingText }}</text>
+			</view>
+
+			<view v-else-if="errorText.length > 0" class="state-wrap">
+				<text class="state-text">{{ errorText }}</text>
+				<view class="retry-btn" @tap="loadPapers">
+					<text class="retry-btn-text">{{ retryText }}</text>
+				</view>
+			</view>
+
+			<view v-else-if="papers.length == 0" class="state-wrap">
+				<text class="state-text">{{ emptyText }}</text>
+			</view>
+
+			<view v-else class="paper-list">
 				<view v-for="paper in papers" :key="paper.id" class="paper-card">
 					<view class="paper-text-box">
-						<text class="paper-title">{{ paper.title }}</text>
-						<text class="paper-subtitle">共{{ paper.questionCount }}道题，限时{{ paper.durationMinutes }}分钟</text>
+						<text class="paper-title">{{ paper.paperName }}</text>
+						<text class="paper-desc">{{ paper.description }}</text>
+						<text class="paper-subtitle">{{ questionText }} {{ paper.questionCount }} {{ durationText }} {{ paper.durationMinutes }}{{ minuteText }}</text>
+						<text class="paper-meta">{{ totalScoreText }} {{ paper.totalScore }}  {{ passScoreText }} {{ paper.passScore }}</text>
 					</view>
-					<view class="paper-action" @click="goExamPaper(paper)">
-						<text class="paper-action-text">立即答题</text>
+					<view class="paper-action" @tap="goExamPaper(paper)">
+						<text class="paper-action-text">{{ startExamText }}</text>
 					</view>
 				</view>
 			</view>
 		</scroll-view>
 
 		<view class="tabbar">
-			<view class="tab-item" @click="goLearningHome">
+			<view class="tab-item" @tap="goLearningHome">
 				<image class="tab-icon" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
-				<text class="tab-text">学习</text>
+				<text class="tab-text">{{ learningTabText }}</text>
 			</view>
 			<view class="tab-item">
 				<image class="tab-icon" src="/static/tabbar/icon_kaohedianji.png" mode="aspectFit"></image>
-				<text class="tab-text tab-text-active">考核</text>
+				<text class="tab-text tab-text-active">{{ examTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goConsultPage">
+			<view class="tab-item" @tap="goConsultPage">
 				<image class="tab-icon" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
-				<text class="tab-text">咨询</text>
+				<text class="tab-text">{{ consultTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goKnowledgePage">
+			<view class="tab-item" @tap="goKnowledgePage">
 				<image class="tab-icon" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
-				<text class="tab-text">知识库</text>
+				<text class="tab-text">{{ knowledgeTabText }}</text>
 			</view>
-			<view class="tab-item" @click="goMinePage">
+			<view class="tab-item" @tap="goMinePage">
 				<image class="tab-icon" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
-				<text class="tab-text">我的</text>
+				<text class="tab-text">{{ mineTabText }}</text>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
-type ExamPaperItem = {
-	id : string
-	title : string
-	questionCount : number
-	durationMinutes : number
+import { ref } from 'vue'
+import { fetchExamPapers, type ExamPaper } from '../../utils/auth.uts'
+
+const pageTitleText = '\u4e2d\u533b\u77e5\u8bc6\u8003\u6838'
+const bannerTitleLineOne = '\u4e2d\u533b'
+const bannerTitleLineTwo = '\u77e5\u8bc6\u8003\u6838'
+const noteTextOne = '\u719f\u8bfb\u76f8\u5173\u77e5\u8bc6\u70b9'
+const noteTextTwo = '\u4e86\u89e3\u4e66\u672c\u77e5\u8bc6\u548c\u8003\u6838\u7684\u5173\u7cfb'
+const noteTextThree = '\u7b2c\u4e00\u65f6\u95f4\u83b7\u53d6\u77e5\u8bc6\u70b9\u7684\u8fd0\u7528'
+const sourceLabelText = '\u6765\u6e90:'
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const emptyText = '\u6682\u65e0\u53ef\u7528\u8bd5\u5377'
+const loadFailedText = '\u8003\u6838\u8bd5\u5377\u52a0\u8f7d\u5931\u8d25'
+const questionText = '\u5171'
+const durationText = '\u9898\uff0c\u9650\u65f6'
+const minuteText = '\u5206\u949f'
+const totalScoreText = '\u603b\u5206:'
+const passScoreText = '\u53ca\u683c\u5206:'
+const startExamText = '\u7acb\u5373\u7b54\u9898'
+const learningTabText = '\u5b66\u4e60'
+const examTabText = '\u8003\u6838'
+const consultTabText = '\u54a8\u8be2'
+const knowledgeTabText = '\u77e5\u8bc6\u5e93'
+const mineTabText = '\u6211\u7684'
+const EXAM_PAPER_ID_KEY = 'exam_paper_id'
+const EXAM_PAPER_TITLE_KEY = 'exam_paper_title'
+
+const papers = ref<ExamPaper[]>([])
+const isLoading = ref(true)
+const errorText = ref('')
+const sourceName = ref('')
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
 }
 
-const currentPages = getCurrentPages()
-let currentSourceName = ''
-
-if (currentPages.length > 0) {
-	const currentPage = currentPages[currentPages.length - 1]
-	const options = currentPage.options
-	if (options != null && options['sourceName'] != null) {
-		currentSourceName = decodeURIComponent(options['sourceName'] as string)
+const loadParams = () => {
+	const pages = getCurrentPages()
+	if (pages.length == 0) {
+		return
+	}
+	const currentPage = pages[pages.length - 1]
+	if (currentPage == null || currentPage.options == null) {
+		return
+	}
+	const options = currentPage.options as UTSJSONObject
+	const sourceValue = options['sourceName']
+	if (typeof sourceValue == 'string' && sourceValue.length > 0) {
+		sourceName.value = decodeURIComponent(sourceValue)
 	}
 }
 
-const sourceName = ref(currentSourceName)
-const papers = ref<ExamPaperItem[]>([
-	{ id: 'paper-1', title: '实用中医方药学模拟练习卷', questionCount: 10, durationMinutes: 10 },
-	{ id: 'paper-2', title: '中医适宜技术模拟练习卷', questionCount: 10, durationMinutes: 10 },
-	{ id: 'paper-3', title: '实用中医理论基础模拟练习卷', questionCount: 10, durationMinutes: 10 },
-	{ id: 'paper-4', title: '实用针灸推拿学模拟练习卷', questionCount: 10, durationMinutes: 10 }
-])
+const loadPapers = () => {
+	isLoading.value = true
+	errorText.value = ''
+	fetchExamPapers(
+		1,
+		20,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			papers.value = records.filter((paper : ExamPaper) : boolean => {
+				return safeText(paper.status) == '' || safeText(paper.status) == 'ENABLED'
+			})
+			isLoading.value = false
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : loadFailedText
+			papers.value = []
+			isLoading.value = false
+		}
+	)
+}
 
-const goExamPaper = (paper : ExamPaperItem) => {
+const goExamPaper = (paper : ExamPaper) => {
+	const paperIdText = String(paper.id)
+	if (paperIdText.length == 0 || paperIdText == 'undefined' || paperIdText == 'null') {
+		uni.showToast({
+			title: '\u7f3a\u5c11\u8bd5\u5377 ID',
+			icon: 'none'
+		})
+		return
+	}
+	uni.setStorageSync(EXAM_PAPER_ID_KEY, paperIdText)
+	uni.setStorageSync(EXAM_PAPER_TITLE_KEY, paper.paperName)
 	uni.navigateTo({
-		url: '/pages/exam/paper?id=' + paper.id + '&title=' + encodeURIComponent(paper.title)
+		url: '/pages/exam/paper?id=' + paperIdText + '&paperId=' + paperIdText + '&title=' + encodeURIComponent(paper.paperName)
 	})
 }
 
 const goLearningHome = () => {
-	uni.redirectTo({
-		url: '/pages/index/index'
-	})
+	uni.redirectTo({ url: '/pages/index/index' })
 }
 
 const goConsultPage = () => {
-	uni.redirectTo({
-		url: '/pages/consult/index'
-	})
+	uni.redirectTo({ url: '/pages/consult/index' })
 }
 
 const goKnowledgePage = () => {
-	uni.redirectTo({
-		url: '/pages/knowledge/index'
-	})
+	uni.redirectTo({ url: '/pages/knowledge/index' })
 }
 
 const goMinePage = () => {
-	uni.redirectTo({
-		url: '/pages/mine/index'
-	})
+	uni.redirectTo({ url: '/pages/mine/index' })
 }
+
+loadParams()
+loadPapers()
 </script>
 
 <style>
@@ -140,7 +210,6 @@ const goMinePage = () => {
 	flex: 1;
 	background-color: #f7f4ee;
 }
-
 
 .hero-shell {
 	position: relative;
@@ -155,6 +224,7 @@ const goMinePage = () => {
 	width: 750rpx;
 	height: 236rpx;
 }
+
 .header {
 	position: relative;
 	z-index: 1;
@@ -162,9 +232,7 @@ const goMinePage = () => {
 	padding-top: 34rpx;
 	align-items: center;
 	justify-content: center;
-	background-color: transparent;
 }
-
 
 .header-title {
 	font-size: 18px;
@@ -286,6 +354,34 @@ const goMinePage = () => {
 	color: #2f2f2f;
 }
 
+.state-wrap {
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
 .paper-list {
 	padding-left: 24rpx;
 	padding-right: 24rpx;
@@ -312,11 +408,25 @@ const goMinePage = () => {
 	font-weight: 600;
 }
 
+.paper-desc {
+	margin-top: 10rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #777777;
+}
+
 .paper-subtitle {
 	margin-top: 12rpx;
 	font-size: 14px;
 	line-height: 20px;
 	color: #9b9b9b;
+}
+
+.paper-meta {
+	margin-top: 8rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #b1b1b1;
 }
 
 .paper-action {
@@ -362,14 +472,14 @@ const goMinePage = () => {
 }
 
 .tab-text {
-	margin-top: 6rpx;
+	margin-top: 8rpx;
 	font-size: 12px;
 	line-height: 18px;
-	color: #b5b5b5;
+	color: #b7b7b7;
 }
 
 .tab-text-active {
-	color: #18b775;
+	color: #12b368;
 	font-weight: 600;
 }
 </style>

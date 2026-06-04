@@ -33,11 +33,37 @@
 	color: #2f2f2f;
 	font-weight: 500;
 }
+.state-wrap {
+	flex: 1;
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9b9b9b;
+	text-align: center;
+}
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
 .content {
 	flex: 1;
 	padding-left: 28rpx;
 	padding-right: 28rpx;
 	padding-top: 26rpx;
+	padding-bottom: 98rpx;
 }
 .paper-name {
 	font-size: 19px;
@@ -69,8 +95,14 @@
 	margin-top: 26rpx;
 }
 .question-index {
+	font-size: 14px;
+	line-height: 20px;
+	color: #9b9b9b;
+}
+.question-type {
+	margin-top: 10rpx;
 	font-size: 16px;
-	line-height: 22px;
+	line-height: 24px;
 	color: #2f2f2f;
 	font-weight: 600;
 }
@@ -85,7 +117,7 @@
 }
 .option-card {
 	min-height: 84rpx;
-	border-radius: 999rpx;
+	border-radius: 24rpx;
 	background-color: #ffffff;
 	padding-left: 28rpx;
 	padding-right: 28rpx;
@@ -126,6 +158,10 @@
 	color: #2f2f2f;
 }
 .footer {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	height: 98rpx;
 	background-color: #ffffff;
 	flex-direction: row;
@@ -150,5 +186,4 @@
 	font-size: 18px;
 	line-height: 26px;
 	color: #ffffff;
-	font-weight: 600;
 }

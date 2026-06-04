@@ -760,6 +760,213 @@ let Article$1 = class Article extends UTS.UTSType {
     delete this.__props__;
   }
 };
+let ExamQuestionOption$1 = class ExamQuestionOption extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          optionKey: { type: String, optional: false },
+          optionContent: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "ExamQuestionOption"
+    };
+  }
+  constructor(options, metadata = ExamQuestionOption.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.optionKey = this.__props__.optionKey;
+    this.optionContent = this.__props__.optionContent;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+};
+let ExamQuestion$1 = class ExamQuestion extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          questionId: { type: Number, optional: false },
+          questionType: { type: String, optional: false },
+          title: { type: String, optional: false },
+          analysis: { type: String, optional: false },
+          difficulty: { type: String, optional: false },
+          score: { type: Number, optional: false },
+          sortOrder: { type: Number, optional: false },
+          options: { type: UTS.UTSType.withGenerics(Array, [ExamQuestionOption$1]), optional: false }
+        };
+      },
+      name: "ExamQuestion"
+    };
+  }
+  constructor(options, metadata = ExamQuestion.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.questionId = this.__props__.questionId;
+    this.questionType = this.__props__.questionType;
+    this.title = this.__props__.title;
+    this.analysis = this.__props__.analysis;
+    this.difficulty = this.__props__.difficulty;
+    this.score = this.__props__.score;
+    this.sortOrder = this.__props__.sortOrder;
+    this.options = this.__props__.options;
+    delete this.__props__;
+  }
+};
+let ExamPaper$1 = class ExamPaper extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          paperName: { type: String, optional: false },
+          description: { type: String, optional: false },
+          totalScore: { type: Number, optional: false },
+          passScore: { type: Number, optional: false },
+          durationMinutes: { type: Number, optional: false },
+          status: { type: String, optional: false },
+          questionCount: { type: Number, optional: false },
+          questions: { type: UTS.UTSType.withGenerics(Array, [ExamQuestion$1]), optional: false }
+        };
+      },
+      name: "ExamPaper"
+    };
+  }
+  constructor(options, metadata = ExamPaper.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.paperName = this.__props__.paperName;
+    this.description = this.__props__.description;
+    this.totalScore = this.__props__.totalScore;
+    this.passScore = this.__props__.passScore;
+    this.durationMinutes = this.__props__.durationMinutes;
+    this.status = this.__props__.status;
+    this.questionCount = this.__props__.questionCount;
+    this.questions = this.__props__.questions;
+    delete this.__props__;
+  }
+};
+let ExamAnswerSubmitItem$1 = class ExamAnswerSubmitItem extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          questionId: { type: Number, optional: false },
+          answerContent: { type: String, optional: false }
+        };
+      },
+      name: "ExamAnswerSubmitItem"
+    };
+  }
+  constructor(options, metadata = ExamAnswerSubmitItem.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.questionId = this.__props__.questionId;
+    this.answerContent = this.__props__.answerContent;
+    delete this.__props__;
+  }
+};
+let ExamSubmitRequest$1 = class ExamSubmitRequest extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          sourceType: { type: String, optional: true },
+          sourceId: { type: Number, optional: true },
+          answers: { type: UTS.UTSType.withGenerics(Array, [ExamAnswerSubmitItem$1]), optional: false }
+        };
+      },
+      name: "ExamSubmitRequest"
+    };
+  }
+  constructor(options, metadata = ExamSubmitRequest.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.sourceType = this.__props__.sourceType;
+    this.sourceId = this.__props__.sourceId;
+    this.answers = this.__props__.answers;
+    delete this.__props__;
+  }
+};
+let ExamAnswerResult$1 = class ExamAnswerResult extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          questionId: { type: Number, optional: false },
+          questionType: { type: String, optional: false },
+          title: { type: String, optional: false },
+          answerContent: { type: String, optional: false },
+          correctAnswer: { type: String, optional: false },
+          analysis: { type: String, optional: false },
+          score: { type: Number, optional: false },
+          correct: { type: Number, optional: false },
+          options: { type: UTS.UTSType.withGenerics(Array, [ExamQuestionOption$1]), optional: false }
+        };
+      },
+      name: "ExamAnswerResult"
+    };
+  }
+  constructor(options, metadata = ExamAnswerResult.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.questionId = this.__props__.questionId;
+    this.questionType = this.__props__.questionType;
+    this.title = this.__props__.title;
+    this.answerContent = this.__props__.answerContent;
+    this.correctAnswer = this.__props__.correctAnswer;
+    this.analysis = this.__props__.analysis;
+    this.score = this.__props__.score;
+    this.correct = this.__props__.correct;
+    this.options = this.__props__.options;
+    delete this.__props__;
+  }
+};
+let ExamRecord$1 = class ExamRecord extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          paperId: { type: Number, optional: false },
+          paperName: { type: String, optional: false },
+          score: { type: Number, optional: false },
+          passed: { type: Number, optional: false },
+          totalScore: { type: Number, optional: false },
+          passScore: { type: Number, optional: false },
+          submittedAt: { type: String, optional: false },
+          answers: { type: UTS.UTSType.withGenerics(Array, [ExamAnswerResult$1]), optional: false }
+        };
+      },
+      name: "ExamRecord"
+    };
+  }
+  constructor(options, metadata = ExamRecord.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.paperId = this.__props__.paperId;
+    this.paperName = this.__props__.paperName;
+    this.score = this.__props__.score;
+    this.passed = this.__props__.passed;
+    this.totalScore = this.__props__.totalScore;
+    this.passScore = this.__props__.passScore;
+    this.submittedAt = this.__props__.submittedAt;
+    this.answers = this.__props__.answers;
+    delete this.__props__;
+  }
+};
 let BrowseHistoryRequest$1 = class BrowseHistoryRequest extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -1754,6 +1961,141 @@ function normalizeArticle(raw) {
     publishedAt: readStringField(raw, "publishedAt")
   });
 }
+function normalizeExamQuestionOption(raw) {
+  const optionKey = readStringField(raw, "optionKey").length > 0 ? readStringField(raw, "optionKey") : readStringField(raw, "key").length > 0 ? readStringField(raw, "key") : readStringField(raw, "label");
+  const optionContent = readStringField(raw, "optionContent").length > 0 ? readStringField(raw, "optionContent") : readStringField(raw, "content").length > 0 ? readStringField(raw, "content") : readStringField(raw, "optionText").length > 0 ? readStringField(raw, "optionText") : readStringField(raw, "label");
+  return new ExamQuestionOption$1({
+    id: readNumberField(raw, "id"),
+    optionKey,
+    optionContent,
+    sortOrder: readNumberField(raw, "sortOrder") > 0 ? readNumberField(raw, "sortOrder") : readNumberField(raw, "orderNum")
+  });
+}
+function readObjectArrayField(raw, key) {
+  const value = raw[key];
+  if (value == null || !UTS.isInstanceOf(value, Array)) {
+    return [];
+  }
+  return value.filter((item = null) => {
+    return item != null && typeof item == "object";
+  }).map((item = null) => {
+    return item;
+  });
+}
+function normalizeExamQuestionTypeValue(value = null) {
+  if (typeof value == "number") {
+    const typeCode = value;
+    if (typeCode == 1) {
+      return "SINGLE_CHOICE";
+    }
+    if (typeCode == 2) {
+      return "MULTIPLE_CHOICE";
+    }
+    if (typeCode == 3) {
+      return "TRUE_FALSE";
+    }
+    if (typeCode == 4) {
+      return "SHORT_ANSWER";
+    }
+    return "";
+  }
+  if (typeof value == "string") {
+    const text = value.toUpperCase();
+    if (text == "1" || text == "SINGLE_CHOICE" || text == "SINGLE" || text == "RADIO") {
+      return "SINGLE_CHOICE";
+    }
+    if (text == "2" || text == "MULTIPLE_CHOICE" || text == "MULTIPLE" || text == "CHECKBOX") {
+      return "MULTIPLE_CHOICE";
+    }
+    if (text == "3" || text == "TRUE_FALSE" || text == "JUDGE" || text == "BOOLEAN") {
+      return "TRUE_FALSE";
+    }
+    if (text == "4" || text == "SHORT_ANSWER" || text == "TEXT" || text == "ESSAY" || text == "FILL_BLANK") {
+      return "SHORT_ANSWER";
+    }
+  }
+  return "";
+}
+function readExamQuestionType(raw, key) {
+  return normalizeExamQuestionTypeValue(raw[key]);
+}
+function normalizeExamQuestion(raw) {
+  const options = readObjectArrayField(raw, "options");
+  const questionRaw = raw["question"] != null ? raw["question"] : raw;
+  const questionId = readNumberField(raw, "questionId") > 0 ? readNumberField(raw, "questionId") : readNumberField(questionRaw, "id");
+  const score = readNumberField(raw, "score") > 0 ? readNumberField(raw, "score") : readNumberField(questionRaw, "score");
+  const sortOrder = readNumberField(raw, "sortOrder");
+  const nestedOptions = readObjectArrayField(questionRaw, "options");
+  const questionOptions = readObjectArrayField(questionRaw, "questionOptions");
+  const optionList = readObjectArrayField(questionRaw, "optionList");
+  const answerOptions = readObjectArrayField(questionRaw, "answers");
+  const normalizedOptionsSource = options.length > 0 ? options : nestedOptions.length > 0 ? nestedOptions : questionOptions.length > 0 ? questionOptions : optionList.length > 0 ? optionList : answerOptions;
+  const questionType = readExamQuestionType(questionRaw, "questionType").length > 0 ? readExamQuestionType(questionRaw, "questionType") : readExamQuestionType(raw, "questionType");
+  return new ExamQuestion$1({
+    questionId,
+    questionType,
+    title: readStringField(questionRaw, "title"),
+    analysis: readStringField(questionRaw, "analysis"),
+    difficulty: readStringField(questionRaw, "difficulty"),
+    score,
+    sortOrder,
+    options: normalizedOptionsSource.map((item) => {
+      return normalizeExamQuestionOption(item);
+    })
+  });
+}
+function normalizeExamPaper(raw) {
+  const questionsValue = raw["questions"];
+  const questions = questionsValue != null && UTS.isInstanceOf(questionsValue, Array) ? questionsValue : [];
+  const questionCountValue = readNumberField(raw, "questionCount");
+  return new ExamPaper$1({
+    id: readNumberField(raw, "id"),
+    paperName: readStringField(raw, "paperName"),
+    description: readStringField(raw, "description"),
+    totalScore: readNumberField(raw, "totalScore"),
+    passScore: readNumberField(raw, "passScore"),
+    durationMinutes: readNumberField(raw, "durationMinutes"),
+    status: readStringField(raw, "status"),
+    questionCount: questionCountValue > 0 ? questionCountValue : questions.length,
+    questions: questions.map((item) => {
+      return normalizeExamQuestion(item);
+    })
+  });
+}
+function normalizeExamAnswerResult(raw) {
+  const optionsValue = raw["options"];
+  const options = optionsValue != null && UTS.isInstanceOf(optionsValue, Array) ? optionsValue : [];
+  return new ExamAnswerResult$1({
+    questionId: readNumberField(raw, "questionId"),
+    questionType: readExamQuestionType(raw, "questionType"),
+    title: readStringField(raw, "title"),
+    answerContent: readStringField(raw, "answerContent"),
+    correctAnswer: readStringField(raw, "correctAnswer"),
+    analysis: readStringField(raw, "analysis"),
+    score: readNumberField(raw, "score"),
+    correct: readNumberField(raw, "correct"),
+    options: options.map((item) => {
+      return normalizeExamQuestionOption(item);
+    })
+  });
+}
+function normalizeExamRecord(raw) {
+  const answersValue = raw["answers"];
+  const answers = answersValue != null && UTS.isInstanceOf(answersValue, Array) ? answersValue : [];
+  return new ExamRecord$1({
+    id: readNumberField(raw, "id"),
+    paperId: readNumberField(raw, "paperId"),
+    paperName: readStringField(raw, "paperName"),
+    score: readNumberField(raw, "score"),
+    passed: readNumberField(raw, "passed"),
+    totalScore: readNumberField(raw, "totalScore"),
+    passScore: readNumberField(raw, "passScore"),
+    submittedAt: readStringField(raw, "submittedAt"),
+    answers: answers.map((item) => {
+      return normalizeExamAnswerResult(item);
+    })
+  });
+}
 function normalizeKnowledgeCategory(raw) {
   const childrenValue = raw["children"];
   const rawChildren = childrenValue != null && UTS.isInstanceOf(childrenValue, Array) ? childrenValue : [];
@@ -1912,6 +2254,43 @@ function fetchArticles(page, size, keyword, success, fail) {
 function fetchArticleDetail(id, success, fail) {
   request("/api/v1/app/content/articles/" + id, "GET", null, true, false, (detail) => {
     success(normalizeArticle(detail));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchExamPapers(page, size, success, fail) {
+  request("/api/v1/app/learning/exam-papers?page=" + String(page) + "&size=" + String(size), "GET", null, true, false, (pageData) => {
+    const recordsValue = pageData["records"];
+    const records = recordsValue != null && UTS.isInstanceOf(recordsValue, Array) ? recordsValue : [];
+    success(new PageResponse$1({
+      records: records.map((item) => {
+        return normalizeExamPaper(item);
+      }),
+      total: readNumberField(pageData, "total"),
+      page: readNumberField(pageData, "page") > 0 ? readNumberField(pageData, "page") : page,
+      size: readNumberField(pageData, "size") > 0 ? readNumberField(pageData, "size") : size
+    }));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchExamPaperDetail(id, success, fail) {
+  request("/api/v1/app/learning/exam-papers/" + id, "GET", null, true, false, (detail) => {
+    success(normalizeExamPaper(detail));
+  }, (message) => {
+    fail(message);
+  });
+}
+function submitExamPaper(id, data, success, fail) {
+  request("/api/v1/app/learning/exam-papers/" + id + "/submit", "POST", data, true, false, (record) => {
+    success(normalizeExamRecord(record));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchExamRecordDetail(id, success, fail) {
+  request("/api/v1/app/learning/exam-records/" + id, "GET", null, true, false, (record) => {
+    success(normalizeExamRecord(record));
   }, (message) => {
     fail(message);
   });
@@ -2989,6 +3368,213 @@ class Article2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+class ExamQuestionOption2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          optionKey: { type: String, optional: false },
+          optionContent: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "ExamQuestionOption"
+    };
+  }
+  constructor(options, metadata = ExamQuestionOption2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.optionKey = this.__props__.optionKey;
+    this.optionContent = this.__props__.optionContent;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+}
+class ExamQuestion2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          questionId: { type: Number, optional: false },
+          questionType: { type: String, optional: false },
+          title: { type: String, optional: false },
+          analysis: { type: String, optional: false },
+          difficulty: { type: String, optional: false },
+          score: { type: Number, optional: false },
+          sortOrder: { type: Number, optional: false },
+          options: { type: UTS.UTSType.withGenerics(Array, [ExamQuestionOption2]), optional: false }
+        };
+      },
+      name: "ExamQuestion"
+    };
+  }
+  constructor(options, metadata = ExamQuestion2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.questionId = this.__props__.questionId;
+    this.questionType = this.__props__.questionType;
+    this.title = this.__props__.title;
+    this.analysis = this.__props__.analysis;
+    this.difficulty = this.__props__.difficulty;
+    this.score = this.__props__.score;
+    this.sortOrder = this.__props__.sortOrder;
+    this.options = this.__props__.options;
+    delete this.__props__;
+  }
+}
+class ExamPaper2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          paperName: { type: String, optional: false },
+          description: { type: String, optional: false },
+          totalScore: { type: Number, optional: false },
+          passScore: { type: Number, optional: false },
+          durationMinutes: { type: Number, optional: false },
+          status: { type: String, optional: false },
+          questionCount: { type: Number, optional: false },
+          questions: { type: UTS.UTSType.withGenerics(Array, [ExamQuestion2]), optional: false }
+        };
+      },
+      name: "ExamPaper"
+    };
+  }
+  constructor(options, metadata = ExamPaper2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.paperName = this.__props__.paperName;
+    this.description = this.__props__.description;
+    this.totalScore = this.__props__.totalScore;
+    this.passScore = this.__props__.passScore;
+    this.durationMinutes = this.__props__.durationMinutes;
+    this.status = this.__props__.status;
+    this.questionCount = this.__props__.questionCount;
+    this.questions = this.__props__.questions;
+    delete this.__props__;
+  }
+}
+class ExamAnswerSubmitItem2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          questionId: { type: Number, optional: false },
+          answerContent: { type: String, optional: false }
+        };
+      },
+      name: "ExamAnswerSubmitItem"
+    };
+  }
+  constructor(options, metadata = ExamAnswerSubmitItem2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.questionId = this.__props__.questionId;
+    this.answerContent = this.__props__.answerContent;
+    delete this.__props__;
+  }
+}
+class ExamSubmitRequest2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          sourceType: { type: String, optional: true },
+          sourceId: { type: Number, optional: true },
+          answers: { type: UTS.UTSType.withGenerics(Array, [ExamAnswerSubmitItem2]), optional: false }
+        };
+      },
+      name: "ExamSubmitRequest"
+    };
+  }
+  constructor(options, metadata = ExamSubmitRequest2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.sourceType = this.__props__.sourceType;
+    this.sourceId = this.__props__.sourceId;
+    this.answers = this.__props__.answers;
+    delete this.__props__;
+  }
+}
+class ExamAnswerResult2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          questionId: { type: Number, optional: false },
+          questionType: { type: String, optional: false },
+          title: { type: String, optional: false },
+          answerContent: { type: String, optional: false },
+          correctAnswer: { type: String, optional: false },
+          analysis: { type: String, optional: false },
+          score: { type: Number, optional: false },
+          correct: { type: Number, optional: false },
+          options: { type: UTS.UTSType.withGenerics(Array, [ExamQuestionOption2]), optional: false }
+        };
+      },
+      name: "ExamAnswerResult"
+    };
+  }
+  constructor(options, metadata = ExamAnswerResult2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.questionId = this.__props__.questionId;
+    this.questionType = this.__props__.questionType;
+    this.title = this.__props__.title;
+    this.answerContent = this.__props__.answerContent;
+    this.correctAnswer = this.__props__.correctAnswer;
+    this.analysis = this.__props__.analysis;
+    this.score = this.__props__.score;
+    this.correct = this.__props__.correct;
+    this.options = this.__props__.options;
+    delete this.__props__;
+  }
+}
+class ExamRecord2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          paperId: { type: Number, optional: false },
+          paperName: { type: String, optional: false },
+          score: { type: Number, optional: false },
+          passed: { type: Number, optional: false },
+          totalScore: { type: Number, optional: false },
+          passScore: { type: Number, optional: false },
+          submittedAt: { type: String, optional: false },
+          answers: { type: UTS.UTSType.withGenerics(Array, [ExamAnswerResult2]), optional: false }
+        };
+      },
+      name: "ExamRecord"
+    };
+  }
+  constructor(options, metadata = ExamRecord2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.paperId = this.__props__.paperId;
+    this.paperName = this.__props__.paperName;
+    this.score = this.__props__.score;
+    this.passed = this.__props__.passed;
+    this.totalScore = this.__props__.totalScore;
+    this.passScore = this.__props__.passScore;
+    this.submittedAt = this.__props__.submittedAt;
+    this.answers = this.__props__.answers;
+    delete this.__props__;
+  }
+}
 class BrowseHistoryRequest2 extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -3534,6 +4120,7 @@ exports.AvatarBinaryUploadConfig = AvatarBinaryUploadConfig2;
 exports.AvatarConfirmRequest = AvatarConfirmRequest2;
 exports.AvatarUploadUrlRequest = AvatarUploadUrlRequest2;
 exports.BrowseHistoryRequest = BrowseHistoryRequest2;
+exports.ExamSubmitRequest = ExamSubmitRequest$1;
 exports.checkFavoriteStatus = checkFavoriteStatus;
 exports.clearBindToken = clearBindToken;
 exports.confirmAvatarUpload = confirmAvatarUpload;
@@ -3544,6 +4131,9 @@ exports.fetchAudioDetail = fetchAudioDetail;
 exports.fetchCertificationStatus = fetchCertificationStatus;
 exports.fetchCourseDetail = fetchCourseDetail;
 exports.fetchCourses = fetchCourses;
+exports.fetchExamPaperDetail = fetchExamPaperDetail;
+exports.fetchExamPapers = fetchExamPapers;
+exports.fetchExamRecordDetail = fetchExamRecordDetail;
 exports.fetchExpertDetail = fetchExpertDetail;
 exports.fetchExperts = fetchExperts;
 exports.fetchKnowledgeCategoryTree = fetchKnowledgeCategoryTree;
@@ -3572,6 +4162,7 @@ exports.requestAvatarUploadUrl = requestAvatarUploadUrl;
 exports.saveLogin = saveLogin;
 exports.sendSmsCode = sendSmsCode;
 exports.submitCertification = submitCertification;
+exports.submitExamPaper = submitExamPaper;
 exports.updateFavoriteStatus = updateFavoriteStatus;
 exports.updateProfile = updateProfile;
 exports.uploadAvatarBinaryFile = uploadAvatarBinaryFile;
