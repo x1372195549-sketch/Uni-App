@@ -25,7 +25,7 @@ class CatalogItem extends UTS.UTSType {
     delete this.__props__;
   }
 }
-const RESOURCE_TYPE = "AUDIO";
+const RESOURCE_TYPE = "podcast";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "detail",
   setup(__props) {

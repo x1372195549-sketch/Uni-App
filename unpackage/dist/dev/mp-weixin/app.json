@@ -20,6 +20,9 @@
     "pages/knowledge/book-detail",
     "pages/consult/index",
     "pages/consult/detail",
+    "pages/consult/create",
+    "pages/consult/questions",
+    "pages/consult/question-detail",
     "pages/exam/index",
     "pages/exam/paper",
     "pages/exam/result"

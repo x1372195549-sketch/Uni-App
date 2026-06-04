@@ -1,0 +1,351 @@
+<template>
+	<view class="page">
+		<image class="top-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
+
+		<view class="nav-back" @tap="goBack">
+			<image class="nav-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+		</view>
+
+		<view class="header">
+			<text class="header-title">{{ titleText }}</text>
+		</view>
+
+		<scroll-view class="content-scroll" scroll-y="true">
+			<view class="content">
+				<view class="expert-card">
+					<text class="expert-caption">{{ consultTargetText }}</text>
+					<text class="expert-value">{{ displayExpertName }}</text>
+				</view>
+
+				<view class="form-card">
+					<text class="field-label">{{ subjectText }}</text>
+					<input
+						v-model="title"
+						class="field-input"
+						:placeholder="titlePlaceholder"
+						maxlength="50"
+					/>
+					<text class="field-count">{{ title.length }}/50</text>
+
+					<text class="field-label field-label-gap">{{ contentText }}</text>
+					<textarea
+						v-model="content"
+						class="field-textarea"
+						:placeholder="contentPlaceholder"
+						maxlength="500"
+					/>
+					<text class="field-count">{{ content.length }}/500</text>
+				</view>
+			</view>
+		</scroll-view>
+
+		<view class="bottom-bar">
+			<view class="submit-btn" @tap="submitQuestion">
+				<text class="submit-btn-text">{{ isSubmitting ? submittingText : submitText }}</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { computed, ref } from 'vue'
+import { createQaQuestion } from '../../utils/auth.uts'
+
+const expertStorageKey = 'consult_current_expert'
+
+const titleText = '\u53d1\u8d77\u54a8\u8be2'
+const consultTargetText = '\u54a8\u8be2\u5bf9\u8c61'
+const subjectText = '\u6807\u9898'
+const contentText = '\u5185\u5bb9'
+const submitText = '\u63d0\u4ea4\u54a8\u8be2'
+const submittingText = '\u63d0\u4ea4\u4e2d...'
+const titlePlaceholder = '\u8bf7\u6982\u62ec\u4f60\u7684\u95ee\u9898\uff08\u5fc5\u586b\uff09'
+const contentPlaceholder = '\u8bf7\u8be6\u7ec6\u63cf\u8ff0\u4f60\u7684\u7591\u95ee\uff0c\u4e13\u5bb6\u5c06\u9488\u5bf9\u6027\u89e3\u7b54\uff08\u5fc5\u586b\uff09'
+const fallbackExpertText = '\u672a\u9009\u62e9\u4e13\u5bb6'
+const missingExpertText = '\u7f3a\u5c11\u4e13\u5bb6\u4fe1\u606f'
+const missingTitleText = '\u8bf7\u8f93\u5165\u6807\u9898'
+const missingContentText = '\u8bf7\u8f93\u5165\u54a8\u8be2\u5185\u5bb9'
+const loadingText = '\u63d0\u4ea4\u4e2d...'
+const successText = '\u63d0\u4ea4\u6210\u529f\uff0c\u8bf7\u7b49\u5f85\u4e13\u5bb6\u56de\u590d'
+const failedText = '\u63d0\u4ea4\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5'
+
+const expertId = ref('')
+const expertName = ref('')
+const title = ref('')
+const content = ref('')
+const isSubmitting = ref(false)
+
+const displayExpertName = computed(() : string => {
+	return expertName.value.length > 0 ? expertName.value : fallbackExpertText
+})
+
+const goBack = () => {
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack({
+			delta: 1
+		})
+		return
+	}
+
+	if (expertId.value.length > 0) {
+		let url = '/pages/consult/detail?id=' + expertId.value
+		if (expertName.value.length > 0) {
+			url += '&name=' + encodeURIComponent(expertName.value)
+		}
+		uni.redirectTo({ url })
+		return
+	}
+
+	uni.redirectTo({ url: '/pages/consult/index' })
+}
+
+const readStoredExpert = () : UTSJSONObject | null => {
+	const stored = uni.getStorageSync(expertStorageKey)
+	return stored != null && stored != '' ? stored as UTSJSONObject : null
+}
+
+const loadParams = () => {
+	const currentPages = getCurrentPages()
+	if (currentPages.length == 0) {
+		return
+	}
+
+	const currentPage = currentPages[currentPages.length - 1]
+	if (currentPage.options != null) {
+		const options = currentPage.options
+		if (options['expertId'] != null) {
+			expertId.value = options['expertId'] as string
+		}
+		if (options['expertName'] != null) {
+			expertName.value = decodeURIComponent(options['expertName'])
+		}
+	}
+
+	if (expertId.value.length > 0 && expertName.value.length > 0) {
+		return
+	}
+
+	const stored = readStoredExpert()
+	if (stored == null) {
+		return
+	}
+
+	const storedId = stored['expertId'] as string
+	const storedName = stored['expertName'] as string
+	if (expertId.value.length == 0 && storedId != null) {
+		expertId.value = storedId
+	}
+	if (expertName.value.length == 0 && storedName != null) {
+		expertName.value = storedName
+	}
+}
+
+const submitQuestion = () => {
+	if (expertId.value.length == 0) {
+		uni.showToast({
+			title: missingExpertText,
+			icon: 'none'
+		})
+		return
+	}
+	if (title.value.trim().length == 0) {
+		uni.showToast({
+			title: missingTitleText,
+			icon: 'none'
+		})
+		return
+	}
+	if (content.value.trim().length == 0) {
+		uni.showToast({
+			title: missingContentText,
+			icon: 'none'
+		})
+		return
+	}
+	if (isSubmitting.value) {
+		return
+	}
+
+	isSubmitting.value = true
+	uni.showLoading({
+		title: loadingText
+	})
+	createQaQuestion(
+		{
+			expertCategoryId: 0,
+			expertId: Number(expertId.value),
+			title: title.value.trim(),
+			content: content.value.trim()
+		},
+		() => {
+			isSubmitting.value = false
+			uni.hideLoading()
+			uni.showToast({
+				title: successText,
+				icon: 'none'
+			})
+			setTimeout(() => {
+				uni.redirectTo({
+					url: '/pages/consult/questions'
+				})
+			}, 600)
+		},
+		(message) => {
+			isSubmitting.value = false
+			uni.hideLoading()
+			uni.showToast({
+				title: message.length > 0 ? message : failedText,
+				icon: 'none'
+			})
+		}
+	)
+}
+
+loadParams()
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+	position: relative;
+}
+
+.top-bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 750rpx;
+	height: 240rpx;
+	opacity: 0.18;
+}
+
+.nav-back {
+	position: absolute;
+	top: 98rpx;
+	left: 12rpx;
+	width: 56rpx;
+	height: 56rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 2;
+}
+
+.nav-back-icon {
+	width: 26rpx;
+	height: 26rpx;
+}
+
+.header {
+	padding-top: 112rpx;
+	padding-left: 24rpx;
+	padding-right: 24rpx;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	z-index: 2;
+	min-height: 72rpx;
+}
+
+.header-title {
+	font-size: 19px;
+	line-height: 28px;
+	color: #1b1b1b;
+	font-weight: 600;
+	text-align: center;
+	width: 100%;
+}
+
+.content-scroll {
+	flex: 1;
+	padding-top: 52rpx;
+	position: relative;
+	z-index: 1;
+}
+
+.content {
+	padding: 0 20rpx 150rpx;
+}
+
+.expert-card,
+.form-card {
+	background-color: #ffffff;
+	border-radius: 18rpx;
+	padding: 24rpx;
+	margin-bottom: 20rpx;
+}
+
+.expert-caption,
+.field-label {
+	font-size: 14px;
+	color: #8a8f98;
+}
+
+.expert-value {
+	margin-top: 14rpx;
+	font-size: 18px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.field-input {
+	margin-top: 12rpx;
+	height: 76rpx;
+	padding: 0 20rpx;
+	background-color: #f7f7f2;
+	border-radius: 12rpx;
+	font-size: 15px;
+	color: #2f2f2f;
+}
+
+.field-label-gap {
+	margin-top: 24rpx;
+}
+
+.field-textarea {
+	margin-top: 12rpx;
+	width: 100%;
+	height: 280rpx;
+	padding: 20rpx;
+	background-color: #f7f7f2;
+	border-radius: 12rpx;
+	font-size: 15px;
+	color: #2f2f2f;
+}
+
+.field-count {
+	margin-top: 10rpx;
+	font-size: 12px;
+	color: #b1b1b1;
+	text-align: right;
+}
+
+.bottom-bar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 20rpx 24rpx 28rpx;
+	background-color: rgba(255, 255, 255, 0.98);
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: #ececec;
+	z-index: 5;
+}
+
+.submit-btn {
+	height: 88rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.submit-btn-text {
+	font-size: 18px;
+	line-height: 26px;
+	color: #ffffff;
+	font-weight: 600;
+}
+</style>

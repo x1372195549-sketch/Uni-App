@@ -1,36 +1,17 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
-class CategoryChild extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          id: { type: String, optional: false },
-          name: { type: String, optional: false }
-        };
-      },
-      name: "CategoryChild"
-    };
-  }
-  constructor(options, metadata = CategoryChild.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
-    this.name = this.__props__.name;
-    delete this.__props__;
-  }
-}
+const utils_auth = require("../../utils/auth.js");
 class CategoryItem extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
       kind: 2,
       get fields() {
         return {
-          id: { type: String, optional: false },
-          name: { type: String, optional: false },
-          children: { type: UTS.UTSType.withGenerics(Array, [CategoryChild]), optional: false }
+          key: { type: String, optional: false },
+          categoryId: { type: Number, optional: false },
+          specialty: { type: String, optional: false },
+          name: { type: String, optional: false }
         };
       },
       name: "CategoryItem"
@@ -39,238 +20,303 @@ class CategoryItem extends UTS.UTSType {
   constructor(options, metadata = CategoryItem.get$UTSMetadata$(), isJSONParse = false) {
     super();
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
+    this.key = this.__props__.key;
+    this.categoryId = this.__props__.categoryId;
+    this.specialty = this.__props__.specialty;
     this.name = this.__props__.name;
-    this.children = this.__props__.children;
     delete this.__props__;
   }
 }
-class DoctorItem extends UTS.UTSType {
+class ExpertCard extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
       kind: 2,
       get fields() {
         return {
-          id: { type: String, optional: false },
-          primaryCategoryId: { type: String, optional: false },
-          secondaryCategoryId: { type: String, optional: false },
+          id: { type: Number, optional: false },
           name: { type: String, optional: false },
           shortName: { type: String, optional: false },
-          brief: { type: String, optional: false },
-          tag: { type: String, optional: false },
-          organization: { type: String, optional: false },
           title: { type: String, optional: false },
+          organization: { type: String, optional: false },
           specialty: { type: String, optional: false },
-          introduction: { type: String, optional: false },
-          qaTitleOne: { type: String, optional: false },
-          qaTitleTwo: { type: String, optional: false },
-          avatarUrl: { type: String, optional: false }
+          avatarUrl: { type: String, optional: false },
+          consultationNotice: { type: String, optional: false },
+          avatarFailed: { type: Boolean, optional: false }
         };
       },
-      name: "DoctorItem"
+      name: "ExpertCard"
     };
   }
-  constructor(options, metadata = DoctorItem.get$UTSMetadata$(), isJSONParse = false) {
+  constructor(options, metadata = ExpertCard.get$UTSMetadata$(), isJSONParse = false) {
     super();
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
-    this.primaryCategoryId = this.__props__.primaryCategoryId;
-    this.secondaryCategoryId = this.__props__.secondaryCategoryId;
     this.name = this.__props__.name;
     this.shortName = this.__props__.shortName;
-    this.brief = this.__props__.brief;
-    this.tag = this.__props__.tag;
-    this.organization = this.__props__.organization;
     this.title = this.__props__.title;
+    this.organization = this.__props__.organization;
     this.specialty = this.__props__.specialty;
-    this.introduction = this.__props__.introduction;
-    this.qaTitleOne = this.__props__.qaTitleOne;
-    this.qaTitleTwo = this.__props__.qaTitleTwo;
     this.avatarUrl = this.__props__.avatarUrl;
+    this.consultationNotice = this.__props__.consultationNotice;
+    this.avatarFailed = this.__props__.avatarFailed;
     delete this.__props__;
   }
 }
+const PAGE_SIZE = 12;
+const CATEGORY_FETCH_SIZE = 100;
+const pageTitleText = "咨询";
+const searchPlaceholder = "搜索专家姓名、职称、机构";
+const searchButtonText = "搜索";
+const allCategoryText = "全部";
+const loadingText = "加载中...";
+const retryText = "重新加载";
+const emptyExpertText = "暂无专家";
+const loadingMoreText = "加载更多中...";
+const noMoreText = "没有更多了";
+const loadFailedText = "专家加载失败";
+const myQuestionsText = "我的咨询";
+const learningText = "学习";
+const examText = "考核";
+const consultText = "咨询";
+const knowledgeText = "知识库";
+const mineText = "我的";
+const fallbackShortName = "医";
+const fallbackExpertName = "专家";
+const fallbackCategoryPrefix = "专业分类";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "index",
   setup(__props) {
-    const primaryCategories = common_vendor.ref([
-      new CategoryItem({
-        id: "internal",
-        name: "中医内科",
-        children: [
-          new CategoryChild({ id: "cardio", name: "心血管" }),
-          new CategoryChild({ id: "brain", name: "脑病" }),
-          new CategoryChild({ id: "elder", name: "老年病" }),
-          new CategoryChild({ id: "lung", name: "肺病" }),
-          new CategoryChild({ id: "spleen", name: "脾胃病" }),
-          new CategoryChild({ id: "kidney", name: "肾病" }),
-          new CategoryChild({ id: "rheumatism", name: "风湿病" })
-        ]
-      }),
-      new CategoryItem({ id: "surgery", name: "中医外科", children: [] }),
-      new CategoryItem({ id: "bone", name: "中医骨伤科", children: [] }),
-      new CategoryItem({ id: "gynecology", name: "中医妇科", children: [] }),
-      new CategoryItem({ id: "pediatrics", name: "中医儿科", children: [] }),
-      new CategoryItem({ id: "acupuncture", name: "中医五官科", children: [] })
-    ]);
-    const doctors = common_vendor.ref([
-      new DoctorItem({
-        id: "d1",
-        primaryCategoryId: "internal",
-        secondaryCategoryId: "cardio",
-        name: "符惠娟",
-        shortName: "符",
-        brief: "常州市中医院心血管科主任中医师，医学硕士，简介占位内容会在后续由数据库替换。",
-        tag: "中医心血管",
-        organization: "常州市中医院",
-        title: "主任中医师",
-        specialty: "中医心血管",
-        introduction: "这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。",
-        qaTitleOne: "符主任您好！请问胸闷气短跟黑心慌，高血压口服药物期间如何调理？",
-        qaTitleTwo: "请问脑梗塞治疗方法",
-        avatarUrl: ""
-      }),
-      new DoctorItem({
-        id: "d2",
-        primaryCategoryId: "internal",
-        secondaryCategoryId: "cardio",
-        name: "林轶蓉",
-        shortName: "林",
-        brief: "镇江市中医院心血管方向副主任医师，占位简介至少三行显示，后续替换真实数据库内容。",
-        tag: "中医心血管",
-        organization: "镇江市中医院",
-        title: "副主任医师",
-        specialty: "中医心血管",
-        introduction: "这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。",
-        qaTitleOne: "请问心悸失眠如何调理？",
-        qaTitleTwo: "高血压伴头晕如何辨证？",
-        avatarUrl: ""
-      }),
-      new DoctorItem({
-        id: "d3",
-        primaryCategoryId: "internal",
-        secondaryCategoryId: "cardio",
-        name: "刘健",
-        shortName: "刘",
-        brief: "江苏省中医院心内科方向副主任中医师，医生简介占位内容，等待数据库替换。",
-        tag: "中医心血管",
-        organization: "江苏省中医院",
-        title: "副主任中医师",
-        specialty: "中医心血管",
-        introduction: "这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。",
-        qaTitleOne: "胸闷胸痛平时需要注意什么？",
-        qaTitleTwo: "冠心病饮食如何调理？",
-        avatarUrl: ""
-      }),
-      new DoctorItem({
-        id: "d4",
-        primaryCategoryId: "internal",
-        secondaryCategoryId: "brain",
-        name: "刘敏",
-        shortName: "敏",
-        brief: "徐州市中医院脑病方向副主任医师，当前为占位简介内容，后续由接口统一替换。",
-        tag: "脑病方向",
-        organization: "徐州市中医院",
-        title: "副主任医师",
-        specialty: "脑病方向",
-        introduction: "这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。",
-        qaTitleOne: "头晕头痛持续发作怎么办？",
-        qaTitleTwo: "脑病恢复期如何调养？",
-        avatarUrl: ""
-      }),
-      new DoctorItem({
-        id: "d5",
-        primaryCategoryId: "internal",
-        secondaryCategoryId: "elder",
-        name: "赵宁",
-        shortName: "赵",
-        brief: "老年病方向医生占位简介内容，至少展示三行并在超出时省略，方便后续接真实数据。",
-        tag: "老年病",
-        organization: "南京市中医院",
-        title: "主任医师",
-        specialty: "老年病调养",
-        introduction: "这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。",
-        qaTitleOne: "老人睡眠差和食欲差怎么调养？",
-        qaTitleTwo: "慢病管理需要注意什么？",
-        avatarUrl: ""
-      }),
-      new DoctorItem({
-        id: "d6",
-        primaryCategoryId: "surgery",
-        secondaryCategoryId: "",
-        name: "王庆春",
-        shortName: "王",
-        brief: "连云港市中医院外科方向主任中医师，医生信息当前保留占位内容。",
-        tag: "中医外科",
-        organization: "连云港市中医院",
-        title: "主任中医师",
-        specialty: "中医外科",
-        introduction: "这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。",
-        qaTitleOne: "术后体虚怎样进行中医调理？",
-        qaTitleTwo: "慢性伤口恢复如何用药？",
-        avatarUrl: ""
-      }),
-      new DoctorItem({
-        id: "d7",
-        primaryCategoryId: "surgery",
-        secondaryCategoryId: "",
-        name: "郑晓丹",
-        shortName: "郑",
-        brief: "南通市中医院中医外科医学博士，医生简介占位内容等待数据库导入。",
-        tag: "中医外科",
-        organization: "南通市中医院",
-        title: "医学博士",
-        specialty: "中医外科",
-        introduction: "这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。",
-        qaTitleOne: "术后调理期间饮食注意事项？",
-        qaTitleTwo: "长期慢性炎症如何调理？",
-        avatarUrl: ""
-      }),
-      new DoctorItem({
-        id: "d8",
-        primaryCategoryId: "acupuncture",
-        secondaryCategoryId: "",
-        name: "邹冲",
-        shortName: "邹",
-        brief: "江苏省中医院五官科方向主治医师，医生简介占位内容后续直接替换。",
-        tag: "中医五官科",
-        organization: "江苏省中医院",
-        title: "主治医师",
-        specialty: "中医五官科",
-        introduction: "这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。",
-        qaTitleOne: "耳鸣耳聋如何进行中医调理？",
-        qaTitleTwo: "过敏性鼻炎怎么辨证治疗？",
-        avatarUrl: ""
-      })
-    ]);
-    const currentPrimaryId = common_vendor.ref("internal");
-    const currentSecondaryId = common_vendor.ref("");
-    const currentDoctors = common_vendor.ref([]);
-    const refreshDoctors = () => {
-      currentDoctors.value = doctors.value.filter((item) => {
-        if (item.primaryCategoryId != currentPrimaryId.value) {
-          return false;
+    const searchKeyword = common_vendor.ref("");
+    const selectedCategoryKey = common_vendor.ref("all");
+    const selectedCategoryId = common_vendor.ref(0);
+    const selectedCategorySpecialty = common_vendor.ref("");
+    const categoryItems = common_vendor.ref([]);
+    const expertItems = common_vendor.ref([]);
+    const page = common_vendor.ref(1);
+    const hasMore = common_vendor.ref(true);
+    const isLoading = common_vendor.ref(true);
+    const isListLoading = common_vendor.ref(false);
+    const errorText = common_vendor.ref("");
+    const safeText = (value = null) => {
+      return value == null || value.length == 0 ? "" : value;
+    };
+    const sanitizeAvatarUrl = (value) => {
+      const avatar = utils_auth.normalizeAppUrl(safeText(value));
+      if (avatar.length == 0) {
+        return "";
+      }
+      if (avatar.indexOf("example.com") >= 0) {
+        return "";
+      }
+      return avatar;
+    };
+    const toShortName = (name) => {
+      const text = safeText(name);
+      return text.length > 0 ? text.substring(0, 1) : fallbackShortName;
+    };
+    const sortCategoryItems = () => {
+      categoryItems.value = categoryItems.value.slice().sort((left, right) => {
+        if (left.categoryId > 0 && right.categoryId > 0) {
+          return left.categoryId - right.categoryId;
         }
-        if (currentSecondaryId.value == "") {
-          return true;
-        }
-        return item.secondaryCategoryId == currentSecondaryId.value;
+        return left.name.localeCompare(right.name);
       });
     };
-    const selectPrimaryCategory = (id) => {
-      currentPrimaryId.value = id;
-      currentSecondaryId.value = "";
-      refreshDoctors();
+    const resolveCategoryName = (detail, categoryId) => {
+      const specialty = safeText(detail.specialty);
+      if (specialty.length > 0) {
+        return specialty;
+      }
+      const title = safeText(detail.title);
+      if (title.length > 0) {
+        return title;
+      }
+      return fallbackCategoryPrefix + " " + String(categoryId);
     };
-    const selectSecondaryCategory = (primaryId, childId) => {
-      currentPrimaryId.value = primaryId;
-      currentSecondaryId.value = childId;
-      refreshDoctors();
+    const appendCategoryItems = (detail) => {
+      const ids = detail.categoryIds != null ? detail.categoryIds : [];
+      if (ids.length > 0) {
+        ids.forEach((categoryId) => {
+          if (categoryId <= 0) {
+            return null;
+          }
+          if (categoryItems.value.some((item) => {
+            return item.categoryId == categoryId;
+          })) {
+            return null;
+          }
+          categoryItems.value.push({
+            key: "id:" + String(categoryId),
+            categoryId,
+            specialty: "",
+            name: resolveCategoryName(detail, categoryId)
+          });
+        });
+        return null;
+      }
+      const specialty = safeText(detail.specialty);
+      if (specialty.length == 0) {
+        return null;
+      }
+      if (categoryItems.value.some((item) => {
+        return item.specialty == specialty;
+      })) {
+        return null;
+      }
+      categoryItems.value.push({
+        key: "sp:" + specialty,
+        categoryId: 0,
+        specialty,
+        name: specialty
+      });
+    };
+    const filterExpertsBySelectedCategory = (records) => {
+      if (selectedCategoryId.value > 0) {
+        return records;
+      }
+      if (selectedCategorySpecialty.value.length == 0) {
+        return records;
+      }
+      return records.filter((item) => {
+        return safeText(item.specialty) == selectedCategorySpecialty.value;
+      });
+    };
+    const resolveRequestPage = (loadMoreValue) => {
+      if (selectedCategoryId.value == 0 && selectedCategorySpecialty.value.length > 0) {
+        return 1;
+      }
+      return loadMoreValue ? page.value : 1;
+    };
+    const resolveRequestSize = () => {
+      if (selectedCategoryId.value == 0 && selectedCategorySpecialty.value.length > 0) {
+        return CATEGORY_FETCH_SIZE;
+      }
+      return PAGE_SIZE;
+    };
+    const resetSelection = () => {
+      selectedCategoryKey.value = "all";
+      selectedCategoryId.value = 0;
+      selectedCategorySpecialty.value = "";
+    };
+    const applyCategorySelection = (item = null) => {
+      if (item == null) {
+        resetSelection();
+        return null;
+      }
+      selectedCategoryKey.value = item.key;
+      selectedCategoryId.value = item.categoryId;
+      selectedCategorySpecialty.value = item.specialty;
+    };
+    const rebuildCategories = (records) => {
+      categoryItems.value = [];
+      records.forEach((detail) => {
+        appendCategoryItems(detail);
+      });
+      sortCategoryItems();
+    };
+    const mapExpert = (detail) => {
+      return new ExpertCard({
+        id: detail.id,
+        name: safeText(detail.realName).length > 0 ? safeText(detail.realName) : fallbackExpertName,
+        shortName: toShortName(detail.realName),
+        title: safeText(detail.title),
+        organization: safeText(detail.organization),
+        specialty: safeText(detail.specialty),
+        avatarUrl: sanitizeAvatarUrl(detail.avatarUrl),
+        consultationNotice: safeText(detail.consultationNotice),
+        avatarFailed: false
+      });
+    };
+    const loadCategories = () => {
+      utils_auth.fetchExperts(1, CATEGORY_FETCH_SIZE, "", 0, (pageData) => {
+        const records = pageData.records != null ? pageData.records : [];
+        rebuildCategories(records);
+      }, () => {
+      });
+    };
+    const loadExperts = (loadMoreValue) => {
+      if (!loadMoreValue) {
+        page.value = 1;
+        hasMore.value = true;
+        errorText.value = "";
+        isLoading.value = true;
+      } else {
+        if (!hasMore.value || isListLoading.value) {
+          return null;
+        }
+        isListLoading.value = true;
+      }
+      utils_auth.fetchExperts(resolveRequestPage(loadMoreValue), resolveRequestSize(), searchKeyword.value, selectedCategoryId.value, (pageData) => {
+        const records = pageData.records != null ? pageData.records : [];
+        const filteredRecords = filterExpertsBySelectedCategory(records);
+        const mapped = filteredRecords.map((item) => {
+          return mapExpert(item);
+        });
+        if (loadMoreValue) {
+          expertItems.value = expertItems.value.concat(mapped);
+        } else {
+          expertItems.value = mapped;
+        }
+        if (categoryItems.value.length == 0) {
+          rebuildCategories(records);
+        }
+        hasMore.value = selectedCategorySpecialty.value.length == 0 && mapped.length >= PAGE_SIZE;
+        if (hasMore.value) {
+          page.value += 1;
+        }
+        isLoading.value = false;
+        isListLoading.value = false;
+      }, (message) => {
+        errorText.value = message.length > 0 ? message : loadFailedText;
+        isLoading.value = false;
+        isListLoading.value = false;
+      });
+    };
+    const handleSearch = () => {
+      loadExperts(false);
+    };
+    const reloadExperts = () => {
+      loadExperts(false);
+    };
+    const selectCategory = (item) => {
+      if (typeof item == "number" && item == 0) {
+        resetSelection();
+        loadExperts(false);
+        return null;
+      }
+      if (typeof item != "number") {
+        applyCategorySelection(item);
+      }
+      loadExperts(false);
+    };
+    const loadMore = () => {
+      loadExperts(true);
+    };
+    const handleAvatarError = (id) => {
+      expertItems.value = expertItems.value.map((item) => {
+        if (item.id != id) {
+          return item;
+        }
+        return new ExpertCard({
+          id: item.id,
+          name: item.name,
+          shortName: item.shortName,
+          title: item.title,
+          organization: item.organization,
+          specialty: item.specialty,
+          avatarUrl: "",
+          consultationNotice: item.consultationNotice,
+          avatarFailed: true
+        });
+      });
     };
     const goDoctorDetail = (doctor) => {
       common_vendor.index.navigateTo({
-        url: "/pages/consult/detail?id=" + doctor.id + "&name=" + encodeURIComponent(doctor.name) + "&title=" + encodeURIComponent(doctor.title) + "&organization=" + encodeURIComponent(doctor.organization) + "&specialty=" + encodeURIComponent(doctor.specialty) + "&tag=" + encodeURIComponent(doctor.tag)
+        url: "/pages/consult/detail?id=" + String(doctor.id) + "&name=" + encodeURIComponent(doctor.name) + "&title=" + encodeURIComponent(doctor.title) + "&organization=" + encodeURIComponent(doctor.organization) + "&specialty=" + encodeURIComponent(doctor.specialty) + "&tag=" + encodeURIComponent(doctor.consultationNotice)
       });
+    };
+    const goMyQuestions = () => {
+      common_vendor.index.navigateTo({ url: "/pages/consult/questions" });
     };
     const goLearningPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/index/index" });
@@ -284,68 +330,102 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goMinePage = () => {
       common_vendor.index.redirectTo({ url: "/pages/mine/index" });
     };
-    refreshDoctors();
+    loadCategories();
+    loadExperts(false);
     return (_ctx, _cache) => {
       "raw js";
-      const __returned__ = {
+      const __returned__ = common_vendor.e({
         a: common_assets._imports_0$3,
-        b: common_vendor.f(common_vendor.unref(primaryCategories), (item, k0, i0) => {
+        b: common_vendor.t(pageTitleText),
+        c: searchPlaceholder,
+        d: common_vendor.o(handleSearch),
+        e: searchKeyword.value,
+        f: common_vendor.o(($event) => {
+          return searchKeyword.value = $event.detail.value;
+        }),
+        g: common_vendor.t(searchButtonText),
+        h: common_vendor.o(handleSearch),
+        i: selectedCategoryId.value == 0
+      }, selectedCategoryId.value == 0 ? {} : {}, {
+        j: common_vendor.t(allCategoryText),
+        k: selectedCategoryId.value == 0 ? 1 : "",
+        l: selectedCategoryId.value == 0 ? 1 : "",
+        m: common_vendor.o(($event) => {
+          return selectCategory(0);
+        }),
+        n: common_vendor.f(categoryItems.value, (item, k0, i0) => {
           return common_vendor.e({
-            a: common_vendor.unref(currentPrimaryId) === item.id && common_vendor.unref(currentSecondaryId) === ""
-          }, common_vendor.unref(currentPrimaryId) === item.id && common_vendor.unref(currentSecondaryId) === "" ? {} : {}, {
+            a: selectedCategoryKey.value == item.key
+          }, selectedCategoryKey.value == item.key ? {} : {}, {
             b: common_vendor.t(item.name),
-            c: common_vendor.unref(currentPrimaryId) === item.id && common_vendor.unref(currentSecondaryId) === "" ? 1 : "",
-            d: common_vendor.unref(currentPrimaryId) === item.id && common_vendor.unref(currentSecondaryId) === "" ? 1 : "",
-            e: common_vendor.o(($event) => {
-              return selectPrimaryCategory(item.id);
-            }, item.id),
-            f: common_vendor.unref(currentPrimaryId) === item.id && item.children.length > 0
-          }, common_vendor.unref(currentPrimaryId) === item.id && item.children.length > 0 ? {
-            g: common_vendor.f(item.children, (child, k1, i1) => {
-              return common_vendor.e({
-                a: common_vendor.unref(currentSecondaryId) === child.id
-              }, common_vendor.unref(currentSecondaryId) === child.id ? {} : {}, {
-                b: common_vendor.t(child.name),
-                c: common_vendor.unref(currentSecondaryId) === child.id ? 1 : "",
-                d: child.id,
-                e: common_vendor.unref(currentSecondaryId) === child.id ? 1 : "",
-                f: common_vendor.o(($event) => {
-                  return selectSecondaryCategory(item.id, child.id);
-                }, child.id)
-              });
-            })
-          } : {}, {
-            h: item.id
+            c: selectedCategoryKey.value == item.key ? 1 : "",
+            d: item.key,
+            e: selectedCategoryKey.value == item.key ? 1 : "",
+            f: common_vendor.o(($event) => {
+              return selectCategory(item);
+            }, item.key)
           });
         }),
-        c: common_vendor.f(common_vendor.unref(currentDoctors), (doctor, k0, i0) => {
+        o: isLoading.value
+      }, isLoading.value ? {
+        p: common_vendor.t(loadingText)
+      } : errorText.value.length > 0 ? {
+        r: common_vendor.t(errorText.value),
+        s: common_vendor.t(retryText),
+        t: common_vendor.o(reloadExperts)
+      } : expertItems.value.length == 0 ? {
+        w: common_vendor.t(emptyExpertText)
+      } : common_vendor.e({
+        x: common_vendor.f(expertItems.value, (doctor, k0, i0) => {
           return common_vendor.e({
-            a: doctor.avatarUrl !== ""
-          }, doctor.avatarUrl !== "" ? {
-            b: doctor.avatarUrl
+            a: doctor.avatarUrl.length > 0 && !doctor.avatarFailed
+          }, doctor.avatarUrl.length > 0 && !doctor.avatarFailed ? {
+            b: doctor.avatarUrl,
+            c: common_vendor.o(($event) => {
+              return handleAvatarError(doctor.id);
+            }, doctor.id)
           } : {
-            c: common_vendor.t(doctor.shortName)
+            d: common_vendor.t(doctor.shortName)
           }, {
-            d: common_vendor.t(doctor.name),
-            e: common_vendor.t(doctor.brief),
-            f: common_vendor.t(doctor.tag),
-            g: doctor.id,
-            h: common_vendor.o(($event) => {
+            e: common_vendor.t(doctor.name),
+            f: common_vendor.t(doctor.title),
+            g: common_vendor.t(doctor.organization),
+            h: common_vendor.t(doctor.specialty),
+            i: doctor.id,
+            j: common_vendor.o(($event) => {
               return goDoctorDetail(doctor);
             }, doctor.id)
           });
         }),
-        d: common_assets._imports_1$2,
-        e: common_vendor.o(goLearningPage),
-        f: common_assets._imports_2,
-        g: common_vendor.o(goExamPage),
-        h: common_assets._imports_3$1,
-        i: common_assets._imports_4,
-        j: common_vendor.o(goKnowledgePage),
-        k: common_assets._imports_5,
-        l: common_vendor.o(goMinePage),
-        m: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
-      };
+        y: isListLoading.value
+      }, isListLoading.value ? {
+        z: common_vendor.t(loadingMoreText)
+      } : !hasMore.value ? {
+        B: common_vendor.t(noMoreText)
+      } : {}, {
+        A: !hasMore.value
+      }), {
+        q: errorText.value.length > 0,
+        v: expertItems.value.length == 0,
+        C: common_vendor.o(loadMore),
+        D: common_vendor.t(myQuestionsText),
+        E: common_vendor.o(goMyQuestions),
+        F: common_assets._imports_1$2,
+        G: common_vendor.t(learningText),
+        H: common_vendor.o(goLearningPage),
+        I: common_assets._imports_2,
+        J: common_vendor.t(examText),
+        K: common_vendor.o(goExamPage),
+        L: common_assets._imports_3$1,
+        M: common_vendor.t(consultText),
+        N: common_assets._imports_4,
+        O: common_vendor.t(knowledgeText),
+        P: common_vendor.o(goKnowledgePage),
+        Q: common_assets._imports_5,
+        R: common_vendor.t(mineText),
+        S: common_vendor.o(goMinePage),
+        T: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+      });
       return __returned__;
     };
   }

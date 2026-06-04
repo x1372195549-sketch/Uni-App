@@ -1,0 +1,395 @@
+<template>
+	<view class="page">
+		<image class="top-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
+
+		<view class="nav-back" @tap="goBack">
+			<image class="nav-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+		</view>
+
+		<view class="header">
+			<text class="header-title">{{ pageTitleText }}</text>
+		</view>
+
+		<scroll-view class="scroll" scroll-y="true">
+			<view v-if="isLoading" class="state-wrap">
+				<text class="state-text">{{ loadingText }}</text>
+			</view>
+
+			<view v-else-if="errorText.length > 0" class="state-wrap">
+				<text class="state-text">{{ errorText }}</text>
+				<button class="retry-btn" hover-class="retry-btn-hover" @tap="loadDetail">{{ retryText }}</button>
+			</view>
+
+			<view v-else class="detail-wrap">
+				<view class="question-card">
+					<view class="question-head">
+						<text class="question-title">{{ title }}</text>
+						<text class="status-tag" :class="statusClass">{{ statusLabel }}</text>
+					</view>
+					<text class="question-id">{{ questionIdLabel }}{{ detailId }}</text>
+					<text class="question-content">{{ content }}</text>
+				</view>
+
+				<view class="answer-section">
+					<view class="section-head">
+						<view class="section-line"></view>
+						<text class="section-title">{{ answerSectionText }}</text>
+					</view>
+
+					<view v-if="answerItems.length == 0" class="empty-answer">
+						<text class="empty-answer-text">{{ emptyAnswerText }}</text>
+					</view>
+
+					<view v-else v-for="item in answerItems" :key="item.id" class="answer-card">
+						<text class="answer-content">{{ item.content }}</text>
+						<text class="answer-time">{{ item.answeredAt }}</text>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { ref } from 'vue'
+import { fetchQaQuestionDetail, type AppQaQuestion, type AppQaAnswer } from '../../utils/auth.uts'
+
+type AnswerDisplayItem = {
+	id : number
+	content : string
+	answeredAt : string
+}
+
+const questionStorageKey = 'consult_current_question_id'
+
+const pageTitleText = '\u54a8\u8be2\u8be6\u60c5'
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const answerSectionText = '\u4e13\u5bb6\u56de\u590d'
+const emptyAnswerText = '\u4e13\u5bb6\u5c1a\u672a\u56de\u590d\uff0c\u8bf7\u8010\u5fc3\u7b49\u5f85'
+const missingIdText = '\u7f3a\u5c11\u54a8\u8be2ID'
+const failedText = '\u54a8\u8be2\u8be6\u60c5\u52a0\u8f7d\u5931\u8d25'
+const untitledText = '\u672a\u547d\u540d\u54a8\u8be2'
+const emptyContentText = '\u6682\u65e0\u95ee\u9898\u63cf\u8ff0'
+const questionIdLabel = '\u54a8\u8be2ID\uff1a'
+
+const detailId = ref('')
+const isLoading = ref(true)
+const errorText = ref('')
+const title = ref('')
+const content = ref('')
+const statusLabel = ref('')
+const statusClass = ref('status-pending')
+const answerItems = ref<AnswerDisplayItem[]>([])
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const mapStatusClass = (status : string) : string => {
+	if (status == 'ANSWERED') {
+		return 'status-answered'
+	}
+	if (status == 'CLOSED') {
+		return 'status-closed'
+	}
+	return 'status-pending'
+}
+
+const saveCurrentQuestionId = (id : string) => {
+	if (id.length > 0) {
+		uni.setStorageSync(questionStorageKey, id)
+	}
+}
+
+const loadParams = () => {
+	const currentPages = getCurrentPages()
+	if (currentPages.length > 0) {
+		const currentPage = currentPages[currentPages.length - 1]
+		if (currentPage.options != null) {
+			const options = currentPage.options
+			const routeId = options['id']
+			if (routeId != null) {
+				detailId.value = String(routeId)
+			}
+		}
+	}
+
+	if (detailId.value.length == 0) {
+		const stored = uni.getStorageSync(questionStorageKey)
+		if (stored != null && String(stored).length > 0) {
+			detailId.value = String(stored)
+		}
+	}
+
+	saveCurrentQuestionId(detailId.value)
+}
+
+const applyDetail = (detail : AppQaQuestion) => {
+	const titleValue = safeText(detail.title)
+	const contentValue = safeText(detail.content)
+	const statusLabelValue = safeText(detail.statusLabel).length > 0 ? safeText(detail.statusLabel) : safeText(detail.status)
+
+	title.value = titleValue.length > 0 ? titleValue : untitledText
+	content.value = contentValue.length > 0 ? contentValue : emptyContentText
+	statusLabel.value = statusLabelValue.length > 0 ? statusLabelValue : '--'
+	statusClass.value = mapStatusClass(safeText(detail.status))
+	answerItems.value = detail.answers != null ? detail.answers.map((item : AppQaAnswer) : AnswerDisplayItem => {
+		return {
+			id: item.id,
+			content: safeText(item.content),
+			answeredAt: safeText(item.answeredAt).replace('T', ' ')
+		}
+	}) : []
+}
+
+const loadDetail = () => {
+	loadParams()
+
+	if (detailId.value.length == 0) {
+		errorText.value = missingIdText
+		isLoading.value = false
+		return
+	}
+
+	isLoading.value = true
+	errorText.value = ''
+
+	fetchQaQuestionDetail(
+		detailId.value,
+		(detail) => {
+			applyDetail(detail)
+			isLoading.value = false
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : failedText
+			isLoading.value = false
+		}
+	)
+}
+
+const goBack = () => {
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack({ delta: 1 })
+		return
+	}
+	uni.redirectTo({ url: '/pages/consult/questions' })
+}
+
+loadDetail()
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+	position: relative;
+}
+
+.top-bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 750rpx;
+	height: 210rpx;
+}
+
+.nav-back {
+	position: absolute;
+	left: 20rpx;
+	top: 94rpx;
+	width: 68rpx;
+	height: 68rpx;
+	border-radius: 34rpx;
+	z-index: 3;
+	align-items: center;
+	justify-content: center;
+}
+
+.nav-back-icon {
+	width: 24rpx;
+	height: 24rpx;
+}
+
+.header {
+	padding-top: 96rpx;
+	padding-left: 120rpx;
+	padding-right: 120rpx;
+	padding-bottom: 24rpx;
+	min-height: 160rpx;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	z-index: 2;
+}
+
+.header-title {
+	width: 100%;
+	text-align: center;
+	font-size: 20px;
+	line-height: 30px;
+	color: #1f2329;
+	font-weight: 600;
+}
+
+.scroll {
+	flex: 1;
+	position: relative;
+	z-index: 1;
+}
+
+.state-wrap {
+	padding: 180rpx 32rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9aa0a8;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	min-width: 220rpx;
+	height: 76rpx;
+	line-height: 76rpx;
+	padding-left: 28rpx;
+	padding-right: 28rpx;
+	background-color: #18b775;
+	color: #ffffff;
+	font-size: 14px;
+	border-radius: 14rpx;
+	border-width: 0;
+}
+
+.retry-btn-hover {
+	opacity: 0.92;
+}
+
+.detail-wrap {
+	padding: 16rpx 20rpx 32rpx;
+}
+
+.question-card,
+.answer-section {
+	background-color: #ffffff;
+	border-radius: 20rpx;
+	padding: 24rpx;
+	margin-bottom: 18rpx;
+	box-shadow: 0 8rpx 24rpx rgba(31, 35, 41, 0.05);
+}
+
+.question-head {
+	flex-direction: row;
+	align-items: flex-start;
+}
+
+.question-title {
+	flex: 1;
+	padding-right: 16rpx;
+	font-size: 16px;
+	line-height: 24px;
+	color: #1f2329;
+	font-weight: 600;
+}
+
+.status-tag {
+	max-width: 180rpx;
+	padding-left: 14rpx;
+	padding-right: 14rpx;
+	padding-top: 4rpx;
+	padding-bottom: 4rpx;
+	border-radius: 20rpx;
+	font-size: 12px;
+	line-height: 18px;
+	text-align: center;
+}
+
+.status-pending {
+	background-color: #fff4d6;
+	color: #d49512;
+}
+
+.status-answered {
+	background-color: #e6f8ef;
+	color: #18b775;
+}
+
+.status-closed {
+	background-color: #f0f0f0;
+	color: #9b9b9b;
+}
+
+.question-id {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #9aa0a8;
+}
+
+.question-content {
+	margin-top: 12rpx;
+	font-size: 14px;
+	line-height: 22px;
+	color: #5f6670;
+}
+
+.section-head {
+	flex-direction: row;
+	align-items: center;
+}
+
+.section-line {
+	width: 8rpx;
+	height: 28rpx;
+	border-radius: 8rpx;
+	background-color: #18b775;
+	margin-right: 14rpx;
+}
+
+.section-title {
+	font-size: 18px;
+	line-height: 26px;
+	color: #1f2329;
+	font-weight: 600;
+}
+
+.empty-answer {
+	padding-top: 22rpx;
+}
+
+.empty-answer-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9aa0a8;
+}
+
+.answer-card {
+	padding-top: 20rpx;
+	padding-bottom: 20rpx;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #edf0f3;
+}
+
+.answer-card:last-child {
+	border-bottom-width: 0;
+	padding-bottom: 0;
+}
+
+.answer-content {
+	font-size: 14px;
+	line-height: 24px;
+	color: #5f6670;
+}
+
+.answer-time {
+	margin-top: 12rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #9aa0a8;
+}
+</style>

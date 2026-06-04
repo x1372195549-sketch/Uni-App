@@ -1,34 +1,53 @@
 <template>
 	<view class="page">
+		<view class="page-top-bg"></view>
+
+		<view class="nav-back" @tap="goBack">
+			<image class="nav-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+		</view>
+
 		<view class="header">
-			<view class="header-back" @click="goBack">
-				<image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
-			</view>
-			<text class="header-title">医生详情</text>
+			<text class="header-title">专家详情</text>
 		</view>
 
 		<scroll-view class="scroll" scroll-y="true">
-			<view class="hero">
-				<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
-				<view class="avatar-shell">
-					<image v-if="avatarUrl.length > 0" class="avatar-image" :src="avatarUrl" mode="aspectFill"></image>
+			<view class="hero-spacer"></view>
+
+			<view class="hero-card">
+				<view class="hero-overlay">
+					<image
+						v-if="avatarUrl.length > 0 && !avatarFailed"
+						class="avatar-image"
+						:src="avatarUrl"
+						mode="aspectFill"
+						@error="handleAvatarError"
+					></image>
 					<view v-else class="avatar-circle">
 						<text class="avatar-text">{{ shortName }}</text>
+					</view>
+
+					<view class="hero-info">
+						<view class="name-row">
+							<text class="doctor-name">{{ doctorName }}</text>
+							<text class="doctor-title">{{ doctorTitle }}</text>
+						</view>
+						<view class="meta-row">
+							<text class="meta-label">单位：</text>
+							<text class="meta-value">{{ organization }}</text>
+						</view>
+						<view class="meta-row">
+							<text class="meta-label">专业方向：</text>
+							<text class="meta-value">{{ specialty }}</text>
+						</view>
+						<view v-if="consultationNotice.length > 0" class="meta-row">
+							<text class="meta-label">咨询须知：</text>
+							<text class="meta-value">{{ consultationNotice }}</text>
+						</view>
 					</view>
 				</view>
 			</view>
 
-			<view class="info-card">
-				<view class="name-row">
-					<text class="doctor-name">{{ doctorName }}</text>
-					<text class="doctor-title">{{ doctorTitle }}</text>
-				</view>
-				<text class="meta-text">单位：{{ organization }}</text>
-				<text class="meta-text">专业方向：{{ specialty }}</text>
-				<text class="meta-text">分类标签：{{ tag }}</text>
-			</view>
-
-			<view class="section">
+			<view class="section-card">
 				<view class="section-head">
 					<view class="section-line"></view>
 					<text class="section-title">履历介绍</text>
@@ -36,79 +55,49 @@
 				<text class="section-content">{{ introduction }}</text>
 			</view>
 
-			<view class="section">
-				<view class="section-head section-head-between">
-					<view class="section-head-left">
-						<view class="section-line"></view>
-						<text class="section-title">专家答疑</text>
-					</view>
-					<text class="more-text">更多</text>
+			<view v-if="experienceItems.length > 0" class="section-card">
+				<view class="section-head">
+					<view class="section-line"></view>
+					<text class="section-title">专家经历</text>
 				</view>
 
-				<view class="qa-item">
-					<text class="qa-title">{{ qaTitleOne }}</text>
-					<view class="qa-row">
-						<text class="qa-time">2020/08/08</text>
-						<text class="qa-status">已回答</text>
-					</view>
-				</view>
-
-				<view class="qa-item">
-					<text class="qa-title">{{ qaTitleTwo }}</text>
-					<view class="qa-row">
-						<text class="qa-time">2020/06/22</text>
-						<text class="qa-status">已回答</text>
-					</view>
+				<view v-for="item in experienceItems" :key="item.id" class="experience-item">
+					<text class="experience-title">{{ item.title }}</text>
+					<text v-if="item.timeText.length > 0" class="experience-time">{{ item.timeText }}</text>
+					<text v-if="item.description.length > 0" class="experience-description">{{ item.description }}</text>
 				</view>
 			</view>
 
-			<view class="action-wrap">
-				<button class="consult-btn" hover-class="consult-btn-hover">咨询专家</button>
+			<view class="action-section">
+				<button class="consult-btn" hover-class="consult-btn-hover" @click="goCreateQuestion">立即咨询</button>
+				<button class="secondary-btn" hover-class="secondary-btn-hover" @click="goMyQuestions">我的咨询</button>
 			</view>
 		</scroll-view>
 	</view>
 </template>
 
 <script setup lang="uts">
-import { ref, onMounted, computed } from 'vue'
-import { fetchExpertDetail } from '../../utils/auth.uts'
+import { computed, onMounted, ref } from 'vue'
+import { fetchExpertDetail, normalizeAppUrl, type ExpertDetail, type ExpertExperience } from '../../utils/auth.uts'
 
-type ExpertExperience = {
+type ExperienceDisplayItem = {
 	id : number
-	expertId : number
-	experienceType : string
 	title : string
+	timeText : string
 	description : string
-	startDate : string
-	endDate : string
-	sortOrder : number
 }
 
-type ExpertDetail = {
-	id : number
-	realName : string
-	avatarUrl : string
-	title : string
-	organization : string
-	specialty : string
-	introduction : string
-	consultationNotice : string
-	sortOrder : number
-	categoryIds : number[]
-	experiences : ExpertExperience[]
-}
-
+const expertStorageKey = 'consult_current_expert'
 const detailId = ref('')
-const doctorName = ref('医生详情')
+const doctorName = ref('专家详情')
 const doctorTitle = ref('专家')
 const organization = ref('暂无单位信息')
 const specialty = ref('暂无专业方向')
-const tag = ref('暂无标签')
+const consultationNotice = ref('')
 const avatarUrl = ref('')
-const introduction = ref('这里展示医生简介、履历和研究方向。接口返回医生介绍时，将优先使用后端数据。')
-
-const qaTitleOne = ref('医生答疑功能占位，后续可根据后端接口补充真实问答内容。')
-const qaTitleTwo = ref('当前页面已优先展示医生基础信息，问答列表等待后端接口补充。')
+const avatarFailed = ref(false)
+const introduction = ref('这里展示专家简介、履历和研究方向。')
+const experienceItems = ref<ExperienceDisplayItem[]>([])
 
 const shortName = computed(() : string => {
 	return doctorName.value.length > 0 ? doctorName.value.substring(0, 1) : '医'
@@ -118,8 +107,52 @@ const safeText = (value : string | null) : string => {
 	return value == null || value.length == 0 ? '' : value
 }
 
+const sanitizeAvatarUrl = (value : string) : string => {
+	const avatar = normalizeAppUrl(safeText(value))
+	if (avatar.length == 0) {
+		return ''
+	}
+	if (avatar.indexOf('example.com') >= 0) {
+		return ''
+	}
+	return avatar
+}
+
+const formatDateRange = (startDate : string, endDate : string) : string => {
+	const start = safeText(startDate)
+	const end = safeText(endDate)
+	if (start.length == 0 && end.length == 0) {
+		return ''
+	}
+	if (start.length > 0 && end.length > 0) {
+		return start + ' - ' + end
+	}
+	return start.length > 0 ? start : end
+}
+
 const goBack = () => {
 	uni.navigateBack()
+}
+
+const handleAvatarError = () => {
+	avatarFailed.value = true
+	avatarUrl.value = ''
+}
+
+const mapExperience = (item : ExpertExperience) : ExperienceDisplayItem => {
+	return {
+		id: item.id,
+		title: safeText(item.title),
+		timeText: formatDateRange(item.startDate, item.endDate),
+		description: safeText(item.description)
+	}
+}
+
+const saveCurrentExpert = () => {
+	uni.setStorageSync(expertStorageKey, {
+		expertId: detailId.value,
+		expertName: doctorName.value
+	})
 }
 
 const applyExpertDetail = (detail : ExpertDetail) => {
@@ -129,7 +162,7 @@ const applyExpertDetail = (detail : ExpertDetail) => {
 	const specialtyText = safeText(detail.specialty)
 	const introText = safeText(detail.introduction)
 	const noticeText = safeText(detail.consultationNotice)
-	const avatarText = safeText(detail.avatarUrl)
+	const avatarText = sanitizeAvatarUrl(detail.avatarUrl)
 
 	if (nameText.length > 0) {
 		doctorName.value = nameText
@@ -143,70 +176,96 @@ const applyExpertDetail = (detail : ExpertDetail) => {
 	if (specialtyText.length > 0) {
 		specialty.value = specialtyText
 	}
-	if (avatarText.length > 0) {
-		avatarUrl.value = avatarText
-	}
-	if (noticeText.length > 0) {
-		tag.value = noticeText
-	}
+	avatarUrl.value = avatarText
+	avatarFailed.value = avatarText.length == 0
+	consultationNotice.value = noticeText
 
 	if (introText.length > 0) {
 		introduction.value = introText
-	} else if (detail.experiences != null && detail.experiences.length > 0) {
-		const experienceText = detail.experiences
-			.slice(0, 3)
-			.map((item : ExpertExperience) : string => {
-				const titleValue = safeText(item.title)
-				const descValue = safeText(item.description)
-				return titleValue.length > 0 ? (titleValue + (descValue.length > 0 ? '：' + descValue : '')) : descValue
-			})
-			.filter((item : string) : boolean => item.length > 0)
-		if (experienceText.length > 0) {
-			introduction.value = experienceText.join('；')
-		}
 	}
+
+	experienceItems.value = detail.experiences != null ? detail.experiences
+		.map((item : ExpertExperience) : ExperienceDisplayItem => {
+			return mapExperience(item)
+		})
+		.filter((item : ExperienceDisplayItem) : boolean => item.title.length > 0 || item.description.length > 0) : []
+
+	saveCurrentExpert()
 }
 
 const loadParams = () => {
 	const currentPages = getCurrentPages()
-	if (currentPages.length > 0) {
-		const currentPage = currentPages[currentPages.length - 1]
-		if (currentPage.options != null) {
-			const options = currentPage.options
-			if (options['id'] != null) {
-				detailId.value = options['id'] as string
-			}
-			if (options['name'] != null) {
-				doctorName.value = decodeURIComponent(options['name'])
-			}
-			if (options['title'] != null) {
-				doctorTitle.value = decodeURIComponent(options['title'])
-			}
-			if (options['organization'] != null) {
-				organization.value = decodeURIComponent(options['organization'])
-			}
-			if (options['specialty'] != null) {
-				specialty.value = decodeURIComponent(options['specialty'])
-			}
-			if (options['tag'] != null) {
-				tag.value = decodeURIComponent(options['tag'])
-			}
-		}
+	if (currentPages.length == 0) {
+		return
+	}
+
+	const currentPage = currentPages[currentPages.length - 1]
+	if (currentPage.options == null) {
+		return
+	}
+
+	const options = currentPage.options
+	if (options['id'] != null) {
+		detailId.value = options['id'] as string
+	}
+	if (options['name'] != null) {
+		doctorName.value = decodeURIComponent(options['name'])
+	}
+	if (options['title'] != null) {
+		doctorTitle.value = decodeURIComponent(options['title'])
+	}
+	if (options['organization'] != null) {
+		organization.value = decodeURIComponent(options['organization'])
+	}
+	if (options['specialty'] != null) {
+		specialty.value = decodeURIComponent(options['specialty'])
+	}
+	if (options['tag'] != null) {
+		consultationNotice.value = decodeURIComponent(options['tag'])
 	}
 
 	if (detailId.value.length > 0) {
-		fetchExpertDetail(
-			detailId.value,
-			(detail) => {
-				applyExpertDetail(detail)
-			},
-			() => {}
-		)
+		saveCurrentExpert()
 	}
+}
+
+const loadExpertDetail = () => {
+	if (detailId.value.length == 0) {
+		return
+	}
+
+	fetchExpertDetail(
+		detailId.value,
+		(detail) => {
+			applyExpertDetail(detail)
+		},
+		(message) => {
+			if (message.length > 0) {
+				uni.showToast({
+					title: message,
+					icon: 'none'
+				})
+			}
+		}
+	)
+}
+
+const goCreateQuestion = () => {
+	saveCurrentExpert()
+	uni.navigateTo({
+		url:
+			'/pages/consult/create?expertId=' + detailId.value +
+			'&expertName=' + encodeURIComponent(doctorName.value)
+	})
+}
+
+const goMyQuestions = () => {
+	uni.navigateTo({ url: '/pages/consult/questions' })
 }
 
 onMounted(() => {
 	loadParams()
+	loadExpertDetail()
 })
 </script>
 
@@ -214,87 +273,101 @@ onMounted(() => {
 .page {
 	flex: 1;
 	background-color: #f5f5fb;
-}
-
-.header {
-	height: 96rpx;
-	padding-left: 24rpx;
-	padding-right: 24rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
 	position: relative;
 }
 
-.header-back {
+.page-top-bg {
 	position: absolute;
-	left: 20rpx;
-	width: 68rpx;
-	height: 68rpx;
-	align-items: center;
-	justify-content: center;
+	left: 0;
+	top: 0;
+	width: 750rpx;
+	height: 300rpx;
+	background-image: url('/static/home/icon_expert.png');
+	background-repeat: no-repeat;
+	background-position: left top;
+	background-size: 750rpx 300rpx;
+	z-index: 0;
 }
 
-.header-back-icon {
-	width: 24rpx;
-	height: 24rpx;
+.nav-back {
+	position: absolute;
+	top: 86rpx;
+	left: 12rpx;
+	width: 56rpx;
+	height: 56rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 3;
+}
+
+.nav-back-icon {
+	width: 26rpx;
+	height: 26rpx;
+}
+
+.header {
+	padding-top: 96rpx;
+	align-items: center;
+	position: relative;
+	z-index: 2;
+	min-height: 56rpx;
 }
 
 .header-title {
-	font-size: 22px;
-	line-height: 32px;
-	color: #2f2f2f;
+	position: absolute;
+	left: 0;
+	right: 0;
+	font-size: 19px;
+	line-height: 28px;
+	color: #1b1b1b;
 	font-weight: 600;
+	text-align: center;
 }
 
 .scroll {
 	flex: 1;
-}
-
-.hero {
-	height: 250rpx;
+	padding-top: 24rpx;
 	position: relative;
+	z-index: 1;
+}
+
+.hero-spacer {
+	height: 180rpx;
+}
+
+.hero-card {
+	margin-left: 18rpx;
+	margin-right: 18rpx;
+	border-radius: 22rpx;
 	overflow: hidden;
+	background-color: #ffffff;
+	position: relative;
+	margin-top: -24rpx;
 }
 
-.hero-bg {
-	position: absolute;
-	left: 0;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	width: 750rpx;
-	height: 250rpx;
-	opacity: 0.95;
-}
-
-.avatar-shell {
-	flex: 1;
+.hero-overlay {
+	position: relative;
+	z-index: 1;
+	padding: 24rpx 22rpx 26rpx;
 	align-items: center;
-	justify-content: center;
+	background-color: rgba(255, 255, 255, 0.98);
 }
 
-.avatar-image {
-	width: 160rpx;
-	height: 160rpx;
-	border-radius: 80rpx;
-	border-width: 8rpx;
-	border-style: solid;
-	border-color: #3dbfe2;
-	margin-top: 20rpx;
-}
-
+.avatar-image,
 .avatar-circle {
 	width: 160rpx;
 	height: 160rpx;
 	border-radius: 80rpx;
-	background-color: #d9eef8;
 	border-width: 8rpx;
 	border-style: solid;
 	border-color: #3dbfe2;
+	background-color: #d9eef8;
+	margin-top: 0;
+}
+
+.avatar-circle {
 	align-items: center;
 	justify-content: center;
-	margin-top: 20rpx;
 }
 
 .avatar-text {
@@ -303,16 +376,34 @@ onMounted(() => {
 	color: #2b829f;
 }
 
-.info-card {
-	margin-left: 28rpx;
-	margin-right: 28rpx;
-	margin-top: 16rpx;
-	padding-bottom: 12rpx;
+.hero-info {
+	width: 100%;
+	margin-top: 18rpx;
+}
+
+.meta-row {
+	margin-top: 10rpx;
+	flex-direction: row;
+	align-items: flex-start;
+}
+
+.meta-label {
+	font-size: 15px;
+	line-height: 22px;
+	color: #8a8f98;
+}
+
+.meta-value {
+	flex: 1;
+	font-size: 15px;
+	line-height: 22px;
+	color: #8a8f98;
 }
 
 .name-row {
 	flex-direction: row;
 	align-items: center;
+	flex-wrap: wrap;
 }
 
 .doctor-name {
@@ -330,30 +421,16 @@ onMounted(() => {
 	font-weight: 600;
 }
 
-.meta-text {
-	margin-top: 10rpx;
-	font-size: 15px;
-	line-height: 22px;
-	color: #8a8f98;
-}
-
-.section {
-	margin-left: 28rpx;
-	margin-right: 28rpx;
+.section-card {
 	margin-top: 18rpx;
-	padding-top: 6rpx;
+	margin-left: 18rpx;
+	margin-right: 18rpx;
+	padding: 22rpx 24rpx;
+	border-radius: 18rpx;
+	background-color: #ffffff;
 }
 
 .section-head {
-	flex-direction: row;
-	align-items: center;
-}
-
-.section-head-between {
-	justify-content: space-between;
-}
-
-.section-head-left {
 	flex-direction: row;
 	align-items: center;
 }
@@ -380,13 +457,7 @@ onMounted(() => {
 	color: #6e7680;
 }
 
-.more-text {
-	font-size: 15px;
-	line-height: 22px;
-	color: #2f2f2f;
-}
-
-.qa-item {
+.experience-item {
 	padding-top: 18rpx;
 	padding-bottom: 18rpx;
 	border-bottom-width: 1px;
@@ -394,33 +465,34 @@ onMounted(() => {
 	border-bottom-color: #ececec;
 }
 
-.qa-title {
+.experience-item:last-child {
+	border-bottom-width: 0;
+	padding-bottom: 0;
+}
+
+.experience-title {
 	font-size: 16px;
-	line-height: 26px;
+	line-height: 24px;
 	color: #2f2f2f;
+	font-weight: 600;
 }
 
-.qa-row {
-	margin-top: 10rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.qa-time {
+.experience-time {
+	margin-top: 8rpx;
 	font-size: 13px;
 	line-height: 18px;
 	color: #9aa0a8;
 }
 
-.qa-status {
+.experience-description {
+	margin-top: 10rpx;
 	font-size: 14px;
-	line-height: 20px;
-	color: #18b775;
+	line-height: 22px;
+	color: #6e7680;
 }
 
-.action-wrap {
-	padding: 34rpx 28rpx 48rpx;
+.action-section {
+	padding: 20rpx 18rpx 48rpx;
 }
 
 .consult-btn {
@@ -430,5 +502,26 @@ onMounted(() => {
 	color: #ffffff;
 	font-size: 18px;
 	line-height: 88rpx;
+}
+
+.consult-btn-hover {
+	opacity: 0.92;
+}
+
+.secondary-btn {
+	margin-top: 20rpx;
+	height: 88rpx;
+	border-radius: 14rpx;
+	background-color: #ffffff;
+	color: #18b775;
+	font-size: 18px;
+	line-height: 88rpx;
+	border-width: 2rpx;
+	border-style: solid;
+	border-color: #18b775;
+}
+
+.secondary-btn-hover {
+	opacity: 0.92;
 }
 </style>

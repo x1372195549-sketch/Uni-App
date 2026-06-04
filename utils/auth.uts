@@ -663,7 +663,11 @@ export type ExpertExperience = {
 export type ExpertDetail = {
 	id : number
 	realName : string
+	gender? : string
+	birthDate? : string
+	mobile? : string
 	avatarUrl : string
+	coverUrl? : string
 	title : string
 	organization : string
 	specialty : string
@@ -674,19 +678,236 @@ export type ExpertDetail = {
 	experiences : ExpertExperience[]
 }
 
+export type AppQaAnswer = {
+	id : number
+	questionId : number
+	adminId : number
+	expertId : number
+	content : string
+	answeredAt : string
+}
+
+export type AppQaQuestion = {
+	id : number
+	expertCategoryId : number
+	expertId : number
+	title : string
+	content : string
+	status : string
+	statusCode : string
+	statusLabel : string
+	answers : AppQaAnswer[]
+}
+
+export type AppQaQuestionRequest = {
+	expertCategoryId? : number
+	expertId? : number
+	title : string
+	content : string
+}
+
+function normalizeExpertExperience(raw : UTSJSONObject) : ExpertExperience {
+	return {
+		id: readNumberField(raw, 'id'),
+		expertId: readNumberField(raw, 'expertId'),
+		experienceType: readStringField(raw, 'experienceType'),
+		title: readStringField(raw, 'title'),
+		description: readStringField(raw, 'description'),
+		startDate: readStringField(raw, 'startDate'),
+		endDate: readStringField(raw, 'endDate'),
+		sortOrder: readNumberField(raw, 'sortOrder')
+	}
+}
+
+function normalizeExpertDetail(raw : UTSJSONObject) : ExpertDetail {
+	const categoryIdsValue = raw['categoryIds']
+	const rawCategoryIds = categoryIdsValue != null && categoryIdsValue instanceof Array ? (categoryIdsValue as number[]) : []
+	const experiencesValue = raw['experiences']
+	const rawExperiences = experiencesValue != null && experiencesValue instanceof Array ? (experiencesValue as UTSJSONObject[]) : []
+
+	return {
+		id: readNumberField(raw, 'id'),
+		realName: readStringField(raw, 'realName'),
+		gender: readStringField(raw, 'gender'),
+		birthDate: readStringField(raw, 'birthDate'),
+		mobile: readStringField(raw, 'mobile'),
+		avatarUrl: readStringField(raw, 'avatarUrl'),
+		coverUrl: readStringField(raw, 'coverUrl'),
+		title: readStringField(raw, 'title'),
+		organization: readStringField(raw, 'organization'),
+		specialty: readStringField(raw, 'specialty'),
+		introduction: readStringField(raw, 'introduction'),
+		consultationNotice: readStringField(raw, 'consultationNotice'),
+		sortOrder: readNumberField(raw, 'sortOrder'),
+		categoryIds: rawCategoryIds,
+		experiences: rawExperiences.map((item : UTSJSONObject) : ExpertExperience => {
+			return normalizeExpertExperience(item)
+		})
+	}
+}
+
+function normalizeQaAnswer(raw : UTSJSONObject) : AppQaAnswer {
+	return {
+		id: readNumberField(raw, 'id'),
+		questionId: readNumberField(raw, 'questionId'),
+		adminId: readNumberField(raw, 'adminId'),
+		expertId: readNumberField(raw, 'expertId'),
+		content: readStringField(raw, 'content'),
+		answeredAt: readStringField(raw, 'answeredAt')
+	}
+}
+
+function normalizeQaQuestion(raw : UTSJSONObject) : AppQaQuestion {
+	const answersValue = raw['answers']
+	const rawAnswers = answersValue != null && answersValue instanceof Array ? (answersValue as UTSJSONObject[]) : []
+
+	return {
+		id: readNumberField(raw, 'id'),
+		expertCategoryId: readNumberField(raw, 'expertCategoryId'),
+		expertId: readNumberField(raw, 'expertId'),
+		title: readStringField(raw, 'title'),
+		content: readStringField(raw, 'content'),
+		status: readStringField(raw, 'status'),
+		statusCode: readStringField(raw, 'statusCode'),
+		statusLabel: readStringField(raw, 'statusLabel'),
+		answers: rawAnswers.map((item : UTSJSONObject) : AppQaAnswer => {
+			return normalizeQaAnswer(item)
+		})
+	}
+}
+
 export function fetchExpertDetail(
 	id : string,
 	success : (detail : ExpertDetail) => void,
 	fail : (message : string) => void
 ) {
-	request<ExpertDetail>(
+	request<UTSJSONObject>(
 		'/api/v1/app/experts/' + id,
 		'GET',
 		null,
 		true,
 		false,
 		(detail) => {
-			success(detail)
+			success(normalizeExpertDetail(detail))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchExperts(
+	page : number,
+	size : number,
+	keyword : string,
+	categoryId : number,
+	success : (pageData : PageResponse<ExpertDetail>) => void,
+	fail : (message : string) => void
+) {
+	let path = '/api/v1/app/experts?page=' + String(page) + '&size=' + String(size)
+	if (keyword != null && keyword.length > 0) {
+		path += '&keyword=' + encodeURIComponent(keyword)
+	}
+	if (categoryId > 0) {
+		path += '&categoryId=' + String(categoryId)
+	}
+
+	request<UTSJSONObject>(
+		path,
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			const recordsValue = pageData['records']
+			const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+			success({
+				records: records.map((item : UTSJSONObject) : ExpertDetail => {
+					return normalizeExpertDetail(item)
+				}),
+				total: readNumberField(pageData, 'total'),
+				page: readNumberField(pageData, 'page'),
+				size: readNumberField(pageData, 'size')
+			})
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function createQaQuestion(
+	data : AppQaQuestionRequest,
+	success : (result : AppQaQuestion) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/interaction/qa/questions',
+		'POST',
+		data as UTSJSONObject,
+		true,
+		false,
+		(result) => {
+			success(normalizeQaQuestion(result))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchQaQuestions(
+	page : number,
+	size : number,
+	success : (pageData : PageResponse<AppQaQuestion>) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/interaction/qa/questions?page=' + String(page) + '&size=' + String(size),
+		'GET',
+		null,
+		true,
+		true,
+		(pageData) => {
+			if (pageData == null) {
+				success({
+					records: [],
+					total: 0,
+					page,
+					size
+				})
+				return
+			}
+			const recordsValue = pageData['records']
+			const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+			success({
+				records: records.map((item : UTSJSONObject) : AppQaQuestion => {
+					return normalizeQaQuestion(item)
+				}),
+				total: readNumberField(pageData, 'total') > 0 ? readNumberField(pageData, 'total') : records.length,
+				page: readNumberField(pageData, 'page') > 0 ? readNumberField(pageData, 'page') : page,
+				size: readNumberField(pageData, 'size') > 0 ? readNumberField(pageData, 'size') : size
+			})
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchQaQuestionDetail(
+	id : string,
+	success : (detail : AppQaQuestion) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/interaction/qa/questions/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(normalizeQaQuestion(detail))
 		},
 		(message) => {
 			fail(message)
@@ -713,41 +934,52 @@ export function fetchTopics(
 	)
 }
 
-function normalizeKnowledgeCategory(category : KnowledgeCategory) : KnowledgeCategory {
-	const rawChildren = category.children
-	const children = rawChildren != null && rawChildren instanceof Array ? rawChildren.map((item : KnowledgeCategory) : KnowledgeCategory => {
+function readStringField(raw : UTSJSONObject, key : string) : string {
+	const value = raw[key]
+	return typeof value == 'string' ? (value as string) : ''
+}
+
+function readNumberField(raw : UTSJSONObject, key : string) : number {
+	const value = raw[key]
+	return typeof value == 'number' ? (value as number) : 0
+}
+
+function normalizeKnowledgeCategory(raw : UTSJSONObject) : KnowledgeCategory {
+	const childrenValue = raw['children']
+	const rawChildren = childrenValue != null && childrenValue instanceof Array ? (childrenValue as UTSJSONObject[]) : []
+	const children = rawChildren.map((item : UTSJSONObject) : KnowledgeCategory => {
 		return normalizeKnowledgeCategory(item)
-	}) : []
+	})
 
 	return {
-		id: category.id,
-		parentId: category.parentId,
-		categoryName: category.categoryName != null ? category.categoryName : '',
-		categoryCode: category.categoryCode != null ? category.categoryCode : '',
-		description: category.description != null ? category.description : '',
-		sortOrder: category.sortOrder != null ? category.sortOrder : 0,
+		id: readNumberField(raw, 'id'),
+		parentId: readNumberField(raw, 'parentId'),
+		categoryName: readStringField(raw, 'categoryName'),
+		categoryCode: readStringField(raw, 'categoryCode'),
+		description: readStringField(raw, 'description'),
+		sortOrder: readNumberField(raw, 'sortOrder'),
 		children
 	} as KnowledgeCategory
 }
 
-function normalizeKnowledgeEntry(entry : KnowledgeEntry) : KnowledgeEntry {
+function normalizeKnowledgeEntry(raw : UTSJSONObject) : KnowledgeEntry {
 	return {
-		id: entry.id,
-		categoryId: entry.categoryId != null ? entry.categoryId : 0,
-		title: entry.title != null ? entry.title : '',
-		summary: entry.summary != null ? entry.summary : '',
-		categoryName: entry.categoryName != null ? entry.categoryName : '',
-		categoryCode: entry.categoryCode != null ? entry.categoryCode : '',
-		coverUrl: normalizeAppUrl(entry.coverUrl != null ? entry.coverUrl : ''),
-		content: entry.content != null ? entry.content : '',
-		keywords: entry.keywords != null ? entry.keywords : '',
-		source: entry.source != null ? entry.source : '',
-		author: entry.author != null ? entry.author : '',
-		publisher: entry.publisher != null ? entry.publisher : '',
-		totalPages: entry.totalPages != null ? entry.totalPages : 0,
-		publishedAt: entry.publishedAt != null ? entry.publishedAt : '',
-		viewCount: entry.viewCount != null ? entry.viewCount : 0,
-		sortOrder: entry.sortOrder != null ? entry.sortOrder : 0
+		id: readNumberField(raw, 'id'),
+		categoryId: readNumberField(raw, 'categoryId'),
+		title: readStringField(raw, 'title'),
+		summary: readStringField(raw, 'summary'),
+		categoryName: readStringField(raw, 'categoryName'),
+		categoryCode: readStringField(raw, 'categoryCode'),
+		coverUrl: normalizeAppUrl(readStringField(raw, 'coverUrl')),
+		content: readStringField(raw, 'content'),
+		keywords: readStringField(raw, 'keywords'),
+		source: readStringField(raw, 'source'),
+		author: readStringField(raw, 'author'),
+		publisher: readStringField(raw, 'publisher'),
+		totalPages: readNumberField(raw, 'totalPages'),
+		publishedAt: readStringField(raw, 'publishedAt'),
+		viewCount: readNumberField(raw, 'viewCount'),
+		sortOrder: readNumberField(raw, 'sortOrder')
 	} as KnowledgeEntry
 }
 
@@ -755,7 +987,7 @@ export function fetchKnowledgeCategoryTree(
 	success : (categories : KnowledgeCategory[]) => void,
 	fail : (message : string) => void
 ) {
-	request<KnowledgeCategory[]>(
+	request<UTSJSONObject[]>(
 		'/api/v1/app/knowledge/categories/tree',
 		'GET',
 		null,
@@ -763,7 +995,7 @@ export function fetchKnowledgeCategoryTree(
 		false,
 		(categories) => {
 			const categoryList = categories != null && categories instanceof Array ? categories : []
-			const normalized = categoryList.map((item : KnowledgeCategory) : KnowledgeCategory => {
+			const normalized = categoryList.map((item : UTSJSONObject) : KnowledgeCategory => {
 				return normalizeKnowledgeCategory(item)
 			})
 			success(normalized)
@@ -790,22 +1022,23 @@ export function fetchKnowledgeEntries(
 		path += '&categoryId=' + String(categoryId)
 	}
 
-	request<PageResponse<KnowledgeEntry>>(
+	request<UTSJSONObject>(
 		path,
 		'GET',
 		null,
 		true,
 		false,
 		(pageData) => {
-			const records = pageData.records != null && pageData.records instanceof Array ? pageData.records : []
-			const normalizedRecords = records.map((item : KnowledgeEntry) : KnowledgeEntry => {
+			const recordsValue = pageData['records']
+			const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+			const normalizedRecords = records.map((item : UTSJSONObject) : KnowledgeEntry => {
 				return normalizeKnowledgeEntry(item)
 			})
 			success({
 				records: normalizedRecords,
-				total: pageData.total != null ? pageData.total : normalizedRecords.length,
-				page: pageData.page != null ? pageData.page : page,
-				size: pageData.size != null ? pageData.size : size
+				total: readNumberField(pageData, 'total') > 0 ? readNumberField(pageData, 'total') : normalizedRecords.length,
+				page: readNumberField(pageData, 'page') > 0 ? readNumberField(pageData, 'page') : page,
+				size: readNumberField(pageData, 'size') > 0 ? readNumberField(pageData, 'size') : size
 			} as PageResponse<KnowledgeEntry>)
 		},
 		(message) => {
@@ -819,7 +1052,7 @@ export function fetchKnowledgeEntryDetail(
 	success : (detail : KnowledgeEntry) => void,
 	fail : (message : string) => void
 ) {
-	request<KnowledgeEntry>(
+	request<UTSJSONObject>(
 		'/api/v1/app/knowledge/entries/' + id,
 		'GET',
 		null,

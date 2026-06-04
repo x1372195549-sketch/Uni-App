@@ -72,7 +72,7 @@ type CatalogItem = {
   duration : string
 }
 
-const RESOURCE_TYPE = 'AUDIO'
+const RESOURCE_TYPE = 'podcast'
 
 const audioId = ref('')
 const activeTab = ref('intro')

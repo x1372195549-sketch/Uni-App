@@ -3,313 +3,450 @@
 		<view class="hero-shell">
 			<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
 			<view class="header">
-				<text class="header-title">咨询</text>
+				<text class="header-title">{{ pageTitleText }}</text>
+			</view>
+		</view>
+
+		<view class="search-bar">
+			<input
+				v-model="searchKeyword"
+				class="search-input"
+				:placeholder="searchPlaceholder"
+				confirm-type="search"
+				@confirm="handleSearch"
+			/>
+			<view class="search-btn" @tap="handleSearch">
+				<text class="search-btn-text">{{ searchButtonText }}</text>
 			</view>
 		</view>
 
 		<view class="content-shell">
 			<scroll-view class="category-panel" scroll-y="true">
 				<view
-					v-for="item in primaryCategories"
-					:key="item.id"
-					class="category-group"
+					class="category-item"
+					:class="{ 'category-item-active': selectedCategoryId == 0 }"
+					@tap="selectCategory(0)"
 				>
-					<view
-						class="category-item"
-						:class="{ 'category-item-active': currentPrimaryId === item.id && currentSecondaryId === '' }"
-						@click="selectPrimaryCategory(item.id)"
-					>
-						<view v-if="currentPrimaryId === item.id && currentSecondaryId === ''" class="category-line"></view>
-						<text
-							class="category-text"
-							:class="{ 'category-text-active': currentPrimaryId === item.id && currentSecondaryId === '' }"
-						>{{ item.name }}</text>
-					</view>
+					<view v-if="selectedCategoryId == 0" class="category-line"></view>
+					<text class="category-text" :class="{ 'category-text-active': selectedCategoryId == 0 }">{{ allCategoryText }}</text>
+				</view>
 
-					<view v-if="currentPrimaryId === item.id && item.children.length > 0" class="subcategory-wrap">
-						<view
-							v-for="child in item.children"
-							:key="child.id"
-							class="subcategory-item"
-							:class="{ 'subcategory-item-active': currentSecondaryId === child.id }"
-							@click="selectSecondaryCategory(item.id, child.id)"
-						>
-							<view v-if="currentSecondaryId === child.id" class="category-line subcategory-line"></view>
-							<text
-								class="subcategory-text"
-								:class="{ 'subcategory-text-active': currentSecondaryId === child.id }"
-							>{{ child.name }}</text>
-						</view>
-					</view>
+				<view
+					v-for="item in categoryItems"
+					:key="item.key"
+					class="category-item"
+					:class="{ 'category-item-active': selectedCategoryKey == item.key }"
+					@tap="selectCategory(item)"
+				>
+					<view v-if="selectedCategoryKey == item.key" class="category-line"></view>
+					<text class="category-text" :class="{ 'category-text-active': selectedCategoryKey == item.key }">{{ item.name }}</text>
 				</view>
 			</scroll-view>
 
-			<scroll-view class="doctor-panel" scroll-y="true">
-				<view class="doctor-grid">
+			<scroll-view class="doctor-panel" scroll-y="true" @scrolltolower="loadMore">
+				<view v-if="isLoading" class="state-wrap">
+					<text class="state-text">{{ loadingText }}</text>
+				</view>
+
+				<view v-else-if="errorText.length > 0" class="state-wrap">
+					<text class="state-text">{{ errorText }}</text>
+					<view class="retry-btn" @tap="reloadExperts">
+						<text class="retry-btn-text">{{ retryText }}</text>
+					</view>
+				</view>
+
+				<view v-else-if="expertItems.length == 0" class="state-wrap">
+					<text class="state-text">{{ emptyExpertText }}</text>
+				</view>
+
+				<view v-else class="doctor-grid">
 					<view
-						v-for="doctor in currentDoctors"
+						v-for="doctor in expertItems"
 						:key="doctor.id"
 						class="doctor-card"
-						@click="goDoctorDetail(doctor)"
+						@tap="goDoctorDetail(doctor)"
 					>
 						<view class="doctor-avatar-wrap">
-							<image v-if="doctor.avatarUrl !== ''" class="doctor-avatar" :src="doctor.avatarUrl" mode="aspectFill"></image>
+							<image
+								v-if="doctor.avatarUrl.length > 0 && !doctor.avatarFailed"
+								class="doctor-avatar"
+								:src="doctor.avatarUrl"
+								mode="aspectFill"
+								@error="handleAvatarError(doctor.id)"
+							></image>
 							<view v-else class="doctor-avatar doctor-avatar-placeholder">
 								<text class="doctor-avatar-text">{{ doctor.shortName }}</text>
 							</view>
 						</view>
 						<text class="doctor-name">{{ doctor.name }}</text>
-						<text class="doctor-brief" lines="3">{{ doctor.brief }}</text>
-						<text class="doctor-tag">{{ doctor.tag }}</text>
+						<text class="doctor-title">{{ doctor.title }}</text>
+						<text class="doctor-organization">{{ doctor.organization }}</text>
+						<text class="doctor-brief">{{ doctor.specialty }}</text>
+					</view>
+
+					<view v-if="isListLoading" class="bottom-state">
+						<text class="bottom-state-text">{{ loadingMoreText }}</text>
+					</view>
+					<view v-else-if="!hasMore" class="bottom-state">
+						<text class="bottom-state-text">{{ noMoreText }}</text>
 					</view>
 				</view>
 			</scroll-view>
 		</view>
 
+		<view class="floating-action" @tap="goMyQuestions">
+			<text class="floating-action-text">{{ myQuestionsText }}</text>
+		</view>
+
 		<view class="tabbar">
-			<view class="tab-item" @click="goLearningPage">
+			<view class="tab-item" @tap="goLearningPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">学习</text>
+				<text class="tab-label">{{ learningText }}</text>
 			</view>
-			<view class="tab-item" @click="goExamPage">
+			<view class="tab-item" @tap="goExamPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">考核</text>
+				<text class="tab-label">{{ examText }}</text>
 			</view>
 			<view class="tab-item tab-item-active">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjiadianji.png" mode="aspectFit"></image>
-				<text class="tab-label tab-label-active">咨询</text>
+				<text class="tab-label tab-label-active">{{ consultText }}</text>
 			</view>
-			<view class="tab-item" @click="goKnowledgePage">
+			<view class="tab-item" @tap="goKnowledgePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">知识库</text>
+				<text class="tab-label">{{ knowledgeText }}</text>
 			</view>
-			<view class="tab-item" @click="goMinePage">
+			<view class="tab-item" @tap="goMinePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">我的</text>
+				<text class="tab-label">{{ mineText }}</text>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
-type CategoryChild = {
-	id : string
-	name : string
-}
+import { ref } from 'vue'
+import { fetchExperts, normalizeAppUrl, type ExpertDetail } from '../../utils/auth.uts'
 
 type CategoryItem = {
-	id : string
+	key : string
+	categoryId : number
+	specialty : string
 	name : string
-	children : CategoryChild[]
 }
 
-type DoctorItem = {
-	id : string
-	primaryCategoryId : string
-	secondaryCategoryId : string
+type ExpertCard = {
+	id : number
 	name : string
 	shortName : string
-	brief : string
-	tag : string
-	organization : string
 	title : string
+	organization : string
 	specialty : string
-	introduction : string
-	qaTitleOne : string
-	qaTitleTwo : string
 	avatarUrl : string
+	consultationNotice : string
+	avatarFailed : boolean
 }
 
-const primaryCategories = ref<CategoryItem[]>([
-	{
-		id: 'internal',
-		name: '中医内科',
-		children: [
-			{ id: 'cardio', name: '心血管' },
-			{ id: 'brain', name: '脑病' },
-			{ id: 'elder', name: '老年病' },
-			{ id: 'lung', name: '肺病' },
-			{ id: 'spleen', name: '脾胃病' },
-			{ id: 'kidney', name: '肾病' },
-			{ id: 'rheumatism', name: '风湿病' }
-		]
-	},
-	{ id: 'surgery', name: '中医外科', children: [] },
-	{ id: 'bone', name: '中医骨伤科', children: [] },
-	{ id: 'gynecology', name: '中医妇科', children: [] },
-	{ id: 'pediatrics', name: '中医儿科', children: [] },
-	{ id: 'acupuncture', name: '中医五官科', children: [] }
-])
+const PAGE_SIZE = 12
+const CATEGORY_FETCH_SIZE = 100
 
-const doctors = ref<DoctorItem[]>([
-	{
-		id: 'd1',
-		primaryCategoryId: 'internal',
-		secondaryCategoryId: 'cardio',
-		name: '符惠娟',
-		shortName: '符',
-		brief: '常州市中医院心血管科主任中医师，医学硕士，简介占位内容会在后续由数据库替换。',
-		tag: '中医心血管',
-		organization: '常州市中医院',
-		title: '主任中医师',
-		specialty: '中医心血管',
-		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
-		qaTitleOne: '符主任您好！请问胸闷气短跟黑心慌，高血压口服药物期间如何调理？',
-		qaTitleTwo: '请问脑梗塞治疗方法',
-		avatarUrl: ''
-	},
-	{
-		id: 'd2',
-		primaryCategoryId: 'internal',
-		secondaryCategoryId: 'cardio',
-		name: '林轶蓉',
-		shortName: '林',
-		brief: '镇江市中医院心血管方向副主任医师，占位简介至少三行显示，后续替换真实数据库内容。',
-		tag: '中医心血管',
-		organization: '镇江市中医院',
-		title: '副主任医师',
-		specialty: '中医心血管',
-		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
-		qaTitleOne: '请问心悸失眠如何调理？',
-		qaTitleTwo: '高血压伴头晕如何辨证？',
-		avatarUrl: ''
-	},
-	{
-		id: 'd3',
-		primaryCategoryId: 'internal',
-		secondaryCategoryId: 'cardio',
-		name: '刘健',
-		shortName: '刘',
-		brief: '江苏省中医院心内科方向副主任中医师，医生简介占位内容，等待数据库替换。',
-		tag: '中医心血管',
-		organization: '江苏省中医院',
-		title: '副主任中医师',
-		specialty: '中医心血管',
-		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
-		qaTitleOne: '胸闷胸痛平时需要注意什么？',
-		qaTitleTwo: '冠心病饮食如何调理？',
-		avatarUrl: ''
-	},
-	{
-		id: 'd4',
-		primaryCategoryId: 'internal',
-		secondaryCategoryId: 'brain',
-		name: '刘敏',
-		shortName: '敏',
-		brief: '徐州市中医院脑病方向副主任医师，当前为占位简介内容，后续由接口统一替换。',
-		tag: '脑病方向',
-		organization: '徐州市中医院',
-		title: '副主任医师',
-		specialty: '脑病方向',
-		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
-		qaTitleOne: '头晕头痛持续发作怎么办？',
-		qaTitleTwo: '脑病恢复期如何调养？',
-		avatarUrl: ''
-	},
-	{
-		id: 'd5',
-		primaryCategoryId: 'internal',
-		secondaryCategoryId: 'elder',
-		name: '赵宁',
-		shortName: '赵',
-		brief: '老年病方向医生占位简介内容，至少展示三行并在超出时省略，方便后续接真实数据。',
-		tag: '老年病',
-		organization: '南京市中医院',
-		title: '主任医师',
-		specialty: '老年病调养',
-		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
-		qaTitleOne: '老人睡眠差和食欲差怎么调养？',
-		qaTitleTwo: '慢病管理需要注意什么？',
-		avatarUrl: ''
-	},
-	{
-		id: 'd6',
-		primaryCategoryId: 'surgery',
-		secondaryCategoryId: '',
-		name: '王庆春',
-		shortName: '王',
-		brief: '连云港市中医院外科方向主任中医师，医生信息当前保留占位内容。',
-		tag: '中医外科',
-		organization: '连云港市中医院',
-		title: '主任中医师',
-		specialty: '中医外科',
-		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
-		qaTitleOne: '术后体虚怎样进行中医调理？',
-		qaTitleTwo: '慢性伤口恢复如何用药？',
-		avatarUrl: ''
-	},
-	{
-		id: 'd7',
-		primaryCategoryId: 'surgery',
-		secondaryCategoryId: '',
-		name: '郑晓丹',
-		shortName: '郑',
-		brief: '南通市中医院中医外科医学博士，医生简介占位内容等待数据库导入。',
-		tag: '中医外科',
-		organization: '南通市中医院',
-		title: '医学博士',
-		specialty: '中医外科',
-		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
-		qaTitleOne: '术后调理期间饮食注意事项？',
-		qaTitleTwo: '长期慢性炎症如何调理？',
-		avatarUrl: ''
-	},
-	{
-		id: 'd8',
-		primaryCategoryId: 'acupuncture',
-		secondaryCategoryId: '',
-		name: '邹冲',
-		shortName: '邹',
-		brief: '江苏省中医院五官科方向主治医师，医生简介占位内容后续直接替换。',
-		tag: '中医五官科',
-		organization: '江苏省中医院',
-		title: '主治医师',
-		specialty: '中医五官科',
-		introduction: '这里保留医生详情简介占位内容，后续将由数据库返回医生的履历简介、研究方向和临床经验。',
-		qaTitleOne: '耳鸣耳聋如何进行中医调理？',
-		qaTitleTwo: '过敏性鼻炎怎么辨证治疗？',
-		avatarUrl: ''
+const pageTitleText = '\u54a8\u8be2'
+const searchPlaceholder = '\u641c\u7d22\u4e13\u5bb6\u59d3\u540d\u3001\u804c\u79f0\u3001\u673a\u6784'
+const searchButtonText = '\u641c\u7d22'
+const allCategoryText = '\u5168\u90e8'
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const emptyExpertText = '\u6682\u65e0\u4e13\u5bb6'
+const loadingMoreText = '\u52a0\u8f7d\u66f4\u591a\u4e2d...'
+const noMoreText = '\u6ca1\u6709\u66f4\u591a\u4e86'
+const loadFailedText = '\u4e13\u5bb6\u52a0\u8f7d\u5931\u8d25'
+const myQuestionsText = '\u6211\u7684\u54a8\u8be2'
+const learningText = '\u5b66\u4e60'
+const examText = '\u8003\u6838'
+const consultText = '\u54a8\u8be2'
+const knowledgeText = '\u77e5\u8bc6\u5e93'
+const mineText = '\u6211\u7684'
+const fallbackShortName = '\u533b'
+const fallbackExpertName = '\u4e13\u5bb6'
+const fallbackCategoryPrefix = '\u4e13\u4e1a\u5206\u7c7b'
+
+const searchKeyword = ref('')
+const selectedCategoryKey = ref('all')
+const selectedCategoryId = ref(0)
+const selectedCategorySpecialty = ref('')
+const categoryItems = ref<CategoryItem[]>([])
+const expertItems = ref<ExpertCard[]>([])
+const page = ref(1)
+const hasMore = ref(true)
+const isLoading = ref(true)
+const isListLoading = ref(false)
+const errorText = ref('')
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const sanitizeAvatarUrl = (value : string) : string => {
+	const avatar = normalizeAppUrl(safeText(value))
+	if (avatar.length == 0) {
+		return ''
 	}
-])
+	if (avatar.indexOf('example.com') >= 0) {
+		return ''
+	}
+	return avatar
+}
 
-const currentPrimaryId = ref('internal')
-const currentSecondaryId = ref('')
-const currentDoctors = ref<DoctorItem[]>([])
+const toShortName = (name : string) : string => {
+	const text = safeText(name)
+	return text.length > 0 ? text.substring(0, 1) : fallbackShortName
+}
 
-const refreshDoctors = () => {
-	currentDoctors.value = doctors.value.filter((item : DoctorItem) : boolean => {
-		if (item.primaryCategoryId != currentPrimaryId.value) {
-			return false
+const sortCategoryItems = () => {
+	categoryItems.value = categoryItems.value.slice().sort((left : CategoryItem, right : CategoryItem) : number => {
+		if (left.categoryId > 0 && right.categoryId > 0) {
+			return left.categoryId - right.categoryId
 		}
-		if (currentSecondaryId.value == '') {
-			return true
-		}
-		return item.secondaryCategoryId == currentSecondaryId.value
+		return left.name.localeCompare(right.name)
 	})
 }
 
-const selectPrimaryCategory = (id : string) => {
-	currentPrimaryId.value = id
-	currentSecondaryId.value = ''
-	refreshDoctors()
+const resolveCategoryName = (detail : ExpertDetail, categoryId : number) : string => {
+	const specialty = safeText(detail.specialty)
+	if (specialty.length > 0) {
+		return specialty
+	}
+
+	const title = safeText(detail.title)
+	if (title.length > 0) {
+		return title
+	}
+
+	return fallbackCategoryPrefix + ' ' + String(categoryId)
 }
 
-const selectSecondaryCategory = (primaryId : string, childId : string) => {
-	currentPrimaryId.value = primaryId
-	currentSecondaryId.value = childId
-	refreshDoctors()
+const appendCategoryItems = (detail : ExpertDetail) => {
+	const ids = detail.categoryIds != null ? detail.categoryIds : []
+	if (ids.length > 0) {
+		ids.forEach((categoryId : number) => {
+			if (categoryId <= 0) {
+				return
+			}
+			if (categoryItems.value.some((item : CategoryItem) : boolean => item.categoryId == categoryId)) {
+				return
+			}
+			categoryItems.value.push({
+				key: 'id:' + String(categoryId),
+				categoryId,
+				specialty: '',
+				name: resolveCategoryName(detail, categoryId)
+			})
+		})
+		return
+	}
+
+	const specialty = safeText(detail.specialty)
+	if (specialty.length == 0) {
+		return
+	}
+	if (categoryItems.value.some((item : CategoryItem) : boolean => item.specialty == specialty)) {
+		return
+	}
+	categoryItems.value.push({
+		key: 'sp:' + specialty,
+		categoryId: 0,
+		specialty,
+		name: specialty
+	})
 }
 
-const goDoctorDetail = (doctor : DoctorItem) => {
+const filterExpertsBySelectedCategory = (records : ExpertDetail[]) : ExpertDetail[] => {
+	if (selectedCategoryId.value > 0) {
+		return records
+	}
+	if (selectedCategorySpecialty.value.length == 0) {
+		return records
+	}
+	return records.filter((item : ExpertDetail) : boolean => {
+		return safeText(item.specialty) == selectedCategorySpecialty.value
+	})
+}
+
+const resolveRequestPage = (loadMoreValue : boolean) : number => {
+	if (selectedCategoryId.value == 0 && selectedCategorySpecialty.value.length > 0) {
+		return 1
+	}
+	return loadMoreValue ? page.value : 1
+}
+
+const resolveRequestSize = () : number => {
+	if (selectedCategoryId.value == 0 && selectedCategorySpecialty.value.length > 0) {
+		return CATEGORY_FETCH_SIZE
+	}
+	return PAGE_SIZE
+}
+
+const resetSelection = () => {
+	selectedCategoryKey.value = 'all'
+	selectedCategoryId.value = 0
+	selectedCategorySpecialty.value = ''
+}
+
+const applyCategorySelection = (item : CategoryItem | null) => {
+	if (item == null) {
+		resetSelection()
+		return
+	}
+	selectedCategoryKey.value = item.key
+	selectedCategoryId.value = item.categoryId
+	selectedCategorySpecialty.value = item.specialty
+}
+
+const rebuildCategories = (records : ExpertDetail[]) => {
+	categoryItems.value = []
+	records.forEach((detail : ExpertDetail) => {
+		appendCategoryItems(detail)
+	})
+	sortCategoryItems()
+}
+
+const mapExpert = (detail : ExpertDetail) : ExpertCard => {
+	return {
+		id: detail.id,
+		name: safeText(detail.realName).length > 0 ? safeText(detail.realName) : fallbackExpertName,
+		shortName: toShortName(detail.realName),
+		title: safeText(detail.title),
+		organization: safeText(detail.organization),
+		specialty: safeText(detail.specialty),
+		avatarUrl: sanitizeAvatarUrl(detail.avatarUrl),
+		consultationNotice: safeText(detail.consultationNotice),
+		avatarFailed: false
+	}
+}
+
+const loadCategories = () => {
+	fetchExperts(
+		1,
+		CATEGORY_FETCH_SIZE,
+		'',
+		0,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			rebuildCategories(records)
+		},
+		() => {
+		}
+	)
+}
+
+const loadExperts = (loadMoreValue : boolean) => {
+	if (!loadMoreValue) {
+		page.value = 1
+		hasMore.value = true
+		errorText.value = ''
+		isLoading.value = true
+	} else {
+		if (!hasMore.value || isListLoading.value) {
+			return
+		}
+		isListLoading.value = true
+	}
+
+	fetchExperts(
+		resolveRequestPage(loadMoreValue),
+		resolveRequestSize(),
+		searchKeyword.value,
+		selectedCategoryId.value,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			const filteredRecords = filterExpertsBySelectedCategory(records)
+			const mapped = filteredRecords.map((item : ExpertDetail) : ExpertCard => {
+				return mapExpert(item)
+			})
+
+			if (loadMoreValue) {
+				expertItems.value = expertItems.value.concat(mapped)
+			} else {
+				expertItems.value = mapped
+			}
+
+			if (categoryItems.value.length == 0) {
+				rebuildCategories(records)
+			}
+
+			hasMore.value = selectedCategorySpecialty.value.length == 0 && mapped.length >= PAGE_SIZE
+			if (hasMore.value) {
+				page.value += 1
+			}
+
+			isLoading.value = false
+			isListLoading.value = false
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : loadFailedText
+			isLoading.value = false
+			isListLoading.value = false
+		}
+	)
+}
+
+const handleSearch = () => {
+	loadExperts(false)
+}
+
+const reloadExperts = () => {
+	loadExperts(false)
+}
+
+const selectCategory = (item : CategoryItem | number) => {
+	if (typeof item == 'number' && item == 0) {
+		resetSelection()
+		loadExperts(false)
+		return
+	}
+
+	if (typeof item != 'number') {
+		applyCategorySelection(item)
+	}
+	loadExperts(false)
+}
+
+const loadMore = () => {
+	loadExperts(true)
+}
+
+const handleAvatarError = (id : number) => {
+	expertItems.value = expertItems.value.map((item : ExpertCard) : ExpertCard => {
+		if (item.id != id) {
+			return item
+		}
+		return {
+			id: item.id,
+			name: item.name,
+			shortName: item.shortName,
+			title: item.title,
+			organization: item.organization,
+			specialty: item.specialty,
+			avatarUrl: '',
+			consultationNotice: item.consultationNotice,
+			avatarFailed: true
+		}
+	})
+}
+
+const goDoctorDetail = (doctor : ExpertCard) => {
 	uni.navigateTo({
 		url:
-			'/pages/consult/detail?id=' + doctor.id +
+			'/pages/consult/detail?id=' + String(doctor.id) +
 			'&name=' + encodeURIComponent(doctor.name) +
 			'&title=' + encodeURIComponent(doctor.title) +
 			'&organization=' + encodeURIComponent(doctor.organization) +
 			'&specialty=' + encodeURIComponent(doctor.specialty) +
-			'&tag=' + encodeURIComponent(doctor.tag)
+			'&tag=' + encodeURIComponent(doctor.consultationNotice)
 	})
+}
+
+const goMyQuestions = () => {
+	uni.navigateTo({ url: '/pages/consult/questions' })
 }
 
 const goLearningPage = () => {
@@ -328,7 +465,8 @@ const goMinePage = () => {
 	uni.redirectTo({ url: '/pages/mine/index' })
 }
 
-refreshDoctors()
+loadCategories()
+loadExperts(false)
 </script>
 
 <style>
@@ -336,7 +474,6 @@ refreshDoctors()
 	flex: 1;
 	background-color: #f5f5fb;
 }
-
 
 .hero-shell {
 	position: relative;
@@ -351,6 +488,7 @@ refreshDoctors()
 	width: 750rpx;
 	height: 236rpx;
 }
+
 .header {
 	position: relative;
 	z-index: 1;
@@ -361,7 +499,6 @@ refreshDoctors()
 	background-color: transparent;
 }
 
-
 .header-title {
 	font-size: 20px;
 	line-height: 30px;
@@ -369,6 +506,42 @@ refreshDoctors()
 	font-weight: 600;
 	width: 100%;
 	text-align: center;
+}
+
+.search-bar {
+	margin-left: 16rpx;
+	margin-right: 16rpx;
+	margin-top: 14rpx;
+	margin-bottom: 14rpx;
+	padding-left: 18rpx;
+	padding-right: 10rpx;
+	height: 78rpx;
+	border-radius: 18rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	align-items: center;
+}
+
+.search-input {
+	flex: 1;
+	height: 78rpx;
+	font-size: 15px;
+	color: #303030;
+}
+
+.search-btn {
+	width: 108rpx;
+	height: 56rpx;
+	border-radius: 28rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-btn-text {
+	font-size: 13px;
+	color: #ffffff;
+	font-weight: 600;
 }
 
 .content-shell {
@@ -382,12 +555,8 @@ refreshDoctors()
 	background-color: #f1f2f5;
 }
 
-.category-group {
-	background-color: #f1f2f5;
-}
-
 .category-item {
-	height: 118rpx;
+	min-height: 112rpx;
 	padding-left: 20rpx;
 	padding-right: 20rpx;
 	background-color: #eef0f3;
@@ -403,27 +572,6 @@ refreshDoctors()
 	background-color: #ffffff;
 }
 
-.subcategory-wrap {
-	background-color: #f1f2f5;
-}
-
-.subcategory-item {
-	height: 110rpx;
-	padding-left: 20rpx;
-	padding-right: 20rpx;
-	background-color: #eef0f3;
-	align-items: center;
-	justify-content: center;
-	position: relative;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-	border-bottom-color: rgba(225, 227, 231, 0.9);
-}
-
-.subcategory-item-active {
-	background-color: #ffffff;
-}
-
 .category-line {
 	position: absolute;
 	left: 0;
@@ -434,14 +582,9 @@ refreshDoctors()
 	background-color: #d26978;
 }
 
-.subcategory-line {
-	top: 18rpx;
-	bottom: 18rpx;
-}
-
 .category-text {
-	font-size: 16px;
-	line-height: 24px;
+	font-size: 15px;
+	line-height: 22px;
 	color: #7f8590;
 	text-align: center;
 }
@@ -451,21 +594,37 @@ refreshDoctors()
 	font-weight: 600;
 }
 
-.subcategory-text {
-	font-size: 15px;
-	line-height: 22px;
-	color: #9ca3ad;
-	text-align: center;
-}
-
-.subcategory-text-active {
-	color: #6b707a;
-	font-weight: 500;
-}
-
 .doctor-panel {
 	flex: 1;
 	background-color: #ffffff;
+}
+
+.state-wrap {
+	padding: 120rpx 30rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	color: #9b9b9b;
+	line-height: 22px;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
 }
 
 .doctor-grid {
@@ -519,34 +678,67 @@ refreshDoctors()
 
 .doctor-name {
 	margin-top: 4rpx;
-	font-size: 18px;
-	line-height: 26px;
+	font-size: 17px;
+	line-height: 24px;
 	color: #2f2f2f;
 	font-weight: 600;
+	text-align: center;
+}
+
+.doctor-title {
+	margin-top: 6rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #18b775;
+}
+
+.doctor-organization {
+	margin-top: 6rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #999999;
+	text-align: center;
 }
 
 .doctor-brief {
 	margin-top: 8rpx;
 	width: 100%;
-	height: 90rpx;
+	height: 48rpx;
 	overflow: hidden;
 	font-size: 11px;
-	line-height: 15px;
+	line-height: 16px;
 	color: #b4b4b4;
 	text-align: left;
 }
 
-.doctor-tag {
-	margin-top: 10rpx;
-	padding: 3rpx 10rpx;
-	border-radius: 8rpx;
-	border-width: 1px;
-	border-style: solid;
-	border-color: #36b979;
-	font-size: 9px;
-	line-height: 13px;
-	color: #36b979;
-	align-self: flex-start;
+.bottom-state {
+	width: 100%;
+	padding-top: 20rpx;
+	align-items: center;
+}
+
+.bottom-state-text {
+	font-size: 12px;
+	color: #b1b1b1;
+}
+
+.floating-action {
+	position: absolute;
+	right: 20rpx;
+	bottom: 124rpx;
+	width: 148rpx;
+	height: 62rpx;
+	border-radius: 31rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 12rpx 24rpx rgba(24, 183, 117, 0.22);
+}
+
+.floating-action-text {
+	font-size: 13px;
+	color: #ffffff;
+	font-weight: 600;
 }
 
 .tabbar {

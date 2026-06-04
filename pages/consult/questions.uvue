@@ -1,0 +1,377 @@
+<template>
+	<view class="page">
+		<image class="top-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
+
+		<view class="nav-back" @tap="goBack">
+			<image class="nav-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+		</view>
+
+		<view class="header">
+			<text class="header-title">{{ pageTitleText }}</text>
+		</view>
+
+		<scroll-view class="scroll" scroll-y="true" @scrolltolower="loadMore">
+			<view v-if="isLoading" class="state-wrap">
+				<text class="state-text">{{ loadingText }}</text>
+			</view>
+
+			<view v-else-if="errorText.length > 0" class="state-wrap">
+				<text class="state-text">{{ errorText }}</text>
+				<button class="retry-btn" hover-class="retry-btn-hover" @tap="reloadQuestions">{{ retryText }}</button>
+			</view>
+
+			<view v-else-if="questionItems.length == 0" class="state-wrap">
+				<text class="state-text">{{ emptyText }}</text>
+				<button class="retry-btn" hover-class="retry-btn-hover" @tap="goConsultHome">{{ goConsultText }}</button>
+			</view>
+
+			<view v-else class="list-wrap">
+				<view v-for="item in questionItems" :key="item.id" class="question-card" @tap="goDetail(item.id)">
+					<view class="question-head">
+						<text class="question-title">{{ item.title }}</text>
+						<text class="status-tag" :class="item.statusClass">{{ item.statusLabel }}</text>
+					</view>
+					<text class="question-id">{{ questionIdLabel }}{{ item.idText }}</text>
+					<text class="question-content">{{ item.content }}</text>
+					<text v-if="item.answerPreview.length > 0" class="question-answer">{{ latestReplyText }}{{ item.answerPreview }}</text>
+				</view>
+
+				<view v-if="isListLoading" class="bottom-state">
+					<text class="bottom-state-text">{{ loadingMoreText }}</text>
+				</view>
+				<view v-else-if="!hasMore" class="bottom-state">
+					<text class="bottom-state-text">{{ noMoreText }}</text>
+				</view>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { ref } from 'vue'
+import { fetchQaQuestions, type AppQaQuestion, type AppQaAnswer } from '../../utils/auth.uts'
+
+type QuestionDisplayItem = {
+	id : number
+	idText : string
+	title : string
+	content : string
+	statusLabel : string
+	statusClass : string
+	answerPreview : string
+}
+
+const PAGE_SIZE = 10
+const questionStorageKey = 'consult_current_question_id'
+
+const pageTitleText = '\u6211\u7684\u54a8\u8be2'
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const emptyText = '\u6682\u65e0\u54a8\u8be2\u8bb0\u5f55'
+const goConsultText = '\u53bb\u54a8\u8be2'
+const loadingMoreText = '\u52a0\u8f7d\u66f4\u591a\u4e2d...'
+const noMoreText = '\u6ca1\u6709\u66f4\u591a\u4e86'
+const failedText = '\u54a8\u8be2\u8bb0\u5f55\u52a0\u8f7d\u5931\u8d25'
+const untitledText = '\u672a\u547d\u540d\u54a8\u8be2'
+const emptyContentText = '\u6682\u65e0\u95ee\u9898\u63cf\u8ff0'
+const questionIdLabel = '\u54a8\u8be2ID\uff1a'
+const latestReplyText = '\u6700\u65b0\u56de\u590d\uff1a'
+
+const isLoading = ref(true)
+const isListLoading = ref(false)
+const errorText = ref('')
+const hasMore = ref(true)
+const page = ref(1)
+const questionItems = ref<QuestionDisplayItem[]>([])
+
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const mapStatusClass = (status : string) : string => {
+	if (status == 'ANSWERED') {
+		return 'status-answered'
+	}
+	if (status == 'CLOSED') {
+		return 'status-closed'
+	}
+	return 'status-pending'
+}
+
+const saveCurrentQuestionId = (id : number) => {
+	uni.setStorageSync(questionStorageKey, String(id))
+}
+
+const mapQuestion = (item : AppQaQuestion) : QuestionDisplayItem => {
+	const firstAnswer = item.answers != null && item.answers.length > 0 ? item.answers[0] as AppQaAnswer : null
+	const titleValue = safeText(item.title)
+	const contentValue = safeText(item.content)
+	const statusLabelValue = safeText(item.statusLabel).length > 0 ? safeText(item.statusLabel) : safeText(item.status)
+	return {
+		id: item.id,
+		idText: item.id > 0 ? String(item.id) : '--',
+		title: titleValue.length > 0 ? titleValue : untitledText,
+		content: contentValue.length > 0 ? contentValue : emptyContentText,
+		statusLabel: statusLabelValue.length > 0 ? statusLabelValue : '--',
+		statusClass: mapStatusClass(safeText(item.status)),
+		answerPreview: firstAnswer != null ? safeText(firstAnswer.content) : ''
+	}
+}
+
+const loadQuestions = (loadMoreValue : boolean) => {
+	if (!loadMoreValue) {
+		page.value = 1
+		hasMore.value = true
+		errorText.value = ''
+		isLoading.value = true
+	} else {
+		if (!hasMore.value || isListLoading.value) {
+			return
+		}
+		isListLoading.value = true
+	}
+
+	fetchQaQuestions(
+		page.value,
+		PAGE_SIZE,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			const mapped = records.map((item : AppQaQuestion) : QuestionDisplayItem => {
+				return mapQuestion(item)
+			})
+
+			if (loadMoreValue) {
+				questionItems.value = questionItems.value.concat(mapped)
+			} else {
+				questionItems.value = mapped
+			}
+
+			hasMore.value = records.length >= PAGE_SIZE
+			if (hasMore.value) {
+				page.value += 1
+			}
+
+			isLoading.value = false
+			isListLoading.value = false
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : failedText
+			isLoading.value = false
+			isListLoading.value = false
+		}
+	)
+}
+
+const reloadQuestions = () => {
+	loadQuestions(false)
+}
+
+const goBack = () => {
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack({ delta: 1 })
+		return
+	}
+	uni.switchTab({ url: '/pages/mine/index' })
+}
+
+const goConsultHome = () => {
+	uni.redirectTo({ url: '/pages/consult/index' })
+}
+
+const loadMore = () => {
+	loadQuestions(true)
+}
+
+const goDetail = (id : number) => {
+	if (id <= 0) {
+		uni.showToast({
+			title: '\u672a\u80fd\u8bfb\u53d6\u54a8\u8be2ID',
+			icon: 'none'
+		})
+		return
+	}
+	saveCurrentQuestionId(id)
+	uni.navigateTo({
+		url: '/pages/consult/question-detail?id=' + String(id)
+	})
+}
+
+loadQuestions(false)
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+	position: relative;
+}
+
+.top-bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 750rpx;
+	height: 210rpx;
+}
+
+.nav-back {
+	position: absolute;
+	left: 20rpx;
+	top: 94rpx;
+	width: 68rpx;
+	height: 68rpx;
+	border-radius: 34rpx;
+	z-index: 3;
+	align-items: center;
+	justify-content: center;
+}
+
+.nav-back-icon {
+	width: 24rpx;
+	height: 24rpx;
+}
+
+.header {
+	padding-top: 96rpx;
+	padding-left: 120rpx;
+	padding-right: 120rpx;
+	padding-bottom: 24rpx;
+	min-height: 160rpx;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	z-index: 2;
+}
+
+.header-title {
+	width: 100%;
+	text-align: center;
+	font-size: 20px;
+	line-height: 30px;
+	color: #1f2329;
+	font-weight: 600;
+}
+
+.scroll {
+	flex: 1;
+	position: relative;
+	z-index: 1;
+}
+
+.state-wrap {
+	padding: 180rpx 32rpx;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: #9aa0a8;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	min-width: 220rpx;
+	height: 76rpx;
+	line-height: 76rpx;
+	padding-left: 28rpx;
+	padding-right: 28rpx;
+	background-color: #18b775;
+	color: #ffffff;
+	font-size: 14px;
+	border-radius: 14rpx;
+	border-width: 0;
+}
+
+.retry-btn-hover {
+	opacity: 0.92;
+}
+
+.list-wrap {
+	padding: 16rpx 20rpx 32rpx;
+}
+
+.question-card {
+	background-color: #ffffff;
+	border-radius: 20rpx;
+	padding: 24rpx;
+	margin-bottom: 18rpx;
+	box-shadow: 0 8rpx 24rpx rgba(31, 35, 41, 0.05);
+}
+
+.question-head {
+	flex-direction: row;
+	align-items: flex-start;
+}
+
+.question-title {
+	flex: 1;
+	padding-right: 16rpx;
+	font-size: 16px;
+	line-height: 24px;
+	color: #1f2329;
+	font-weight: 600;
+}
+
+.status-tag {
+	max-width: 180rpx;
+	padding-left: 14rpx;
+	padding-right: 14rpx;
+	padding-top: 4rpx;
+	padding-bottom: 4rpx;
+	border-radius: 20rpx;
+	font-size: 12px;
+	line-height: 18px;
+	text-align: center;
+}
+
+.status-pending {
+	background-color: #fff4d6;
+	color: #d49512;
+}
+
+.status-answered {
+	background-color: #e6f8ef;
+	color: #18b775;
+}
+
+.status-closed {
+	background-color: #f0f0f0;
+	color: #9b9b9b;
+}
+
+.question-id {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #9aa0a8;
+}
+
+.question-content {
+	margin-top: 12rpx;
+	font-size: 14px;
+	line-height: 22px;
+	color: #5f6670;
+}
+
+.question-answer {
+	margin-top: 14rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #18b775;
+}
+
+.bottom-state {
+	padding-top: 6rpx;
+	padding-bottom: 18rpx;
+	align-items: center;
+}
+
+.bottom-state-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #b2b7bf;
+}
+</style>

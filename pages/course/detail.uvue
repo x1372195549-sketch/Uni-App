@@ -68,7 +68,7 @@ type CatalogItem = {
   duration : string
 }
 
-const RESOURCE_TYPE = 'COURSE'
+const RESOURCE_TYPE = 'course'
 
 const courseId = ref('')
 const activeTab = ref('intro')

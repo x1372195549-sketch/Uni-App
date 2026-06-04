@@ -22,6 +22,9 @@ if (!Math) {
   "./pages/knowledge/book-detail.js";
   "./pages/consult/index.js";
   "./pages/consult/detail.js";
+  "./pages/consult/create.js";
+  "./pages/consult/questions.js";
+  "./pages/consult/question-detail.js";
   "./pages/exam/index.js";
   "./pages/exam/paper.js";
   "./pages/exam/result.js";

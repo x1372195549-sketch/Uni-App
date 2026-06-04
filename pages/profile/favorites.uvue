@@ -47,6 +47,7 @@
 						class="favorite-cover"
 						:src="item.coverUrl"
 						mode="aspectFill"
+						@error="handleCoverError(item.id)"
 					></image>
 					<view v-else class="favorite-cover-placeholder">
 						<text class="favorite-cover-placeholder-text">{{ item.typeLabel }}</text>
@@ -59,7 +60,7 @@
 						<text class="favorite-title">{{ item.title }}</text>
 					</view>
 					<text v-if="item.source.length > 0" class="favorite-source">{{ item.source }}</text>
-					<text class="favorite-time">收藏时间：{{ item.timeText }}</text>
+					<text class="favorite-time">收藏时间: {{ item.timeText }}</text>
 				</view>
 			</view>
 
@@ -106,8 +107,6 @@ const TYPE_AUDIO = 'AUDIO'
 const TYPE_LIVE = 'LIVE'
 const TYPE_COURSE = 'COURSE'
 const TYPE_TOPIC = 'TOPIC'
-const TYPE_INFO = 'INFO'
-const TYPE_ARTICLE = 'ARTICLE'
 
 const tabs : FavoriteTab[] = [
 	{ key: TYPE_ALL, label: '全部' },
@@ -126,18 +125,24 @@ const filteredItems = computed(() : FavoriteDisplayItem[] => {
 	if (activeTab.value == TYPE_ALL) {
 		return allItems.value
 	}
-	return allItems.value.filter((item : FavoriteDisplayItem) : boolean => normalizeFavoriteType(item.resourceType) == activeTab.value)
+	return allItems.value.filter((item : FavoriteDisplayItem) : boolean => item.resourceType == activeTab.value)
 })
 
+const safeText = (value : string | null) : string => {
+	return value == null || value.length == 0 ? '' : value
+}
+
+const formatOccurredAt = (value : string) : string => {
+	const text = safeText(value)
+	if (text.length == 0) {
+		return '未知'
+	}
+	return text.replace('T', ' ')
+}
+
 const normalizeFavoriteType = (resourceType : string) : string => {
-	const normalizedType = resourceType.toLowerCase()
-	if (normalizedType == TYPE_INFO || normalizedType == TYPE_ARTICLE) {
-		return TYPE_TOPIC
-	}
-	if (normalizedType == 'audio') {
-		return TYPE_AUDIO
-	}
-	if (normalizedType == 'podcast') {
+	const normalizedType = safeText(resourceType).toLowerCase()
+	if (normalizedType == 'audio' || normalizedType == 'podcast') {
 		return TYPE_AUDIO
 	}
 	if (normalizedType == 'live') {
@@ -146,13 +151,10 @@ const normalizeFavoriteType = (resourceType : string) : string => {
 	if (normalizedType == 'course') {
 		return TYPE_COURSE
 	}
-	if (normalizedType == 'topic') {
+	if (normalizedType == 'topic' || normalizedType == 'article' || normalizedType == 'info') {
 		return TYPE_TOPIC
 	}
-	if (normalizedType == 'info') {
-		return TYPE_TOPIC
-	}
-	return resourceType.toUpperCase()
+	return safeText(resourceType).toUpperCase()
 }
 
 const getTypeLabel = (resourceType : string) : string => {
@@ -189,15 +191,15 @@ const getCoverColor = (resourceType : string) : string => {
 	return '#F1F1F1'
 }
 
-const safeText = (value : string | null) : string => {
-	return value == null || value.length == 0 ? '' : value
-}
-
-const formatOccurredAt = (value : string) : string => {
-	if (value.length == 0) {
-		return '未知'
+const sanitizeCoverUrl = (value : string) : string => {
+	const cover = safeText(value)
+	if (cover.length == 0) {
+		return ''
 	}
-	return value.replace('T', ' ')
+	if (cover.indexOf('example.com') >= 0) {
+		return ''
+	}
+	return cover
 }
 
 const buildFallbackItem = (record : AppResourceRecord) : FavoriteDisplayItem => {
@@ -223,7 +225,7 @@ const mapAudioFavorite = (record : AppResourceRecord, detail : AppPodcast) : Fav
 		title: safeText(detail.title).length > 0 ? detail.title : '音频 #' + String(record.resourceId),
 		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.publishedAt),
 		timeText: formatOccurredAt(safeText(record.occurredAt)),
-		coverUrl: safeText(detail.coverUrl),
+		coverUrl: sanitizeCoverUrl(detail.coverUrl),
 		coverColor: getCoverColor(record.resourceType)
 	}
 }
@@ -237,7 +239,7 @@ const mapLiveFavorite = (record : AppResourceRecord, detail : LiveSession) : Fav
 		title: safeText(detail.title).length > 0 ? detail.title : '直播 #' + String(record.resourceId),
 		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.anchorName),
 		timeText: formatOccurredAt(safeText(record.occurredAt)),
-		coverUrl: safeText(detail.coverUrl),
+		coverUrl: sanitizeCoverUrl(detail.coverUrl),
 		coverColor: getCoverColor(record.resourceType)
 	}
 }
@@ -251,7 +253,7 @@ const mapCourseFavorite = (record : AppResourceRecord, detail : Course) : Favori
 		title: safeText(detail.courseName).length > 0 ? detail.courseName : '课程 #' + String(record.resourceId),
 		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.lecturerName),
 		timeText: formatOccurredAt(safeText(record.occurredAt)),
-		coverUrl: safeText(detail.coverUrl),
+		coverUrl: sanitizeCoverUrl(detail.coverUrl),
 		coverColor: getCoverColor(record.resourceType)
 	}
 }
@@ -265,7 +267,7 @@ const mapTopicFavorite = (record : AppResourceRecord, detail : Topic) : Favorite
 		title: safeText(detail.title).length > 0 ? detail.title : '资讯 #' + String(record.resourceId),
 		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.publishedAt),
 		timeText: formatOccurredAt(safeText(record.occurredAt)),
-		coverUrl: safeText(detail.coverUrl),
+		coverUrl: sanitizeCoverUrl(detail.coverUrl),
 		coverColor: getCoverColor(record.resourceType)
 	}
 }
@@ -374,6 +376,25 @@ const loadFavorites = () => {
 
 const changeTab = (tabKey : string) => {
 	activeTab.value = tabKey
+}
+
+const handleCoverError = (itemId : string) => {
+	allItems.value = allItems.value.map((item : FavoriteDisplayItem) : FavoriteDisplayItem => {
+		if (item.id != itemId) {
+			return item
+		}
+		return {
+			id: item.id,
+			resourceType: item.resourceType,
+			resourceId: item.resourceId,
+			typeLabel: item.typeLabel,
+			title: item.title,
+			source: item.source,
+			timeText: item.timeText,
+			coverUrl: '',
+			coverColor: item.coverColor
+		}
+	})
 }
 
 const goToDetail = (item : FavoriteDisplayItem) => {

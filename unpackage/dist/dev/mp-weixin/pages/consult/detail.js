@@ -2,99 +2,92 @@
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
-class ExpertExperience extends UTS.UTSType {
+class ExperienceDisplayItem extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
       kind: 2,
       get fields() {
         return {
           id: { type: Number, optional: false },
-          expertId: { type: Number, optional: false },
-          experienceType: { type: String, optional: false },
           title: { type: String, optional: false },
-          description: { type: String, optional: false },
-          startDate: { type: String, optional: false },
-          endDate: { type: String, optional: false },
-          sortOrder: { type: Number, optional: false }
+          timeText: { type: String, optional: false },
+          description: { type: String, optional: false }
         };
       },
-      name: "ExpertExperience"
+      name: "ExperienceDisplayItem"
     };
   }
-  constructor(options, metadata = ExpertExperience.get$UTSMetadata$(), isJSONParse = false) {
+  constructor(options, metadata = ExperienceDisplayItem.get$UTSMetadata$(), isJSONParse = false) {
     super();
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
-    this.expertId = this.__props__.expertId;
-    this.experienceType = this.__props__.experienceType;
     this.title = this.__props__.title;
+    this.timeText = this.__props__.timeText;
     this.description = this.__props__.description;
-    this.startDate = this.__props__.startDate;
-    this.endDate = this.__props__.endDate;
-    this.sortOrder = this.__props__.sortOrder;
     delete this.__props__;
   }
 }
-class ExpertDetail extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          id: { type: Number, optional: false },
-          realName: { type: String, optional: false },
-          avatarUrl: { type: String, optional: false },
-          title: { type: String, optional: false },
-          organization: { type: String, optional: false },
-          specialty: { type: String, optional: false },
-          introduction: { type: String, optional: false },
-          consultationNotice: { type: String, optional: false },
-          sortOrder: { type: Number, optional: false },
-          categoryIds: { type: UTS.UTSType.withGenerics(Array, [Number]), optional: false },
-          experiences: { type: UTS.UTSType.withGenerics(Array, [ExpertExperience]), optional: false }
-        };
-      },
-      name: "ExpertDetail"
-    };
-  }
-  constructor(options, metadata = ExpertDetail.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
-    this.realName = this.__props__.realName;
-    this.avatarUrl = this.__props__.avatarUrl;
-    this.title = this.__props__.title;
-    this.organization = this.__props__.organization;
-    this.specialty = this.__props__.specialty;
-    this.introduction = this.__props__.introduction;
-    this.consultationNotice = this.__props__.consultationNotice;
-    this.sortOrder = this.__props__.sortOrder;
-    this.categoryIds = this.__props__.categoryIds;
-    this.experiences = this.__props__.experiences;
-    delete this.__props__;
-  }
-}
+const expertStorageKey = "consult_current_expert";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "detail",
   setup(__props) {
     const detailId = common_vendor.ref("");
-    const doctorName = common_vendor.ref("医生详情");
+    const doctorName = common_vendor.ref("专家详情");
     const doctorTitle = common_vendor.ref("专家");
     const organization = common_vendor.ref("暂无单位信息");
     const specialty = common_vendor.ref("暂无专业方向");
-    const tag = common_vendor.ref("暂无标签");
+    const consultationNotice = common_vendor.ref("");
     const avatarUrl = common_vendor.ref("");
-    const introduction = common_vendor.ref("这里展示医生简介、履历和研究方向。接口返回医生介绍时，将优先使用后端数据。");
-    const qaTitleOne = common_vendor.ref("医生答疑功能占位，后续可根据后端接口补充真实问答内容。");
-    const qaTitleTwo = common_vendor.ref("当前页面已优先展示医生基础信息，问答列表等待后端接口补充。");
+    const avatarFailed = common_vendor.ref(false);
+    const introduction = common_vendor.ref("这里展示专家简介、履历和研究方向。");
+    const experienceItems = common_vendor.ref([]);
     const shortName = common_vendor.computed(() => {
       return doctorName.value.length > 0 ? doctorName.value.substring(0, 1) : "医";
     });
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
     };
+    const sanitizeAvatarUrl = (value) => {
+      const avatar = utils_auth.normalizeAppUrl(safeText(value));
+      if (avatar.length == 0) {
+        return "";
+      }
+      if (avatar.indexOf("example.com") >= 0) {
+        return "";
+      }
+      return avatar;
+    };
+    const formatDateRange = (startDate, endDate) => {
+      const start = safeText(startDate);
+      const end = safeText(endDate);
+      if (start.length == 0 && end.length == 0) {
+        return "";
+      }
+      if (start.length > 0 && end.length > 0) {
+        return start + " - " + end;
+      }
+      return start.length > 0 ? start : end;
+    };
     const goBack = () => {
       common_vendor.index.navigateBack();
+    };
+    const handleAvatarError = () => {
+      avatarFailed.value = true;
+      avatarUrl.value = "";
+    };
+    const mapExperience = (item) => {
+      return new ExperienceDisplayItem({
+        id: item.id,
+        title: safeText(item.title),
+        timeText: formatDateRange(item.startDate, item.endDate),
+        description: safeText(item.description)
+      });
+    };
+    const saveCurrentExpert = () => {
+      common_vendor.index.setStorageSync(expertStorageKey, new UTSJSONObject({
+        expertId: detailId.value,
+        expertName: doctorName.value
+      }));
     };
     const applyExpertDetail = (detail) => {
       const nameText = safeText(detail.realName);
@@ -103,7 +96,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const specialtyText = safeText(detail.specialty);
       const introText = safeText(detail.introduction);
       const noticeText = safeText(detail.consultationNotice);
-      const avatarText = safeText(detail.avatarUrl);
+      const avatarText = sanitizeAvatarUrl(detail.avatarUrl);
       if (nameText.length > 0) {
         doctorName.value = nameText;
       }
@@ -116,72 +109,88 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (specialtyText.length > 0) {
         specialty.value = specialtyText;
       }
-      if (avatarText.length > 0) {
-        avatarUrl.value = avatarText;
-      }
-      if (noticeText.length > 0) {
-        tag.value = noticeText;
-      }
+      avatarUrl.value = avatarText;
+      avatarFailed.value = avatarText.length == 0;
+      consultationNotice.value = noticeText;
       if (introText.length > 0) {
         introduction.value = introText;
-      } else if (detail.experiences != null && detail.experiences.length > 0) {
-        const experienceText = detail.experiences.slice(0, 3).map((item) => {
-          const titleValue = safeText(item.title);
-          const descValue = safeText(item.description);
-          return titleValue.length > 0 ? titleValue + (descValue.length > 0 ? "：" + descValue : "") : descValue;
-        }).filter((item) => {
-          return item.length > 0;
-        });
-        if (experienceText.length > 0) {
-          introduction.value = experienceText.join("；");
-        }
       }
+      experienceItems.value = detail.experiences != null ? detail.experiences.map((item) => {
+        return mapExperience(item);
+      }).filter((item) => {
+        return item.title.length > 0 || item.description.length > 0;
+      }) : [];
+      saveCurrentExpert();
     };
     const loadParams = () => {
       const currentPages = getCurrentPages();
-      if (currentPages.length > 0) {
-        const currentPage = currentPages[currentPages.length - 1];
-        if (currentPage.options != null) {
-          const options = currentPage.options;
-          if (options["id"] != null) {
-            detailId.value = options["id"];
-          }
-          if (options["name"] != null) {
-            doctorName.value = decodeURIComponent(options["name"]);
-          }
-          if (options["title"] != null) {
-            doctorTitle.value = decodeURIComponent(options["title"]);
-          }
-          if (options["organization"] != null) {
-            organization.value = decodeURIComponent(options["organization"]);
-          }
-          if (options["specialty"] != null) {
-            specialty.value = decodeURIComponent(options["specialty"]);
-          }
-          if (options["tag"] != null) {
-            tag.value = decodeURIComponent(options["tag"]);
-          }
-        }
+      if (currentPages.length == 0) {
+        return null;
+      }
+      const currentPage = currentPages[currentPages.length - 1];
+      if (currentPage.options == null) {
+        return null;
+      }
+      const options = currentPage.options;
+      if (options["id"] != null) {
+        detailId.value = options["id"];
+      }
+      if (options["name"] != null) {
+        doctorName.value = decodeURIComponent(options["name"]);
+      }
+      if (options["title"] != null) {
+        doctorTitle.value = decodeURIComponent(options["title"]);
+      }
+      if (options["organization"] != null) {
+        organization.value = decodeURIComponent(options["organization"]);
+      }
+      if (options["specialty"] != null) {
+        specialty.value = decodeURIComponent(options["specialty"]);
+      }
+      if (options["tag"] != null) {
+        consultationNotice.value = decodeURIComponent(options["tag"]);
       }
       if (detailId.value.length > 0) {
-        utils_auth.fetchExpertDetail(detailId.value, (detail) => {
-          applyExpertDetail(detail);
-        }, () => {
-        });
+        saveCurrentExpert();
       }
+    };
+    const loadExpertDetail = () => {
+      if (detailId.value.length == 0) {
+        return null;
+      }
+      utils_auth.fetchExpertDetail(detailId.value, (detail) => {
+        applyExpertDetail(detail);
+      }, (message) => {
+        if (message.length > 0) {
+          common_vendor.index.showToast({
+            title: message,
+            icon: "none"
+          });
+        }
+      });
+    };
+    const goCreateQuestion = () => {
+      saveCurrentExpert();
+      common_vendor.index.navigateTo({
+        url: "/pages/consult/create?expertId=" + detailId.value + "&expertName=" + encodeURIComponent(doctorName.value)
+      });
+    };
+    const goMyQuestions = () => {
+      common_vendor.index.navigateTo({ url: "/pages/consult/questions" });
     };
     common_vendor.onMounted(() => {
       loadParams();
+      loadExpertDetail();
     });
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = common_vendor.e({
         a: common_assets._imports_0$1,
         b: common_vendor.o(goBack),
-        c: common_assets._imports_0$3,
-        d: avatarUrl.value.length > 0
-      }, avatarUrl.value.length > 0 ? {
-        e: avatarUrl.value
+        c: avatarUrl.value.length > 0 && !avatarFailed.value
+      }, avatarUrl.value.length > 0 && !avatarFailed.value ? {
+        d: avatarUrl.value,
+        e: common_vendor.o(handleAvatarError)
       } : {
         f: common_vendor.t(shortName.value)
       }, {
@@ -189,11 +198,31 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         h: common_vendor.t(doctorTitle.value),
         i: common_vendor.t(organization.value),
         j: common_vendor.t(specialty.value),
-        k: common_vendor.t(tag.value),
-        l: common_vendor.t(introduction.value),
-        m: common_vendor.t(qaTitleOne.value),
-        n: common_vendor.t(qaTitleTwo.value),
-        o: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        k: consultationNotice.value.length > 0
+      }, consultationNotice.value.length > 0 ? {
+        l: common_vendor.t(consultationNotice.value)
+      } : {}, {
+        m: common_vendor.t(introduction.value),
+        n: experienceItems.value.length > 0
+      }, experienceItems.value.length > 0 ? {
+        o: common_vendor.f(experienceItems.value, (item, k0, i0) => {
+          return common_vendor.e({
+            a: common_vendor.t(item.title),
+            b: item.timeText.length > 0
+          }, item.timeText.length > 0 ? {
+            c: common_vendor.t(item.timeText)
+          } : {}, {
+            d: item.description.length > 0
+          }, item.description.length > 0 ? {
+            e: common_vendor.t(item.description)
+          } : {}, {
+            f: item.id
+          });
+        })
+      } : {}, {
+        p: common_vendor.o(goCreateQuestion),
+        q: common_vendor.o(goMyQuestions),
+        r: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

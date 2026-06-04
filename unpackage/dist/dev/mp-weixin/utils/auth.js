@@ -1133,7 +1133,11 @@ let ExpertDetail$1 = class ExpertDetail extends UTS.UTSType {
         return {
           id: { type: Number, optional: false },
           realName: { type: String, optional: false },
+          gender: { type: String, optional: true },
+          birthDate: { type: String, optional: true },
+          mobile: { type: String, optional: true },
           avatarUrl: { type: String, optional: false },
+          coverUrl: { type: String, optional: true },
           title: { type: String, optional: false },
           organization: { type: String, optional: false },
           specialty: { type: String, optional: false },
@@ -1152,7 +1156,11 @@ let ExpertDetail$1 = class ExpertDetail extends UTS.UTSType {
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
     this.realName = this.__props__.realName;
+    this.gender = this.__props__.gender;
+    this.birthDate = this.__props__.birthDate;
+    this.mobile = this.__props__.mobile;
     this.avatarUrl = this.__props__.avatarUrl;
+    this.coverUrl = this.__props__.coverUrl;
     this.title = this.__props__.title;
     this.organization = this.__props__.organization;
     this.specialty = this.__props__.specialty;
@@ -1164,9 +1172,224 @@ let ExpertDetail$1 = class ExpertDetail extends UTS.UTSType {
     delete this.__props__;
   }
 };
+let AppQaAnswer$1 = class AppQaAnswer extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          questionId: { type: Number, optional: false },
+          adminId: { type: Number, optional: false },
+          expertId: { type: Number, optional: false },
+          content: { type: String, optional: false },
+          answeredAt: { type: String, optional: false }
+        };
+      },
+      name: "AppQaAnswer"
+    };
+  }
+  constructor(options, metadata = AppQaAnswer.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.questionId = this.__props__.questionId;
+    this.adminId = this.__props__.adminId;
+    this.expertId = this.__props__.expertId;
+    this.content = this.__props__.content;
+    this.answeredAt = this.__props__.answeredAt;
+    delete this.__props__;
+  }
+};
+let AppQaQuestion$1 = class AppQaQuestion extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          expertCategoryId: { type: Number, optional: false },
+          expertId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          content: { type: String, optional: false },
+          status: { type: String, optional: false },
+          statusCode: { type: String, optional: false },
+          statusLabel: { type: String, optional: false },
+          answers: { type: UTS.UTSType.withGenerics(Array, [AppQaAnswer$1]), optional: false }
+        };
+      },
+      name: "AppQaQuestion"
+    };
+  }
+  constructor(options, metadata = AppQaQuestion.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.expertCategoryId = this.__props__.expertCategoryId;
+    this.expertId = this.__props__.expertId;
+    this.title = this.__props__.title;
+    this.content = this.__props__.content;
+    this.status = this.__props__.status;
+    this.statusCode = this.__props__.statusCode;
+    this.statusLabel = this.__props__.statusLabel;
+    this.answers = this.__props__.answers;
+    delete this.__props__;
+  }
+};
+let AppQaQuestionRequest$1 = class AppQaQuestionRequest extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          expertCategoryId: { type: Number, optional: true },
+          expertId: { type: Number, optional: true },
+          title: { type: String, optional: false },
+          content: { type: String, optional: false }
+        };
+      },
+      name: "AppQaQuestionRequest"
+    };
+  }
+  constructor(options, metadata = AppQaQuestionRequest.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.expertCategoryId = this.__props__.expertCategoryId;
+    this.expertId = this.__props__.expertId;
+    this.title = this.__props__.title;
+    this.content = this.__props__.content;
+    delete this.__props__;
+  }
+};
+function normalizeExpertExperience(raw) {
+  return new ExpertExperience$1({
+    id: readNumberField(raw, "id"),
+    expertId: readNumberField(raw, "expertId"),
+    experienceType: readStringField(raw, "experienceType"),
+    title: readStringField(raw, "title"),
+    description: readStringField(raw, "description"),
+    startDate: readStringField(raw, "startDate"),
+    endDate: readStringField(raw, "endDate"),
+    sortOrder: readNumberField(raw, "sortOrder")
+  });
+}
+function normalizeExpertDetail(raw) {
+  const categoryIdsValue = raw["categoryIds"];
+  const rawCategoryIds = categoryIdsValue != null && UTS.isInstanceOf(categoryIdsValue, Array) ? categoryIdsValue : [];
+  const experiencesValue = raw["experiences"];
+  const rawExperiences = experiencesValue != null && UTS.isInstanceOf(experiencesValue, Array) ? experiencesValue : [];
+  return new ExpertDetail$1({
+    id: readNumberField(raw, "id"),
+    realName: readStringField(raw, "realName"),
+    gender: readStringField(raw, "gender"),
+    birthDate: readStringField(raw, "birthDate"),
+    mobile: readStringField(raw, "mobile"),
+    avatarUrl: readStringField(raw, "avatarUrl"),
+    coverUrl: readStringField(raw, "coverUrl"),
+    title: readStringField(raw, "title"),
+    organization: readStringField(raw, "organization"),
+    specialty: readStringField(raw, "specialty"),
+    introduction: readStringField(raw, "introduction"),
+    consultationNotice: readStringField(raw, "consultationNotice"),
+    sortOrder: readNumberField(raw, "sortOrder"),
+    categoryIds: rawCategoryIds,
+    experiences: rawExperiences.map((item) => {
+      return normalizeExpertExperience(item);
+    })
+  });
+}
+function normalizeQaAnswer(raw) {
+  return new AppQaAnswer$1({
+    id: readNumberField(raw, "id"),
+    questionId: readNumberField(raw, "questionId"),
+    adminId: readNumberField(raw, "adminId"),
+    expertId: readNumberField(raw, "expertId"),
+    content: readStringField(raw, "content"),
+    answeredAt: readStringField(raw, "answeredAt")
+  });
+}
+function normalizeQaQuestion(raw) {
+  const answersValue = raw["answers"];
+  const rawAnswers = answersValue != null && UTS.isInstanceOf(answersValue, Array) ? answersValue : [];
+  return new AppQaQuestion$1({
+    id: readNumberField(raw, "id"),
+    expertCategoryId: readNumberField(raw, "expertCategoryId"),
+    expertId: readNumberField(raw, "expertId"),
+    title: readStringField(raw, "title"),
+    content: readStringField(raw, "content"),
+    status: readStringField(raw, "status"),
+    statusCode: readStringField(raw, "statusCode"),
+    statusLabel: readStringField(raw, "statusLabel"),
+    answers: rawAnswers.map((item) => {
+      return normalizeQaAnswer(item);
+    })
+  });
+}
 function fetchExpertDetail(id, success, fail) {
   request("/api/v1/app/experts/" + id, "GET", null, true, false, (detail) => {
-    success(detail);
+    success(normalizeExpertDetail(detail));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchExperts(page, size, keyword, categoryId, success, fail) {
+  let path = "/api/v1/app/experts?page=" + String(page) + "&size=" + String(size);
+  if (keyword != null && keyword.length > 0) {
+    path += "&keyword=" + encodeURIComponent(keyword);
+  }
+  if (categoryId > 0) {
+    path += "&categoryId=" + String(categoryId);
+  }
+  request(path, "GET", null, true, false, (pageData) => {
+    const recordsValue = pageData["records"];
+    const records = recordsValue != null && UTS.isInstanceOf(recordsValue, Array) ? recordsValue : [];
+    success(new PageResponse$1({
+      records: records.map((item) => {
+        return normalizeExpertDetail(item);
+      }),
+      total: readNumberField(pageData, "total"),
+      page: readNumberField(pageData, "page"),
+      size: readNumberField(pageData, "size")
+    }));
+  }, (message) => {
+    fail(message);
+  });
+}
+function createQaQuestion(data, success, fail) {
+  request("/api/v1/app/interaction/qa/questions", "POST", data, true, false, (result) => {
+    success(normalizeQaQuestion(result));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchQaQuestions(page, size, success, fail) {
+  request("/api/v1/app/interaction/qa/questions?page=" + String(page) + "&size=" + String(size), "GET", null, true, true, (pageData) => {
+    if (pageData == null) {
+      success(new PageResponse$1({
+        records: [],
+        total: 0,
+        page,
+        size
+      }));
+      return null;
+    }
+    const recordsValue = pageData["records"];
+    const records = recordsValue != null && UTS.isInstanceOf(recordsValue, Array) ? recordsValue : [];
+    success(new PageResponse$1({
+      records: records.map((item) => {
+        return normalizeQaQuestion(item);
+      }),
+      total: readNumberField(pageData, "total") > 0 ? readNumberField(pageData, "total") : records.length,
+      page: readNumberField(pageData, "page") > 0 ? readNumberField(pageData, "page") : page,
+      size: readNumberField(pageData, "size") > 0 ? readNumberField(pageData, "size") : size
+    }));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchQaQuestionDetail(id, success, fail) {
+  request("/api/v1/app/interaction/qa/questions/" + id, "GET", null, true, false, (detail) => {
+    success(normalizeQaQuestion(detail));
   }, (message) => {
     fail(message);
   });
@@ -1178,39 +1401,48 @@ function fetchTopics(success, fail) {
     fail(message);
   });
 }
-function normalizeKnowledgeCategory(category) {
-  const rawChildren = category.children;
-  const children = rawChildren != null && UTS.isInstanceOf(rawChildren, Array) ? rawChildren.map((item) => {
+function readStringField(raw, key) {
+  const value = raw[key];
+  return typeof value == "string" ? value : "";
+}
+function readNumberField(raw, key) {
+  const value = raw[key];
+  return typeof value == "number" ? value : 0;
+}
+function normalizeKnowledgeCategory(raw) {
+  const childrenValue = raw["children"];
+  const rawChildren = childrenValue != null && UTS.isInstanceOf(childrenValue, Array) ? childrenValue : [];
+  const children = rawChildren.map((item) => {
     return normalizeKnowledgeCategory(item);
-  }) : [];
+  });
   return new KnowledgeCategory$1({
-    id: category.id,
-    parentId: category.parentId,
-    categoryName: category.categoryName != null ? category.categoryName : "",
-    categoryCode: category.categoryCode != null ? category.categoryCode : "",
-    description: category.description != null ? category.description : "",
-    sortOrder: category.sortOrder != null ? category.sortOrder : 0,
+    id: readNumberField(raw, "id"),
+    parentId: readNumberField(raw, "parentId"),
+    categoryName: readStringField(raw, "categoryName"),
+    categoryCode: readStringField(raw, "categoryCode"),
+    description: readStringField(raw, "description"),
+    sortOrder: readNumberField(raw, "sortOrder"),
     children
   });
 }
-function normalizeKnowledgeEntry(entry) {
+function normalizeKnowledgeEntry(raw) {
   return new KnowledgeEntry$1({
-    id: entry.id,
-    categoryId: entry.categoryId != null ? entry.categoryId : 0,
-    title: entry.title != null ? entry.title : "",
-    summary: entry.summary != null ? entry.summary : "",
-    categoryName: entry.categoryName != null ? entry.categoryName : "",
-    categoryCode: entry.categoryCode != null ? entry.categoryCode : "",
-    coverUrl: normalizeAppUrl(entry.coverUrl != null ? entry.coverUrl : ""),
-    content: entry.content != null ? entry.content : "",
-    keywords: entry.keywords != null ? entry.keywords : "",
-    source: entry.source != null ? entry.source : "",
-    author: entry.author != null ? entry.author : "",
-    publisher: entry.publisher != null ? entry.publisher : "",
-    totalPages: entry.totalPages != null ? entry.totalPages : 0,
-    publishedAt: entry.publishedAt != null ? entry.publishedAt : "",
-    viewCount: entry.viewCount != null ? entry.viewCount : 0,
-    sortOrder: entry.sortOrder != null ? entry.sortOrder : 0
+    id: readNumberField(raw, "id"),
+    categoryId: readNumberField(raw, "categoryId"),
+    title: readStringField(raw, "title"),
+    summary: readStringField(raw, "summary"),
+    categoryName: readStringField(raw, "categoryName"),
+    categoryCode: readStringField(raw, "categoryCode"),
+    coverUrl: normalizeAppUrl(readStringField(raw, "coverUrl")),
+    content: readStringField(raw, "content"),
+    keywords: readStringField(raw, "keywords"),
+    source: readStringField(raw, "source"),
+    author: readStringField(raw, "author"),
+    publisher: readStringField(raw, "publisher"),
+    totalPages: readNumberField(raw, "totalPages"),
+    publishedAt: readStringField(raw, "publishedAt"),
+    viewCount: readNumberField(raw, "viewCount"),
+    sortOrder: readNumberField(raw, "sortOrder")
   });
 }
 function fetchKnowledgeCategoryTree(success, fail) {
@@ -1233,15 +1465,16 @@ function fetchKnowledgeEntries(page, size, keyword, categoryId, success, fail) {
     path += "&categoryId=" + String(categoryId);
   }
   request(path, "GET", null, true, false, (pageData) => {
-    const records = pageData.records != null && UTS.isInstanceOf(pageData.records, Array) ? pageData.records : [];
+    const recordsValue = pageData["records"];
+    const records = recordsValue != null && UTS.isInstanceOf(recordsValue, Array) ? recordsValue : [];
     const normalizedRecords = records.map((item) => {
       return normalizeKnowledgeEntry(item);
     });
     success(new PageResponse$1({
       records: normalizedRecords,
-      total: pageData.total != null ? pageData.total : normalizedRecords.length,
-      page: pageData.page != null ? pageData.page : page,
-      size: pageData.size != null ? pageData.size : size
+      total: readNumberField(pageData, "total") > 0 ? readNumberField(pageData, "total") : normalizedRecords.length,
+      page: readNumberField(pageData, "page") > 0 ? readNumberField(pageData, "page") : page,
+      size: readNumberField(pageData, "size") > 0 ? readNumberField(pageData, "size") : size
     }));
   }, (message) => {
     fail(message);
@@ -2535,7 +2768,11 @@ class ExpertDetail2 extends UTS.UTSType {
         return {
           id: { type: Number, optional: false },
           realName: { type: String, optional: false },
+          gender: { type: String, optional: true },
+          birthDate: { type: String, optional: true },
+          mobile: { type: String, optional: true },
           avatarUrl: { type: String, optional: false },
+          coverUrl: { type: String, optional: true },
           title: { type: String, optional: false },
           organization: { type: String, optional: false },
           specialty: { type: String, optional: false },
@@ -2554,7 +2791,11 @@ class ExpertDetail2 extends UTS.UTSType {
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
     this.realName = this.__props__.realName;
+    this.gender = this.__props__.gender;
+    this.birthDate = this.__props__.birthDate;
+    this.mobile = this.__props__.mobile;
     this.avatarUrl = this.__props__.avatarUrl;
+    this.coverUrl = this.__props__.coverUrl;
     this.title = this.__props__.title;
     this.organization = this.__props__.organization;
     this.specialty = this.__props__.specialty;
@@ -2566,7 +2807,97 @@ class ExpertDetail2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+class AppQaAnswer2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          questionId: { type: Number, optional: false },
+          adminId: { type: Number, optional: false },
+          expertId: { type: Number, optional: false },
+          content: { type: String, optional: false },
+          answeredAt: { type: String, optional: false }
+        };
+      },
+      name: "AppQaAnswer"
+    };
+  }
+  constructor(options, metadata = AppQaAnswer2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.questionId = this.__props__.questionId;
+    this.adminId = this.__props__.adminId;
+    this.expertId = this.__props__.expertId;
+    this.content = this.__props__.content;
+    this.answeredAt = this.__props__.answeredAt;
+    delete this.__props__;
+  }
+}
+class AppQaQuestion2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          expertCategoryId: { type: Number, optional: false },
+          expertId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          content: { type: String, optional: false },
+          status: { type: String, optional: false },
+          statusCode: { type: String, optional: false },
+          statusLabel: { type: String, optional: false },
+          answers: { type: UTS.UTSType.withGenerics(Array, [AppQaAnswer2]), optional: false }
+        };
+      },
+      name: "AppQaQuestion"
+    };
+  }
+  constructor(options, metadata = AppQaQuestion2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.expertCategoryId = this.__props__.expertCategoryId;
+    this.expertId = this.__props__.expertId;
+    this.title = this.__props__.title;
+    this.content = this.__props__.content;
+    this.status = this.__props__.status;
+    this.statusCode = this.__props__.statusCode;
+    this.statusLabel = this.__props__.statusLabel;
+    this.answers = this.__props__.answers;
+    delete this.__props__;
+  }
+}
+class AppQaQuestionRequest2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          expertCategoryId: { type: Number, optional: true },
+          expertId: { type: Number, optional: true },
+          title: { type: String, optional: false },
+          content: { type: String, optional: false }
+        };
+      },
+      name: "AppQaQuestionRequest"
+    };
+  }
+  constructor(options, metadata = AppQaQuestionRequest2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.expertCategoryId = this.__props__.expertCategoryId;
+    this.expertId = this.__props__.expertId;
+    this.title = this.__props__.title;
+    this.content = this.__props__.content;
+    delete this.__props__;
+  }
+}
 exports.AppFavoriteRequest = AppFavoriteRequest2;
+exports.AppQaQuestionRequest = AppQaQuestionRequest2;
 exports.AppStudentCertificationRequest = AppStudentCertificationRequest2;
 exports.AvatarBinaryUploadConfig = AvatarBinaryUploadConfig2;
 exports.AvatarConfirmRequest = AvatarConfirmRequest2;
@@ -2574,11 +2905,13 @@ exports.AvatarUploadUrlRequest = AvatarUploadUrlRequest2;
 exports.checkFavoriteStatus = checkFavoriteStatus;
 exports.clearBindToken = clearBindToken;
 exports.confirmAvatarUpload = confirmAvatarUpload;
+exports.createQaQuestion = createQaQuestion;
 exports.fetchAudioDetail = fetchAudioDetail;
 exports.fetchCertificationStatus = fetchCertificationStatus;
 exports.fetchCourseDetail = fetchCourseDetail;
 exports.fetchCourses = fetchCourses;
 exports.fetchExpertDetail = fetchExpertDetail;
+exports.fetchExperts = fetchExperts;
 exports.fetchHomeCategories = fetchHomeCategories;
 exports.fetchHomeContents = fetchHomeContents;
 exports.fetchKnowledgeCategoryTree = fetchKnowledgeCategoryTree;
@@ -2588,6 +2921,8 @@ exports.fetchLiveSessionDetail = fetchLiveSessionDetail;
 exports.fetchLiveSessions = fetchLiveSessions;
 exports.fetchProfile = fetchProfile;
 exports.fetchProfileFavorites = fetchProfileFavorites;
+exports.fetchQaQuestionDetail = fetchQaQuestionDetail;
+exports.fetchQaQuestions = fetchQaQuestions;
 exports.fetchTopicDetail = fetchTopicDetail;
 exports.fetchTopics = fetchTopics;
 exports.getBindToken = getBindToken;

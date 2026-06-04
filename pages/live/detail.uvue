@@ -51,7 +51,7 @@ import {
   type LiveSession
 } from '../../utils/auth.uts'
 
-const RESOURCE_TYPE = 'LIVE'
+const RESOURCE_TYPE = 'live'
 
 const liveId = ref('')
 const liveTitle = ref('直播详情')
