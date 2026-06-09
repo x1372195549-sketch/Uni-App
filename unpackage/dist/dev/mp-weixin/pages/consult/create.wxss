@@ -22,7 +22,7 @@
 	height: 56rpx;
 	align-items: center;
 	justify-content: center;
-	z-index: 2;
+	z-index: 5;
 }
 .nav-back-icon {
 	width: 26rpx;

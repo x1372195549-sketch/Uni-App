@@ -46,6 +46,14 @@
   background-color: #d8c9b5;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+.hero-cover-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 750rpx;
+  height: 420rpx;
 }
 .hero-mask {
   position: absolute;

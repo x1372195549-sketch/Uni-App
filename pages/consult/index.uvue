@@ -477,7 +477,7 @@ loadExperts(false)
 
 .hero-shell {
 	position: relative;
-	height: 118rpx;
+	height: 146rpx;
 	overflow: hidden;
 }
 
@@ -486,14 +486,14 @@ loadExperts(false)
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 236rpx;
+	height: 264rpx;
 }
 
 .header {
 	position: relative;
 	z-index: 1;
-	height: 118rpx;
-	padding-top: 34rpx;
+	height: 146rpx;
+	padding-top: 62rpx;
 	align-items: center;
 	justify-content: center;
 	background-color: transparent;

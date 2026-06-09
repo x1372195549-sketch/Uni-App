@@ -78,6 +78,12 @@ export type AppProfileUpdateRequest = {
 	gender? : string
 }
 
+export type AppFeedbackRequest = {
+	feedbackType : string
+	content : string
+	contact : string
+}
+
 export type AppStudentCertification = {
 	studentId : number
 	studentNo : string
@@ -109,17 +115,33 @@ export type AppStudentCertificationRequest = {
 	certificationMaterials? : string
 }
 
+export type LiveSessionVideo = {
+	id : number
+	liveSessionId : number
+	title : string
+	videoUrl : string
+	durationSeconds : number
+	sortOrder : number
+	status : string
+}
+
 export type LiveSession = {
 	id : number
 	title : string
 	coverUrl : string
 	anchorName : string
+	speakerName : string
+	tags : string[]
 	liveUrl : string
 	playbackUrl : string
 	startAt : string
 	endAt : string
 	reviewStatus : string
 	liveStatus : string
+	browseCount : number
+	favoriteCount : number
+	favorited : boolean
+	videos : LiveSessionVideo[]
 }
 
 export type CourseVideo = {
@@ -352,6 +374,37 @@ export type KnowledgeEntry = {
 	sortOrder? : number
 }
 
+export type AppBookChapter = {
+	id : number
+	bookId : number
+	parentId : number
+	chapterTitle : string
+	content : string
+	startPage : number
+	pageCount : number
+	paperId : number
+	sortOrder : number
+}
+
+export type AppBook = {
+	id : number
+	categoryId : number
+	bookName : string
+	author : string
+	publisher : string
+	coverUrl : string
+	introduction : string
+	totalPages : number
+	paperId : number
+	publishedAt : string
+	browseCount : number
+	favoriteCount : number
+	favorited : boolean
+	progressPercent : number
+	studySeconds : number
+	chapters : AppBookChapter[]
+}
+
 export type PageResponse<T> = {
 	records : T[]
 	total : number
@@ -366,6 +419,19 @@ export type AppResourceRecord = {
 	source : string
 	viewCount : number
 	occurredAt : string
+}
+
+export type LearningHistoryRecord = {
+	id : number
+	resourceType : string
+	resourceId : number
+	title : string
+	subtitle : string
+	coverUrl : string
+	resourceTypeLabel : string
+	visitedTime : string
+	progressPercent : number
+	studySeconds : number
 }
 
 export type AppFavoriteRequest = {
@@ -405,6 +471,33 @@ export type HomeContent = {
 	startAt : string
 	endAt : string
 	status : string
+}
+
+export type AppHomeItem = {
+	id : number
+	contentType : string
+	contentTypeLabel : string
+	targetId : number
+	title : string
+	subtitle : string
+	summary : string
+	coverUrl : string
+	linkUrl : string
+	sortOrder : number
+}
+
+export type AppHomeSection = {
+	id : number
+	categoryName : string
+	categoryCode : string
+	iconUrl : string
+	description : string
+	sortOrder : number
+	items : AppHomeItem[]
+}
+
+export type AppHomeResponse = {
+	sections : AppHomeSection[]
 }
 
 export type AvatarUploadUrlResponse = {
@@ -498,7 +591,11 @@ function normalizeExternalUrl(rawUrl : string) : string {
 }
 
 export function normalizeAppUrl(rawUrl : string) : string {
-	return normalizeExternalUrl(rawUrl)
+	const normalized = normalizeExternalUrl(rawUrl)
+	if (normalized.indexOf('https://example.com/assets/') == 0 || normalized.indexOf('http://example.com/assets/') == 0) {
+		return ''
+	}
+	return normalized
 }
 
 function normalizeUploadUrlResponse(data : UTSJSONObject) : AvatarUploadUrlResponse {
@@ -706,7 +803,15 @@ export function fetchLiveSessions(
 		true,
 		false,
 		(pageData) => {
-			success(pageData)
+			const records = pageData.records != null ? pageData.records : []
+			success({
+				records: records.map((item : UTSJSONObject) : LiveSession => {
+					return normalizeLiveSession(item)
+				}),
+				total: pageData.total,
+				page: pageData.page,
+				size: pageData.size
+			} as PageResponse<LiveSession>)
 		},
 		(message) => {
 			fail(message)
@@ -726,7 +831,7 @@ export function fetchLiveSessionDetail(
 		true,
 		false,
 		(detail) => {
-			success(detail)
+			success(normalizeLiveSession(detail))
 		},
 		(message) => {
 			fail(message)
@@ -794,6 +899,43 @@ export function fetchAudioDetail(
 		(detail) => {
 			detail.coverUrl = normalizeAppUrl(detail.coverUrl)
 			success(detail)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchPodcastsPage(
+	page : number,
+	size : number,
+	keyword : string,
+	success : (pageData : PageResponse<AppPodcast>) => void,
+	fail : (message : string) => void
+) {
+	let path = '/api/v1/app/learning/podcasts?page=' + String(page) + '&size=' + String(size)
+	if (keyword != null && keyword.length > 0) {
+		path += '&keyword=' + encodeURIComponent(keyword)
+	}
+	request<PageResponse<AppPodcast>>(
+		path,
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			success({
+				records: records.map((item : AppPodcast) : AppPodcast => {
+					return {
+						...item,
+						coverUrl: normalizeAppUrl(item.coverUrl)
+					}
+				}),
+				total: pageData.total,
+				page: pageData.page,
+				size: pageData.size
+			} as PageResponse<AppPodcast>)
 		},
 		(message) => {
 			fail(message)
@@ -1249,6 +1391,106 @@ function normalizeArticle(raw : UTSJSONObject) : Article {
 	}
 }
 
+function normalizeLiveSessionVideo(raw : UTSJSONObject) : LiveSessionVideo {
+	return {
+		id: typeof raw['id'] == 'number' ? (raw['id'] as number) : 0,
+		liveSessionId: typeof raw['liveSessionId'] == 'number' ? (raw['liveSessionId'] as number) : 0,
+		title: typeof raw['title'] == 'string' ? (raw['title'] as string) : '',
+		videoUrl: normalizeAppUrl(typeof raw['videoUrl'] == 'string' ? (raw['videoUrl'] as string) : ''),
+		durationSeconds: typeof raw['durationSeconds'] == 'number' ? (raw['durationSeconds'] as number) : 0,
+		sortOrder: typeof raw['sortOrder'] == 'number' ? (raw['sortOrder'] as number) : 0,
+		status: typeof raw['status'] == 'string' ? (raw['status'] as string) : ''
+	} as LiveSessionVideo
+}
+
+function normalizeLiveSession(raw : UTSJSONObject) : LiveSession {
+	const videoRaw = raw['videos']
+	const videos = Array.isArray(videoRaw)
+		? (videoRaw as UTSJSONObject[]).map((item : UTSJSONObject) : LiveSessionVideo => {
+			return normalizeLiveSessionVideo(item)
+		})
+		: []
+
+	const tagRaw = raw['tags']
+	const tags = Array.isArray(tagRaw)
+		? (tagRaw as string[]).filter((item : string) : boolean => {
+			return item != null && item.length > 0
+		})
+		: []
+
+	return {
+		id: typeof raw['id'] == 'number' ? (raw['id'] as number) : 0,
+		title: typeof raw['title'] == 'string' ? (raw['title'] as string) : '',
+		coverUrl: normalizeAppUrl(typeof raw['coverUrl'] == 'string' ? (raw['coverUrl'] as string) : ''),
+		anchorName: typeof raw['anchorName'] == 'string' ? (raw['anchorName'] as string) : '',
+		speakerName: typeof raw['speakerName'] == 'string' ? (raw['speakerName'] as string) : '',
+		tags,
+		liveUrl: normalizeAppUrl(typeof raw['liveUrl'] == 'string' ? (raw['liveUrl'] as string) : ''),
+		playbackUrl: normalizeAppUrl(typeof raw['playbackUrl'] == 'string' ? (raw['playbackUrl'] as string) : ''),
+		startAt: typeof raw['startAt'] == 'string' ? (raw['startAt'] as string) : '',
+		endAt: typeof raw['endAt'] == 'string' ? (raw['endAt'] as string) : '',
+		reviewStatus: typeof raw['reviewStatus'] == 'string' ? (raw['reviewStatus'] as string) : '',
+		liveStatus: typeof raw['liveStatus'] == 'string' ? (raw['liveStatus'] as string) : '',
+		browseCount: typeof raw['browseCount'] == 'number' ? (raw['browseCount'] as number) : 0,
+		favoriteCount: typeof raw['favoriteCount'] == 'number' ? (raw['favoriteCount'] as number) : 0,
+		favorited: typeof raw['favorited'] == 'boolean' ? (raw['favorited'] as boolean) : false,
+		videos
+	} as LiveSession
+}
+
+function normalizeLearningHistoryRecord(raw : UTSJSONObject) : LearningHistoryRecord {
+	const resourceType = readStringField(raw, 'resourceType')
+	const title = readStringField(raw, 'title').length > 0
+		? readStringField(raw, 'title')
+		: (readStringField(raw, 'bookName').length > 0
+			? readStringField(raw, 'bookName')
+			: (readStringField(raw, 'courseName').length > 0
+				? readStringField(raw, 'courseName')
+				: readStringField(raw, 'topicName')))
+	const subtitle = readStringField(raw, 'subtitle').length > 0
+		? readStringField(raw, 'subtitle')
+		: (readStringField(raw, 'author').length > 0
+			? readStringField(raw, 'author')
+			: (readStringField(raw, 'lecturerName').length > 0
+				? readStringField(raw, 'lecturerName')
+				: readStringField(raw, 'source')))
+	const visitedTime = readStringField(raw, 'visitedTime').length > 0
+		? readStringField(raw, 'visitedTime')
+		: readStringField(raw, 'occurredAt')
+	const resourceTypeLabel = readStringField(raw, 'resourceTypeLabel').length > 0
+		? readStringField(raw, 'resourceTypeLabel')
+		: resourceType
+	return {
+		id: readNumberField(raw, 'id'),
+		resourceType,
+		resourceId: readNumberField(raw, 'resourceId'),
+		title,
+		subtitle,
+		coverUrl: normalizeAppUrl(readStringField(raw, 'coverUrl')),
+		resourceTypeLabel,
+		visitedTime,
+		progressPercent: readNumberField(raw, 'progressPercent'),
+		studySeconds: readNumberField(raw, 'studySeconds')
+	}
+}
+
+function mapLearningHistoryPage(
+	pageData : UTSJSONObject,
+	page : number,
+	size : number
+) : PageResponse<LearningHistoryRecord> {
+	const recordsValue = pageData['records']
+	const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+	return {
+		records: records.map((item : UTSJSONObject) : LearningHistoryRecord => {
+			return normalizeLearningHistoryRecord(item)
+		}),
+		total: readNumberField(pageData, 'total'),
+		page: readNumberField(pageData, 'page') > 0 ? readNumberField(pageData, 'page') : page,
+		size: readNumberField(pageData, 'size') > 0 ? readNumberField(pageData, 'size') : size
+	}
+}
+
 function normalizeExamQuestionOption(raw : UTSJSONObject) : ExamQuestionOption {
 	const optionKey = readStringField(raw, 'optionKey').length > 0
 		? readStringField(raw, 'optionKey')
@@ -1445,6 +1687,45 @@ function normalizeKnowledgeEntry(raw : UTSJSONObject) : KnowledgeEntry {
 	} as KnowledgeEntry
 }
 
+function normalizeBookChapter(raw : UTSJSONObject) : AppBookChapter {
+	return {
+		id: readNumberField(raw, 'id'),
+		bookId: readNumberField(raw, 'bookId'),
+		parentId: readNumberField(raw, 'parentId'),
+		chapterTitle: readStringField(raw, 'chapterTitle'),
+		content: readStringField(raw, 'content'),
+		startPage: readNumberField(raw, 'startPage'),
+		pageCount: readNumberField(raw, 'pageCount'),
+		paperId: readNumberField(raw, 'paperId'),
+		sortOrder: readNumberField(raw, 'sortOrder')
+	} as AppBookChapter
+}
+
+function normalizeBook(raw : UTSJSONObject) : AppBook {
+	const chaptersValue = raw['chapters']
+	const chapters = chaptersValue != null && chaptersValue instanceof Array ? (chaptersValue as UTSJSONObject[]) : []
+	return {
+		id: readNumberField(raw, 'id'),
+		categoryId: readNumberField(raw, 'categoryId'),
+		bookName: readStringField(raw, 'bookName').length > 0 ? readStringField(raw, 'bookName') : readStringField(raw, 'title'),
+		author: readStringField(raw, 'author'),
+		publisher: readStringField(raw, 'publisher'),
+		coverUrl: normalizeAppUrl(readStringField(raw, 'coverUrl')),
+		introduction: readStringField(raw, 'introduction').length > 0 ? readStringField(raw, 'introduction') : readStringField(raw, 'summary'),
+		totalPages: readNumberField(raw, 'totalPages'),
+		paperId: readNumberField(raw, 'paperId'),
+		publishedAt: readStringField(raw, 'publishedAt'),
+		browseCount: readNumberField(raw, 'browseCount'),
+		favoriteCount: readNumberField(raw, 'favoriteCount'),
+		favorited: readBooleanField(raw, 'favorited'),
+		progressPercent: readNumberField(raw, 'progressPercent'),
+		studySeconds: readNumberField(raw, 'studySeconds'),
+		chapters: chapters.map((item : UTSJSONObject) : AppBookChapter => {
+			return normalizeBookChapter(item)
+		})
+	} as AppBook
+}
+
 export function fetchKnowledgeCategoryTree(
 	success : (categories : KnowledgeCategory[]) => void,
 	fail : (message : string) => void
@@ -1529,6 +1810,47 @@ export function fetchKnowledgeEntryDetail(
 	)
 }
 
+export function fetchBookDetail(
+	id : string,
+	success : (detail : AppBook) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/learning/books/' + id,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(normalizeBook(detail))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchBookChapterDetail(
+	bookId : string,
+	chapterId : string,
+	success : (detail : AppBookChapter) => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/learning/books/' + bookId + '/chapters/' + chapterId,
+		'GET',
+		null,
+		true,
+		false,
+		(detail) => {
+			success(normalizeBookChapter(detail))
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
 export function fetchHomeCategories(
 	success : (pageData : PageResponse<HomeCategory>) => void,
 	fail : (message : string) => void
@@ -1567,6 +1889,25 @@ export function fetchHomeContents(
 	)
 }
 
+export function fetchAppHome(
+	success : (data : AppHomeResponse) => void,
+	fail : (message : string) => void
+) {
+	request<AppHomeResponse>(
+		'/api/v1/app/home',
+		'GET',
+		null,
+		true,
+		false,
+		(data) => {
+			success(data)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
 export function fetchTopicDetail(
 	id : string,
 	success : (detail : Topic) => void,
@@ -1595,6 +1936,27 @@ export function fetchProfileFavorites(
 ) {
 	request<PageResponse<AppResourceRecord>>(
 		'/api/v1/app/profile/favorites?page=' + String(page) + '&size=' + String(size),
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			success(pageData)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchLearningHistory(
+	page : number,
+	size : number,
+	success : (pageData : PageResponse<AppResourceRecord>) => void,
+	fail : (message : string) => void
+) {
+	request<PageResponse<AppResourceRecord>>(
+		'/api/v1/app/profile/browse-histories?page=' + String(page) + '&size=' + String(size) + '&sort=occurredAt,desc',
 		'GET',
 		null,
 		true,
@@ -1933,6 +2295,26 @@ export function updateFavoriteStatus(
 	)
 }
 
+export function submitFeedback(
+	data : AppFeedbackRequest,
+	success : () => void,
+	fail : (message : string) => void
+) {
+	request<UTSJSONObject>(
+		'/api/v1/app/interaction/feedbacks',
+		'POST',
+		data as UTSJSONObject,
+		true,
+		true,
+		() => {
+			success()
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
 export function requestAvatarUploadUrl(
 	requestData : AvatarUploadUrlRequest,
 	success : (data : AvatarUploadUrlResponse) => void,
@@ -2193,6 +2575,16 @@ export function clearBindToken() {
 	uni.removeStorageSync(BIND_TOKEN_KEY)
 }
 
+function redirectToLogin() {
+	uni.showToast({
+		title: '请先登录',
+		icon: 'none'
+	})
+	uni.navigateTo({
+		url: '/pages/login/index'
+	})
+}
+
 function request<T>(
 	path : string,
 	method : string,
@@ -2208,6 +2600,8 @@ function request<T>(
 	if (needAuth) {
 		const authorization = buildAuthorization()
 		if (authorization == '') {
+			clearAuthStorage()
+			redirectToLogin()
 			fail('登录状态已失效，请重新登录')
 			return
 		}
@@ -2222,6 +2616,12 @@ function request<T>(
 		success: (res) => {
 			const statusCode = res.statusCode
 			const body = res.data as ApiResponse<T>
+			if (statusCode == 401 || (body != null && body.code == 'UNAUTHORIZED')) {
+				clearAuthStorage()
+				redirectToLogin()
+				fail(body != null && body.message != null && body.message != '' ? body.message : '登录状态已失效，请重新登录')
+				return
+			}
 			if (statusCode >= 200 && statusCode < 300 && body != null && body.success == true) {
 				if (body.data != null) {
 					success(body.data)

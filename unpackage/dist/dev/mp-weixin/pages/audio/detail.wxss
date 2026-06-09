@@ -41,10 +41,16 @@
   flex: 1;
 }
 .detail-cover {
+  position: relative;
   height: 232px;
   align-items: center;
   justify-content: center;
   background-color: #cabca7;
+  overflow: hidden;
+}
+.detail-cover-image {
+  width: 100%;
+  height: 232px;
 }
 .audio-disc {
   border-radius: 999px;

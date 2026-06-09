@@ -26,17 +26,11 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const title = common_vendor.ref("");
     const content = common_vendor.ref("");
     const isSubmitting = common_vendor.ref(false);
+    const isGoingBack = common_vendor.ref(false);
     const displayExpertName = common_vendor.computed(() => {
       return expertName.value.length > 0 ? expertName.value : fallbackExpertText;
     });
-    const goBack = () => {
-      const pages = getCurrentPages();
-      if (pages.length > 1) {
-        common_vendor.index.navigateBack(new UTSJSONObject({
-          delta: 1
-        }));
-        return null;
-      }
+    const fallbackBack = () => {
       if (expertId.value.length > 0) {
         let url = "/pages/consult/detail?id=" + expertId.value;
         if (expertName.value.length > 0) {
@@ -46,6 +40,31 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         return null;
       }
       common_vendor.index.redirectTo({ url: "/pages/consult/index" });
+    };
+    const goBack = () => {
+      if (isGoingBack.value) {
+        return null;
+      }
+      isGoingBack.value = true;
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        common_vendor.index.navigateBack(new UTSJSONObject({
+          delta: 1,
+          fail: () => {
+            fallbackBack();
+          },
+          complete: () => {
+            setTimeout(() => {
+              isGoingBack.value = false;
+            }, 300);
+          }
+        }));
+        return null;
+      }
+      fallbackBack();
+      setTimeout(() => {
+        isGoingBack.value = false;
+      }, 300);
     };
     const readStoredExpert = () => {
       const stored = common_vendor.index.getStorageSync(expertStorageKey);

@@ -1,183 +1,168 @@
 <template>
-	<view class="page">
-		<view class="hero-shell">
-			<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
+  <view class="page">
+    <view class="hero-shell">
+      <image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
+      <view class="header">
+        <text class="header-title">{{ appTitleText }}</text>
+      </view>
 
-			<view class="header">
-				<text class="header-title">江苏中医在线</text>
-			</view>
+      <view class="top-tabs">
+        <view class="top-tab" @tap="goLearningPage">
+          <text class="top-tab-text">{{ homeTabText }}</text>
+        </view>
+        <view class="top-tab" @tap="goTopicsPage">
+          <text class="top-tab-text">{{ topicsTabText }}</text>
+        </view>
+        <view class="top-tab" @tap="goAudioPage">
+          <text class="top-tab-text">{{ audioTabText }}</text>
+        </view>
+        <view class="top-tab" @tap="goLivePage">
+          <text class="top-tab-text">{{ liveTabText }}</text>
+        </view>
+        <view class="top-tab top-tab-active">
+          <text class="top-tab-text top-tab-text-active">{{ pageTitleText }}</text>
+          <view class="top-tab-line"></view>
+        </view>
+        <view class="top-tab" @tap="goNewsPage">
+          <text class="top-tab-text">{{ newsTabText }}</text>
+        </view>
+      </view>
+    </view>
 
-			<view class="top-tabs">
-				<view class="top-tab" @click="goLearningPage">
-					<text class="top-tab-text">首页</text>
-				</view>
-				<view class="top-tab" @click="goTopicsPage">
-					<text class="top-tab-text">专题</text>
-				</view>
-				<view class="top-tab" @click="goAudioPage">
-					<text class="top-tab-text">音频</text>
-				</view>
-				<view class="top-tab" @click="goLivePage">
-					<text class="top-tab-text">直播</text>
-				</view>
-				<view class="top-tab top-tab-active">
-					<text class="top-tab-text top-tab-text-active">课程</text>
-					<view class="top-tab-line"></view>
-				</view>
-				<view class="top-tab" @click="goNewsPage">
-					<text class="top-tab-text">资讯</text>
-				</view>
-			</view>
-		</view>
+    <view class="search-bar">
+      <input
+        v-model="keyword"
+        class="search-input"
+        :placeholder="searchPlaceholder"
+        confirm-type="search"
+        @confirm="reloadList"
+      />
+      <view class="search-btn" @tap="reloadList">
+        <text class="search-btn-text">{{ searchText }}</text>
+      </view>
+    </view>
 
-		<view class="search-bar">
-			<input
-				v-model="keyword"
-				class="search-input"
-				placeholder="搜索标题、讲师、课程"
-				confirm-type="search"
-				@confirm="reloadList"
-			/>
-			<view class="search-btn" @tap="reloadList">
-				<text class="search-btn-text">搜索</text>
-			</view>
-		</view>
+    <scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
+      <view class="content-shell">
+        <view v-if="isLoading" class="state-wrap">
+          <text class="state-text">{{ loadingText }}</text>
+        </view>
 
-		<scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
-			<view class="content-shell">
-				<view v-if="isLoading" class="state-wrap">
-					<text class="state-text">加载中...</text>
-				</view>
+        <view v-else-if="errorText.length > 0" class="state-wrap">
+          <text class="state-text">{{ errorText }}</text>
+          <view class="retry-btn" @tap="reloadList">
+            <text class="retry-btn-text">{{ retryText }}</text>
+          </view>
+        </view>
 
-				<view v-else-if="errorText.length > 0" class="state-wrap">
-					<text class="state-text">{{ errorText }}</text>
-					<view class="search-btn retry-btn" @tap="reloadList">
-						<text class="search-btn-text">重新加载</text>
-					</view>
-				</view>
+        <view v-else-if="courseItems.length == 0" class="state-wrap">
+          <text class="state-text">{{ emptyText }}</text>
+        </view>
 
-				<view v-else-if="courseItems.length == 0" class="state-wrap">
-					<text class="state-text">暂无课程</text>
-				</view>
+        <view v-else class="list-wrap">
+          <view class="course-card" v-for="item in courseItems" :key="item.id" @tap="goCourseDetail(item.id)">
+            <view class="course-cover-shell">
+              <image v-if="item.coverUrl.length > 0" class="course-cover-image" :src="item.coverUrl" mode="aspectFill"></image>
+              <view v-else class="course-cover">
+                <text class="cover-badge">COURSE</text>
+                <text class="cover-title">{{ item.coverTitle }}</text>
+                <text class="cover-subtitle">{{ item.coverSubtitle }}</text>
+                <view class="cover-board">
+                  <text class="board-text">{{ pageTitleText }}</text>
+                </view>
+              </view>
+            </view>
 
-				<view v-else class="list-wrap">
-				<view class="course-card" v-for="item in courseItems" :key="item.id" @click="goCourseDetail(item.id)">
-					<view class="course-cover-shell">
-						<view class="course-cover">
-							<text class="cover-badge">COURSE</text>
-							<text class="cover-title">{{ item.coverTitle }}</text>
-							<text class="cover-subtitle">{{ item.coverSubtitle }}</text>
-							<view class="cover-board">
-								<text class="board-text">课程</text>
-							</view>
-						</view>
-					</view>
+            <view class="course-info">
+              <text class="course-title">{{ item.title }}</text>
+              <view class="course-meta">
+                <text class="teacher-name">{{ item.teacher }}</text>
+                <view class="stats">
+                  <text class="stat-text">{{ viewText }} {{ item.views }}</text>
+                  <text class="stat-text">{{ commentText }} {{ item.comments }}</text>
+                </view>
+              </view>
+            </view>
+          </view>
 
-					<view class="course-info">
-						<text class="course-title">{{ item.title }}</text>
-						<view class="course-meta">
-							<text class="teacher-name">{{ item.teacher }}</text>
-							<view class="stats">
-								<text class="stat-text">浏览 {{ item.views }}</text>
-								<text class="stat-text">评论 {{ item.comments }}</text>
-							</view>
-						</view>
-					</view>
-				</view>
-				<view v-if="isListLoading" class="bottom-state">
-					<text class="bottom-state-text">加载更多中...</text>
-				</view>
-				<view v-else-if="!hasMore" class="bottom-state">
-					<text class="bottom-state-text">没有更多了</text>
-				</view>
-				</view>
-			</view>
-		</scroll-view>
+          <view v-if="isListLoading" class="bottom-state">
+            <text class="bottom-state-text">{{ loadingMoreText }}</text>
+          </view>
+          <view v-else-if="!hasMore" class="bottom-state">
+            <text class="bottom-state-text">{{ noMoreText }}</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
 
-		<view class="tabbar">
-			<view class="tab-item tab-item-active">
-				<image class="tab-icon-image" src="/static/tabbar/icon_xuexidianji.png" mode="aspectFit"></image>
-				<text class="tab-label tab-label-active">学习</text>
-			</view>
-			<view class="tab-item" @click="goExamPage">
-				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">考核</text>
-			</view>
-			<view class="tab-item" @click="goConsultPage">
-				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
-				<text class="tab-label">咨询</text>
-			</view>
-			<view class="tab-item" @click="goKnowledgePage">
-				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">知识库</text>
-			</view>
-			<view class="tab-item" @click="goMinePage">
-				<image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
-				<text class="tab-label">我的</text>
-			</view>
-		</view>
-	</view>
+    <view class="tabbar">
+      <view class="tab-item tab-item-active">
+        <image class="tab-icon-image" src="/static/tabbar/icon_xuexidianji.png" mode="aspectFit"></image>
+        <text class="tab-label tab-label-active">{{ learningTabText }}</text>
+      </view>
+      <view class="tab-item" @tap="goExamPage">
+        <image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
+        <text class="tab-label">{{ examTabText }}</text>
+      </view>
+      <view class="tab-item" @tap="goConsultPage">
+        <image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
+        <text class="tab-label">{{ consultTabText }}</text>
+      </view>
+      <view class="tab-item" @tap="goKnowledgePage">
+        <image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
+        <text class="tab-label">{{ knowledgeTabText }}</text>
+      </view>
+      <view class="tab-item" @tap="goMinePage">
+        <image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
+        <text class="tab-label">{{ mineTabText }}</text>
+      </view>
+    </view>
+  </view>
 </template>
 
 <script setup lang="uts">
 import { ref } from 'vue'
-import { fetchCourses } from '../../utils/auth.uts'
+import { onShow } from '@dcloudio/uni-app'
+import { fetchCourses, type Course } from '../../utils/auth.uts'
 
 type CourseItem = {
-	id : string
-	coverTitle : string
-	coverSubtitle : string
-	title : string
-	teacher : string
-	views : string
-	comments : string
+  id : string
+  coverUrl : string
+  coverTitle : string
+  coverSubtitle : string
+  title : string
+  teacher : string
+  views : string
+  comments : string
 }
-
-type CourseVideo = {
-	id : number
-	courseId : number
-	title : string
-	videoUrl : string
-	durationSeconds : number
-	sortOrder : number
-}
-
-type Course = {
-	id : number
-	courseName : string
-	subtitle : string
-	coverUrl : string
-	lecturerName : string
-	introduction : string
-	paperId : number
-	publishedAt : string
-	progressPercent : number
-	studySeconds : number
-	videos : CourseVideo[]
-}
-
-const placeholderItems = [
-	{
-		id: '1',
-		coverTitle: '课程封面占位',
-		coverSubtitle: '第一门课程',
-		title: '课程标题占位一，点击进入课程详情页面',
-		teacher: '讲师名称占位',
-		views: '2600',
-		comments: '420'
-	},
-	{
-		id: '2',
-		coverTitle: '课程封面占位',
-		coverSubtitle: '第二门课程',
-		title: '课程标题占位二，点击进入课程详情页面',
-		teacher: '讲师名称占位',
-		views: '2600',
-		comments: '420'
-	}
-]
 
 const PAGE_SIZE = 10
+
+const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
+const homeTabText = '\u9996\u9875'
+const topicsTabText = '\u4e13\u9898'
+const audioTabText = '\u97f3\u9891'
+const liveTabText = '\u76f4\u64ad'
+const pageTitleText = '\u8bfe\u7a0b'
+const newsTabText = '\u8d44\u8baf'
+const learningTabText = '\u5b66\u4e60'
+const examTabText = '\u8003\u6838'
+const consultTabText = '\u54a8\u8be2'
+const knowledgeTabText = '\u77e5\u8bc6\u5e93'
+const mineTabText = '\u6211\u7684'
+const searchPlaceholder = '\u641c\u7d22\u6807\u9898\u3001\u8bb2\u5e08\u3001\u8bfe\u7a0b'
+const searchText = '\u641c\u7d22'
+const loadingText = '\u52a0\u8f7d\u4e2d...'
+const retryText = '\u91cd\u65b0\u52a0\u8f7d'
+const emptyText = '\u6682\u65e0\u8bfe\u7a0b'
+const loadingMoreText = '\u52a0\u8f7d\u66f4\u591a\u4e2d...'
+const noMoreText = '\u6ca1\u6709\u66f4\u591a\u4e86'
+const loadFailedText = '\u8bf7\u6c42\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5'
+const viewText = '\u6d4f\u89c8'
+const commentText = '\u8bc4\u8bba'
+const fallbackCoverTitle = '\u8bfe\u7a0b\u5c01\u9762'
+const fallbackTitle = '\u8bfe\u7a0b\u6807\u9898'
+const fallbackTeacher = '\u8bb2\u5e08\u5f85\u5b9a'
 
 const courseItems = ref<CourseItem[]>([])
 const keyword = ref('')
@@ -186,431 +171,432 @@ const hasMore = ref(true)
 const isLoading = ref(true)
 const isListLoading = ref(false)
 const errorText = ref('')
+const hasLoadedOnce = ref(false)
 
 const safeText = (value : string | null) : string => {
-	return value == null || value.length == 0 ? '' : value
+  return value == null || value.length == 0 ? '' : value
+}
+
+const safeNumberText = (value : number) : string => {
+  return String(value == null ? 0 : value)
 }
 
 const mapCourseToCard = (item : Course, index : number) : CourseItem => {
-	const courseName = safeText(item.courseName)
-	const subtitle = safeText(item.subtitle)
-	const lecturer = safeText(item.lecturerName)
-	return {
-		id: String(item.id),
-		coverTitle: courseName.length > 0 ? courseName : '课程封面占位',
-		coverSubtitle: subtitle.length > 0 ? subtitle : '第' + String(index + 1) + '门课程',
-		title: courseName.length > 0 ? courseName : '课程标题占位',
-		teacher: lecturer.length > 0 ? lecturer : '讲师名称占位',
-		views: String(item.studySeconds != null ? item.studySeconds : 0),
-		comments: String(item.videos != null ? item.videos.length : 0)
-	}
+  const title = safeText(item.courseName)
+  const subtitle = safeText(item.subtitle)
+  const lecturer = safeText(item.lecturerName)
+  return {
+    id: String(item.id),
+    coverUrl: safeText(item.coverUrl),
+    coverTitle: title.length > 0 ? title : fallbackCoverTitle,
+    coverSubtitle: subtitle.length > 0 ? subtitle : '\u7b2c' + String(index + 1) + '\u95e8\u8bfe\u7a0b',
+    title: title.length > 0 ? title : fallbackTitle,
+    teacher: lecturer.length > 0 ? lecturer : fallbackTeacher,
+    views: safeNumberText(item.studySeconds),
+    comments: safeNumberText(item.videos != null ? item.videos.length : 0)
+  }
 }
 
 const loadCourseItems = (loadMoreValue : boolean) => {
-	if (!loadMoreValue) {
-		page.value = 1
-		hasMore.value = true
-		errorText.value = ''
-		isLoading.value = true
-	} else {
-		if (!hasMore.value || isListLoading.value) {
-			return
-		}
-		isListLoading.value = true
-	}
+  if (!loadMoreValue) {
+    page.value = 1
+    hasMore.value = true
+    errorText.value = ''
+    isLoading.value = true
+  } else {
+    if (!hasMore.value || isListLoading.value) {
+      return
+    }
+    isListLoading.value = true
+  }
 
-	fetchCourses(
-		page.value,
-		PAGE_SIZE,
-		keyword.value,
-		(pageData) => {
-			const records = pageData.records != null ? pageData.records : []
-			const mapped = records.map((item : Course, index : number) : CourseItem => {
-				return mapCourseToCard(item, index)
-			})
-			if (loadMoreValue) {
-				courseItems.value = courseItems.value.concat(mapped)
-			} else {
-				courseItems.value = mapped
-			}
-			hasMore.value = mapped.length >= PAGE_SIZE
-			if (hasMore.value) {
-				page.value += 1
-			}
-			isLoading.value = false
-			isListLoading.value = false
-		},
-		(message) => {
-			errorText.value = message.length > 0 ? message : '课程加载失败'
-			isLoading.value = false
-			isListLoading.value = false
-		}
-	)
+  fetchCourses(
+    page.value,
+    PAGE_SIZE,
+    keyword.value,
+    (pageData) => {
+      const records = pageData.records != null ? pageData.records : []
+      const mapped = records.map((item : Course, index : number) : CourseItem => {
+        return mapCourseToCard(item, loadMoreValue ? courseItems.value.length + index : index)
+      })
+      if (loadMoreValue) {
+        courseItems.value = courseItems.value.concat(mapped)
+      } else {
+        courseItems.value = mapped
+      }
+      hasMore.value = records.length >= PAGE_SIZE
+      if (hasMore.value) {
+        page.value += 1
+      }
+      isLoading.value = false
+      isListLoading.value = false
+    },
+    (message) => {
+      errorText.value = message.length > 0 ? message : loadFailedText
+      isLoading.value = false
+      isListLoading.value = false
+    }
+  )
 }
 
 const reloadList = () => {
-	loadCourseItems(false)
+  loadCourseItems(false)
 }
 
 const loadMore = () => {
-	loadCourseItems(true)
+  loadCourseItems(true)
 }
 
 const goLearningPage = () => {
-	uni.redirectTo({ url: '/pages/index/index' })
+  uni.redirectTo({ url: '/pages/index/index' })
 }
 
 const goTopicsPage = () => {
-	uni.redirectTo({ url: '/pages/topics/list' })
+  uni.redirectTo({ url: '/pages/topics/list' })
 }
 
 const goAudioPage = () => {
-	uni.redirectTo({ url: '/pages/audio/index' })
+  uni.redirectTo({ url: '/pages/audio/index' })
 }
 
 const goLivePage = () => {
-	uni.redirectTo({ url: '/pages/live/index' })
+  uni.redirectTo({ url: '/pages/live/index' })
 }
 
 const goNewsPage = () => {
-	uni.redirectTo({ url: '/pages/news/index' })
+  uni.redirectTo({ url: '/pages/news/index' })
 }
 
 const goMinePage = () => {
-	uni.redirectTo({ url: '/pages/mine/index' })
+  uni.redirectTo({ url: '/pages/mine/index' })
 }
 
 const goExamPage = () => {
-	uni.redirectTo({ url: '/pages/exam/index' })
-}
-
-const goCourseDetail = (id : string) => {
-	uni.navigateTo({ url: '/pages/course/detail?id=' + id })
+  uni.redirectTo({ url: '/pages/exam/index' })
 }
 
 const goKnowledgePage = () => {
-	uni.redirectTo({ url: '/pages/knowledge/index' })
+  uni.redirectTo({ url: '/pages/knowledge/index' })
 }
 
 const goConsultPage = () => {
-	uni.redirectTo({ url: '/pages/consult/index' })
+  uni.redirectTo({ url: '/pages/consult/index' })
 }
 
-loadCourseItems(false)
+const goCourseDetail = (id : string) => {
+  uni.navigateTo({ url: '/pages/course/detail?id=' + id })
+}
+
+onShow(() => {
+  if (!hasLoadedOnce.value) {
+    hasLoadedOnce.value = true
+    loadCourseItems(false)
+  }
+})
 </script>
 
 <style>
 .page {
-	flex: 1;
-	background-color: #f7f7f2;
+  flex: 1;
+  background-color: #f7f7f2;
 }
 
 .hero-shell {
-	position: relative;
-	height: 226rpx;
-	overflow: hidden;
+  position: relative;
+  height: 254rpx;
+  overflow: hidden;
 }
 
 .hero-bg {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 750rpx;
-	height: 226rpx;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 750rpx;
+  height: 254rpx;
 }
 
 .header {
-	position: relative;
-	z-index: 1;
-	padding-top: 34rpx;
-	height: 118rpx;
-	align-items: center;
-	justify-content: center;
+  position: relative;
+  z-index: 1;
+  padding-top: 62rpx;
+  height: 146rpx;
+  align-items: center;
+  justify-content: center;
 }
 
 .header-title {
-	font-size: 20px;
-	line-height: 30px;
-	color: #2f2f2f;
-	font-weight: 600;
+  font-size: 20px;
+  line-height: 30px;
+  color: #2f2f2f;
+  font-weight: 600;
 }
 
 .top-tabs {
-	position: relative;
-	z-index: 1;
-	height: 108rpx;
-	padding-left: 18rpx;
-	padding-right: 18rpx;
-	background-color: rgba(251, 250, 246, 0.78);
-	flex-direction: row;
-	align-items: flex-end;
-	justify-content: space-around;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-	border-bottom-color: rgba(229, 234, 225, 0.95);
+  position: relative;
+  z-index: 1;
+  height: 108rpx;
+  padding-left: 18rpx;
+  padding-right: 18rpx;
+  background-color: rgba(251, 250, 246, 0.78);
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .top-tab {
-	min-width: 78rpx;
-	height: 96rpx;
-	align-items: center;
-	justify-content: center;
-}
-
-.top-tab-active {
-	position: relative;
+  min-width: 78rpx;
+  height: 96rpx;
+  align-items: center;
+  justify-content: center;
 }
 
 .top-tab-text {
-	font-size: 15px;
-	line-height: 22px;
-	color: #333333;
+  font-size: 15px;
+  line-height: 22px;
+  color: #333333;
 }
 
 .top-tab-text-active {
-	color: #b85d69;
-	font-weight: 600;
+  color: #b85d69;
+  font-weight: 600;
 }
 
 .top-tab-line {
-	position: absolute;
-	bottom: 10rpx;
-	width: 48rpx;
-	height: 6rpx;
-	border-radius: 4rpx;
-	background-color: #b85d69;
+  margin-top: 12rpx;
+  width: 40rpx;
+  height: 6rpx;
+  border-radius: 4rpx;
+  background-color: #b85d69;
 }
 
 .search-bar {
-	margin: 0 20rpx 0;
-	padding-left: 18rpx;
-	padding-right: 10rpx;
-	height: 76rpx;
-	border-radius: 18rpx;
-	background-color: #ffffff;
-	flex-direction: row;
-	align-items: center;
+  margin: 0 20rpx 0;
+  padding-left: 18rpx;
+  padding-right: 10rpx;
+  height: 76rpx;
+  border-radius: 18rpx;
+  background-color: #ffffff;
+  flex-direction: row;
+  align-items: center;
 }
 
 .search-input {
-	flex: 1;
-	height: 76rpx;
-	font-size: 14px;
-	color: #2f2f2f;
+  flex: 1;
+  height: 76rpx;
+  font-size: 14px;
+  color: #2f2f2f;
 }
 
 .search-btn {
-	width: 108rpx;
-	height: 54rpx;
-	border-radius: 27rpx;
-	background-color: #18b775;
-	align-items: center;
-	justify-content: center;
+  width: 108rpx;
+  height: 54rpx;
+  border-radius: 27rpx;
+  background-color: #18b775;
+  align-items: center;
+  justify-content: center;
 }
 
 .search-btn-text {
-	font-size: 13px;
-	color: #ffffff;
-	font-weight: 600;
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .content {
-	flex: 1;
-	padding-bottom: 110rpx;
+  flex: 1;
 }
 
 .content-shell {
-	padding-left: 20rpx;
-	padding-right: 20rpx;
-	padding-top: 8rpx;
-	padding-bottom: 40rpx;
+  padding: 18rpx 20rpx 176rpx;
 }
 
 .state-wrap {
-	padding: 120rpx 30rpx;
-	align-items: center;
+  padding: 120rpx 30rpx;
+  align-items: center;
 }
 
 .state-text {
-	font-size: 14px;
-	line-height: 22px;
-	color: #9b9b9b;
-	text-align: center;
+  font-size: 14px;
+  line-height: 22px;
+  color: #9b9b9b;
+  text-align: center;
 }
 
 .retry-btn {
-	margin-top: 24rpx;
-	width: 220rpx !important;
-	height: 70rpx !important;
-	border-radius: 14rpx !important;
-	background-color: #18b775;
-	align-items: center;
-	justify-content: center;
+  margin-top: 24rpx;
+  width: 220rpx;
+  height: 70rpx;
+  border-radius: 14rpx;
+  background-color: #18b775;
+  align-items: center;
+  justify-content: center;
 }
 
 .retry-btn-text {
-	font-size: 14px;
-	color: #ffffff;
-	font-weight: 600;
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.list-wrap {
+  gap: 18rpx;
 }
 
 .course-card {
-	margin-bottom: 22rpx;
-	border-radius: 20rpx;
-	background-color: #ffffff;
-	overflow: hidden;
-	box-shadow: 0 12rpx 24rpx rgba(110, 100, 80, 0.05);
-}
-
-.bottom-state {
-	padding-top: 10rpx;
-	align-items: center;
-}
-
-.bottom-state-text {
-	font-size: 12px;
-	line-height: 18px;
-	color: #b1b1b1;
+  overflow: hidden;
+  border-radius: 22rpx;
+  background-color: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
 }
 
 .course-cover-shell {
-	padding: 0;
-	background-color: #e9dfc8;
+  padding: 0;
+}
+
+.course-cover-image {
+  width: 100%;
+  height: 196rpx;
 }
 
 .course-cover {
-	height: 260rpx;
-	position: relative;
-	padding-left: 44rpx;
-	padding-top: 48rpx;
-	background-color: #efe5d0;
+  position: relative;
+  height: 196rpx;
+  padding: 28rpx 28rpx 24rpx;
+  background-color: #f6e1bc;
 }
 
 .cover-badge {
-	padding-left: 12rpx;
-	padding-right: 12rpx;
-	height: 34rpx;
-	line-height: 34rpx;
-	border-radius: 18rpx;
-	background-color: #bf5d68;
-	color: #ffffff;
-	font-size: 12px;
-	font-weight: 600;
-	align-self: flex-start;
-	text-align: center;
+  padding-left: 16rpx;
+  padding-right: 16rpx;
+  height: 34rpx;
+  line-height: 34rpx;
+  border-radius: 18rpx;
+  background-color: #cc6b76;
+  font-size: 11px;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .cover-title {
-	margin-top: 16rpx;
-	font-size: 28px;
-	line-height: 38px;
-	color: #b9702f;
-	font-weight: 600;
+  margin-top: 18rpx;
+  width: 420rpx;
+  font-size: 28px;
+  line-height: 40px;
+  color: #d38c42;
+  font-weight: 700;
 }
 
 .cover-subtitle {
-	margin-top: 16rpx;
-	font-size: 18px;
-	line-height: 26px;
-	color: #8d6e4d;
+  margin-top: 10rpx;
+  font-size: 18px;
+  line-height: 28px;
+  color: #8f7a57;
 }
 
 .cover-board {
-	position: absolute;
-	right: 54rpx;
-	top: 44rpx;
-	width: 148rpx;
-	height: 148rpx;
-	border-radius: 24rpx;
-	background-color: rgba(255, 255, 255, 0.75);
-	align-items: center;
-	justify-content: center;
+  position: absolute;
+  right: 34rpx;
+  top: 42rpx;
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 999rpx;
+  border-width: 10rpx;
+  border-style: solid;
+  border-color: #fff8ee;
+  align-items: center;
+  justify-content: center;
 }
 
 .board-text {
-	font-size: 22px;
-	line-height: 30px;
-	color: rgba(185, 112, 47, 0.55);
-	font-weight: 600;
+  font-size: 16px;
+  color: #e1b98e;
+  font-weight: 700;
 }
 
 .course-info {
-	padding-left: 24rpx;
-	padding-right: 24rpx;
-	padding-top: 22rpx;
-	padding-bottom: 22rpx;
+  padding: 20rpx 24rpx 24rpx;
 }
 
 .course-title {
-	font-size: 18px;
-	line-height: 28px;
-	color: #252525;
-	font-weight: 600;
+  font-size: 22px;
+  line-height: 32px;
+  font-weight: 600;
+  color: #2f2f2f;
 }
 
 .course-meta {
-	margin-top: 18rpx;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
+  margin-top: 14rpx;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
 }
 
 .teacher-name {
-	font-size: 15px;
-	line-height: 22px;
-	color: #a8a8a8;
+  flex: 1;
+  font-size: 16px;
+  line-height: 24px;
+  color: #8f8f8f;
 }
 
 .stats {
-	flex-direction: row;
-	align-items: center;
+  flex-direction: row;
 }
 
 .stat-text {
-	font-size: 13px;
-	line-height: 20px;
-	color: #a0a0a0;
-	margin-left: 18rpx;
+  margin-left: 16rpx;
+  font-size: 14px;
+  line-height: 22px;
+  color: #b1b1b1;
+}
+
+.bottom-state {
+  padding-top: 10rpx;
+  align-items: center;
+}
+
+.bottom-state-text {
+  font-size: 12px;
+  line-height: 18px;
+  color: #b1b1b1;
 }
 
 .tabbar {
-	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	height: 96rpx;
-	padding-bottom: 8rpx;
-	background-color: rgba(255, 255, 255, 0.98);
-	border-top-width: 1px;
-	border-top-style: solid;
-	border-top-color: #e9e9e4;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-around;
+  height: 120rpx;
+  padding-top: 10rpx;
+  padding-bottom: 10rpx;
+  background-color: #ffffff;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: #ededed;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
 }
 
 .tab-item {
-	align-items: center;
-	justify-content: center;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
 }
 
 .tab-item-active {
-	margin-top: -2rpx;
+  opacity: 1;
 }
 
 .tab-icon-image {
-	width: 42rpx;
-	height: 42rpx;
-	margin-bottom: 6rpx;
+  width: 42rpx;
+  height: 42rpx;
 }
 
 .tab-label {
-	font-size: 11px;
-	line-height: 16px;
-	color: #b1b1b1;
+  margin-top: 6rpx;
+  font-size: 11px;
+  line-height: 16px;
+  color: #bcbcbc;
 }
 
 .tab-label-active {
-	color: #18b775;
+  color: #1ab168;
 }
 </style>

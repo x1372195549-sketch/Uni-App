@@ -267,19 +267,19 @@ const goNewsPage = () => {
 }
 
 const goExamPage = () => {
-	uni.switchTab({ url: '/pages/exam/index' })
+	uni.redirectTo({ url: '/pages/exam/index' })
 }
 
 const goConsultPage = () => {
-	uni.switchTab({ url: '/pages/consult/index' })
+	uni.redirectTo({ url: '/pages/consult/index' })
 }
 
 const goKnowledgePage = () => {
-	uni.switchTab({ url: '/pages/knowledge/index' })
+	uni.redirectTo({ url: '/pages/knowledge/index' })
 }
 
 const goMinePage = () => {
-	uni.switchTab({ url: '/pages/mine/index' })
+	uni.redirectTo({ url: '/pages/mine/index' })
 }
 
 const goBack = () => {
@@ -302,7 +302,7 @@ loadTopics(false)
 
 .hero-shell {
 	position: relative;
-	height: 226rpx;
+	height: 254rpx;
 	overflow: hidden;
 }
 
@@ -311,14 +311,14 @@ loadTopics(false)
 	left: 0;
 	top: 0;
 	width: 750rpx;
-	height: 226rpx;
+	height: 254rpx;
 }
 
 .header {
 	position: relative;
 	z-index: 1;
-	padding-top: 34rpx;
-	height: 118rpx;
+	padding-top: 62rpx;
+	height: 146rpx;
 	align-items: center;
 	justify-content: center;
 }

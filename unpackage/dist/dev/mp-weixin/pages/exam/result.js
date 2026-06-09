@@ -22,6 +22,7 @@ const retryExamText = "再练一次";
 const EXAM_RECORD_ID_KEY = "exam_record_id";
 const EXAM_PAPER_ID_KEY = "exam_paper_id";
 const EXAM_PAPER_TITLE_KEY = "exam_paper_title";
+const DEFAULT_QUESTION_SCORE = 5;
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "result",
   setup(__props) {
@@ -55,6 +56,30 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const readCachedText = (key) => {
       const value = common_vendor.index.getStorageSync(key);
       return typeof value == "string" ? value : "";
+    };
+    const computeFallbackTotalScore = (items) => {
+      if (items.length == 0) {
+        return 0;
+      }
+      return items.length * DEFAULT_QUESTION_SCORE;
+    };
+    const computeFallbackScore = (items) => {
+      if (items.length == 0) {
+        return 0;
+      }
+      const correctItems = items.filter((item) => {
+        return item.correct == 1;
+      });
+      if (correctItems.length == 0) {
+        return 0;
+      }
+      const summedScore = correctItems.reduce((total, item) => {
+        return total + (item.score > 0 ? item.score : 0);
+      }, 0);
+      if (summedScore > 0) {
+        return summedScore;
+      }
+      return correctItems.length * DEFAULT_QUESTION_SCORE;
     };
     const resolveResultContext = () => {
       const optionRecordId = routeRecordId.length > 0 ? routeRecordId : readPageOption("recordId");
@@ -104,13 +129,13 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         if (paperName.value.length > 0) {
           common_vendor.index.setStorageSync(EXAM_PAPER_TITLE_KEY, paperName.value);
         }
-        score.value = record.score;
-        totalScore.value = record.totalScore;
-        passed.value = record.passed == 1;
         answerItems.value = record.answers != null ? record.answers : [];
+        score.value = record.score > 0 ? Math.min(record.score, computeFallbackTotalScore(answerItems.value)) : computeFallbackScore(answerItems.value);
+        totalScore.value = record.totalScore > 0 ? record.totalScore : computeFallbackTotalScore(answerItems.value);
         correctCount.value = answerItems.value.filter((item) => {
           return item.correct == 1;
         }).length;
+        passed.value = score.value >= record.passScore && record.passScore > 0 ? true : record.passed == 1;
         isLoading.value = false;
       }, (message) => {
         lastLoadedRecordId = "";

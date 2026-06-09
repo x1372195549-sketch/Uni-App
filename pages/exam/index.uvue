@@ -9,13 +9,12 @@
 
 		<scroll-view class="content" scroll-y="true">
 			<view class="banner">
-				<view class="banner-left">
-					<text class="banner-title">{{ bannerTitleLineOne }}</text>
-					<text class="banner-title">{{ bannerTitleLineTwo }}</text>
-				</view>
-				<view class="banner-illustration">
-					<view class="banner-figure-body"></view>
-					<view class="banner-figure-head"></view>
+				<image class="banner-bg" src="/static/exam-bg.png" mode="scaleToFill"></image>
+				<view class="banner-overlay">
+					<view class="banner-left">
+						<text class="banner-title">{{ bannerTitleLineOne }}</text>
+						<text class="banner-title">{{ bannerTitleLineTwo }}</text>
+					</view>
 				</view>
 			</view>
 
@@ -213,7 +212,7 @@ loadPapers()
 
 .hero-shell {
 	position: relative;
-	height: 118rpx;
+	height: 146rpx;
 	overflow: hidden;
 }
 
@@ -222,14 +221,14 @@ loadPapers()
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 236rpx;
+	height: 264rpx;
 }
 
 .header {
 	position: relative;
 	z-index: 1;
-	height: 118rpx;
-	padding-top: 34rpx;
+	height: 146rpx;
+	padding-top: 62rpx;
 	align-items: center;
 	justify-content: center;
 }
@@ -249,18 +248,31 @@ loadPapers()
 }
 
 .banner {
+	position: relative;
 	margin-left: 24rpx;
 	margin-right: 24rpx;
 	margin-top: 18rpx;
 	height: 280rpx;
-	border-top-left-radius: 22rpx;
-	border-top-right-radius: 22rpx;
-	background-color: #10b86f;
+	border-radius: 22rpx;
+	overflow: hidden;
+}
+
+.banner-bg {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.banner-overlay {
+	position: relative;
+	width: 100%;
+	height: 100%;
 	padding-left: 34rpx;
 	padding-right: 30rpx;
 	padding-top: 34rpx;
-	flex-direction: row;
-	justify-content: space-between;
+	background-color: rgba(0, 0, 0, 0.04);
 }
 
 .banner-left {
@@ -272,33 +284,6 @@ loadPapers()
 	line-height: 40px;
 	color: #ffffff;
 	font-weight: 700;
-}
-
-.banner-illustration {
-	width: 170rpx;
-	height: 170rpx;
-	position: relative;
-	margin-top: 20rpx;
-}
-
-.banner-figure-body {
-	position: absolute;
-	right: 18rpx;
-	bottom: 0;
-	width: 78rpx;
-	height: 110rpx;
-	border-radius: 18rpx;
-	background-color: #f0a45d;
-}
-
-.banner-figure-head {
-	position: absolute;
-	right: 40rpx;
-	top: 0;
-	width: 48rpx;
-	height: 48rpx;
-	border-radius: 999rpx;
-	background-color: #ffdcb8;
 }
 
 .banner-note {

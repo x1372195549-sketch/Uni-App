@@ -1,83 +1,183 @@
 <template>
 	<view class="page">
 		<view class="header">
-			<view class="header-back" @click="goBack">
+			<view class="header-back" @tap="goBack">
 				<image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
 			</view>
-			<text class="header-title">知识详情</text>
+			<text class="header-title">图书详情</text>
 		</view>
 
-		<scroll-view class="detail-scroll" scroll-y="true">
-			<view v-if="isLoading" class="state-wrap">
-				<text class="state-text">加载中...</text>
+		<view class="tab-strip">
+			<view class="tab-item" @tap="switchTab('overview')">
+				<text :class="activeTab == 'overview' ? 'tab-text tab-text-active' : 'tab-text'">概览</text>
+				<view v-if="activeTab == 'overview'" class="tab-line"></view>
 			</view>
+			<view class="tab-item" @tap="switchTab('chapters')">
+				<text :class="activeTab == 'chapters' ? 'tab-text tab-text-active' : 'tab-text'">图书章节</text>
+				<view v-if="activeTab == 'chapters'" class="tab-line"></view>
+			</view>
+		</view>
 
-			<view v-else-if="errorText.length > 0" class="state-wrap">
-				<text class="state-text">{{ errorText }}</text>
-				<view class="retry-btn" @click="loadDetail">
-					<text class="retry-btn-text">重新加载</text>
+		<view v-if="activeTab == 'overview'" class="overview-shell">
+			<scroll-view class="detail-scroll" scroll-y="true">
+				<view v-if="isLoading" class="state-wrap">
+					<text class="state-text">加载中...</text>
 				</view>
-			</view>
 
-			<view v-else class="detail-body">
-				<view class="hero-card">
-					<view class="cover-shell">
-						<image
-							v-if="coverUrl.length > 0"
-							class="cover-image"
-							:src="coverUrl"
-							mode="aspectFill"
-						></image>
-						<view v-else class="cover-fallback">
-							<text class="cover-fallback-text">{{ shortTitle }}</text>
-						</view>
-					</view>
-
-					<view class="hero-main">
-						<text class="book-title">{{ title }}</text>
-						<text v-if="author.length > 0" class="book-meta">作者：{{ author }}</text>
-						<text v-if="publisher.length > 0" class="book-meta">出版社：{{ publisher }}</text>
-						<text v-if="categoryName.length > 0" class="book-meta">分类：{{ categoryName }}</text>
-						<view class="stats-row">
-							<text v-if="publishedAt.length > 0" class="stat-text">{{ publishedAt }}</text>
-							<text class="stat-text">阅读 {{ viewCount }}</text>
-							<text v-if="totalPages.length > 0" class="stat-text">{{ totalPages }}</text>
-						</view>
+				<view v-else-if="errorText.length > 0" class="state-wrap">
+					<text class="state-text">{{ errorText }}</text>
+					<view class="retry-btn" @tap="loadDetail">
+						<text class="retry-btn-text">重新加载</text>
 					</view>
 				</view>
 
-				<view v-if="summary.length > 0" class="section-card">
-					<text class="section-title">简介</text>
-					<text class="section-text">{{ summary }}</text>
-				</view>
+				<view v-else class="detail-body">
+					<view class="hero-card">
+						<view class="cover-shell">
+							<image
+								v-if="coverUrl.length > 0"
+								class="cover-image"
+								:src="coverUrl"
+								mode="aspectFill"
+							></image>
+							<view v-else class="cover-fallback">
+								<text class="cover-fallback-text">{{ shortTitle }}</text>
+							</view>
+						</view>
 
-				<view class="section-card">
-					<text class="section-title">正文内容</text>
-					<rich-text v-if="isHtmlContent" class="rich-content" :nodes="content"></rich-text>
-					<text v-else class="section-text">{{ content }}</text>
-				</view>
+						<view class="hero-main">
+							<text class="book-title">{{ title }}</text>
+							<text v-if="author.length > 0" class="book-meta">作者：{{ author }}</text>
+							<text v-if="publisher.length > 0" class="book-meta">出版社：{{ publisher }}</text>
+							<text v-if="categoryName.length > 0" class="book-meta">分类：{{ categoryName }}</text>
+							<view class="stats-row">
+								<text v-if="publishedAt.length > 0" class="stat-text">{{ publishedAt }}</text>
+								<text class="stat-text">阅读 {{ viewCount }}</text>
+								<text v-if="totalPages.length > 0" class="stat-text">{{ totalPages }}</text>
+							</view>
+							<view v-if="chapters.length > 0" class="chapter-entry-btn" @tap="switchTab('chapters')">
+								<text class="chapter-entry-btn-text">进入图书章节</text>
+							</view>
+						</view>
+					</view>
 
-				<view v-if="keywords.length > 0 || source.length > 0" class="section-card">
-					<text class="section-title">补充信息</text>
-					<text v-if="keywords.length > 0" class="section-text">关键词：{{ keywords }}</text>
-					<text v-if="source.length > 0" class="section-text">来源：{{ source }}</text>
+					<view v-if="summary.length > 0" class="section-card">
+						<text class="section-title">简介</text>
+						<text class="section-text">{{ summary }}</text>
+					</view>
+
+					<view class="section-card">
+						<text class="section-title">正文内容</text>
+						<rich-text v-if="isHtmlContent" class="rich-content" :nodes="content"></rich-text>
+						<text v-else class="section-text">{{ content }}</text>
+					</view>
+
+					<view v-if="keywords.length > 0 || source.length > 0" class="section-card">
+						<text class="section-title">补充信息</text>
+						<text v-if="keywords.length > 0" class="section-text">关键词：{{ keywords }}</text>
+						<text v-if="source.length > 0" class="section-text">来源：{{ source }}</text>
+					</view>
 				</view>
+			</scroll-view>
+		</view>
+
+		<view v-else class="chapter-shell">
+			<view class="drawer-panel">
+				<scroll-view class="drawer-scroll" scroll-y="true">
+					<view
+						v-for="item in chapters"
+						:key="item.id"
+						class="drawer-item"
+						:class="item.id == activeChapterId ? 'drawer-item-active' : ''"
+						@tap="selectChapter(item.id)"
+					>
+						<text
+							class="drawer-item-text"
+							:class="item.id == activeChapterId ? 'drawer-item-text-active' : ''"
+						>{{ item.chapterTitle.length > 0 ? item.chapterTitle : ('章节 ' + String(item.id)) }}</text>
+					</view>
+					<view v-if="chapters.length == 0" class="drawer-empty">
+						<text class="drawer-empty-text">暂无章节</text>
+					</view>
+				</scroll-view>
 			</view>
-		</scroll-view>
+
+			<view class="chapter-content-panel">
+				<view v-if="chapterLoading" class="state-wrap chapter-state-wrap">
+					<text class="state-text">章节加载中...</text>
+				</view>
+
+				<view v-else-if="chapterErrorText.length > 0" class="state-wrap chapter-state-wrap">
+					<text class="state-text">{{ chapterErrorText }}</text>
+					<view v-if="activeChapterId.length > 0" class="retry-btn" @tap="reloadActiveChapter">
+						<text class="retry-btn-text">重新加载</text>
+					</view>
+				</view>
+
+				<scroll-view v-else class="chapter-scroll" scroll-y="true">
+					<view class="chapter-content-card">
+						<text class="chapter-title">{{ activeChapterTitle }}</text>
+						<view class="chapter-meta-row">
+							<text v-if="activeChapterStartPage.length > 0" class="chapter-meta">{{ activeChapterStartPage }}</text>
+							<text v-if="activeChapterPageCount.length > 0" class="chapter-meta">{{ activeChapterPageCount }}</text>
+						</view>
+						<rich-text v-if="activeChapterIsHtml" class="rich-content" :nodes="activeChapterContent"></rich-text>
+						<text v-else class="chapter-text">{{ activeChapterContent }}</text>
+					</view>
+				</scroll-view>
+			</view>
+		</view>
+
+		<view class="tabbar">
+			<view class="tab-item" @tap="goLearningPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">学习</text>
+			</view>
+			<view class="tab-item" @tap="goExamPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">考核</text>
+			</view>
+			<view class="tab-item" @tap="goConsultPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
+				<text class="tab-label">咨询</text>
+			</view>
+			<view class="tab-item tab-item-active">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikudianji.png" mode="aspectFit"></image>
+				<text class="tab-label tab-label-active">知识库</text>
+			</view>
+			<view class="tab-item" @tap="goMinePage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">我的</text>
+			</view>
+		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
 import { ref } from 'vue'
-import { fetchKnowledgeEntryDetail, type KnowledgeEntry } from '../../utils/auth.uts'
+import { onLoad } from '@dcloudio/uni-app'
+import {
+	fetchBookChapterDetail,
+	fetchBookDetail,
+	fetchKnowledgeEntryDetail,
+	reportBrowseHistory,
+	type AppBook,
+	type AppBookChapter,
+	type KnowledgeEntry
+} from '../../utils/auth.uts'
 
 const KNOWLEDGE_DETAIL_ID_KEY = 'knowledge_detail_id'
+
 const detailId = ref('')
+const activeTab = ref('overview')
+
 const isLoading = ref(true)
 const errorText = ref('')
+const chapterLoading = ref(false)
+const chapterErrorText = ref('')
 
 const title = ref('')
-const shortTitle = ref('知识')
+const shortTitle = ref('图书')
 const coverUrl = ref('')
 const summary = ref('')
 const content = ref('')
@@ -91,6 +191,14 @@ const totalPages = ref('')
 const viewCount = ref('0')
 const isHtmlContent = ref(false)
 
+const chapters = ref<AppBookChapter[]>([])
+const activeChapterId = ref('')
+const activeChapterTitle = ref('')
+const activeChapterContent = ref('')
+const activeChapterIsHtml = ref(false)
+const activeChapterStartPage = ref('')
+const activeChapterPageCount = ref('')
+
 function safeText(value : string | null) : string {
 	return value == null || value.length == 0 ? '' : value
 }
@@ -98,7 +206,7 @@ function safeText(value : string | null) : string {
 function buildShortTitle(value : string) : string {
 	const text = safeText(value)
 	if (text.length == 0) {
-		return '知识'
+		return '图书'
 	}
 	if (text.length <= 4) {
 		return text
@@ -110,7 +218,16 @@ function detectHtml(value : string) : boolean {
 	return value.indexOf('<p') >= 0 || value.indexOf('<div') >= 0 || value.indexOf('<br') >= 0
 }
 
-function applyDetail(detail : KnowledgeEntry) : void {
+function sortChapters(items : AppBookChapter[]) : AppBookChapter[] {
+	return items.slice().sort((left : AppBookChapter, right : AppBookChapter) : number => {
+		if (left.sortOrder != right.sortOrder) {
+			return left.sortOrder - right.sortOrder
+		}
+		return left.id - right.id
+	})
+}
+
+function applyKnowledgeDetail(detail : KnowledgeEntry) : void {
 	title.value = safeText(detail.title)
 	shortTitle.value = buildShortTitle(detail.title)
 	coverUrl.value = safeText(detail.coverUrl)
@@ -127,51 +244,96 @@ function applyDetail(detail : KnowledgeEntry) : void {
 	isHtmlContent.value = detectHtml(content.value)
 }
 
-function loadParams() : void {
-	const pages = getCurrentPages()
-	if (pages.length == 0) {
-		const cachedId = uni.getStorageSync(KNOWLEDGE_DETAIL_ID_KEY)
-		if (typeof cachedId == 'string' && cachedId.length > 0) {
-			detailId.value = cachedId
+function applyBookDetail(detail : AppBook) : void {
+	title.value = safeText(detail.bookName)
+	shortTitle.value = buildShortTitle(detail.bookName)
+	coverUrl.value = safeText(detail.coverUrl)
+	summary.value = safeText(detail.introduction)
+	if (summary.value.length > 0 && content.value.length == 0) {
+		content.value = summary.value
+	}
+	author.value = safeText(detail.author)
+	publisher.value = safeText(detail.publisher)
+	publishedAt.value = safeText(detail.publishedAt).replace('T', ' ')
+	totalPages.value = detail.totalPages > 0 ? '共 ' + String(detail.totalPages) + ' 页' : ''
+	viewCount.value = String(detail.browseCount)
+	chapters.value = sortChapters(detail.chapters != null ? detail.chapters : [])
+	if (chapters.value.length > 0 && activeChapterId.value.length == 0) {
+		activeChapterId.value = String(chapters.value[0].id)
+	}
+}
+
+function applyChapterDetail(detail : AppBookChapter) : void {
+	activeChapterTitle.value = safeText(detail.chapterTitle).length > 0 ? detail.chapterTitle : '章节内容'
+	activeChapterContent.value = safeText(detail.content)
+	activeChapterIsHtml.value = detectHtml(activeChapterContent.value)
+	activeChapterStartPage.value = detail.startPage > 0 ? '起始页 ' + String(detail.startPage) : ''
+	activeChapterPageCount.value = detail.pageCount > 0 ? '页数 ' + String(detail.pageCount) : ''
+}
+
+function loadParams(options : UTSJSONObject | null) : void {
+	if (options != null) {
+		const idValue = options['id']
+		const entryIdValue = options['entryId']
+		const knowledgeIdValue = options['knowledgeId']
+		const contentIdValue = options['contentId']
+		if (typeof idValue == 'string' && idValue.length > 0) {
+			detailId.value = idValue
+			uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+			return
 		}
-		return
-	}
-
-	const currentPage = pages[pages.length - 1]
-	if (currentPage == null || currentPage.options == null) {
-		return
-	}
-
-	const options = currentPage.options as UTSJSONObject
-	const idValue = options['id']
-	const entryIdValue = options['entryId']
-	const knowledgeIdValue = options['knowledgeId']
-	const contentIdValue = options['contentId']
-	if (typeof idValue == 'string' && idValue.length > 0) {
-		detailId.value = idValue
-		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
-		return
-	}
-	if (typeof entryIdValue == 'string' && entryIdValue.length > 0) {
-		detailId.value = entryIdValue
-		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
-		return
-	}
-	if (typeof knowledgeIdValue == 'string' && knowledgeIdValue.length > 0) {
-		detailId.value = knowledgeIdValue
-		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
-		return
-	}
-	if (typeof contentIdValue == 'string' && contentIdValue.length > 0) {
-		detailId.value = contentIdValue
-		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
-		return
+		if (typeof entryIdValue == 'string' && entryIdValue.length > 0) {
+			detailId.value = entryIdValue
+			uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+			return
+		}
+		if (typeof knowledgeIdValue == 'string' && knowledgeIdValue.length > 0) {
+			detailId.value = knowledgeIdValue
+			uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+			return
+		}
+		if (typeof contentIdValue == 'string' && contentIdValue.length > 0) {
+			detailId.value = contentIdValue
+			uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+			return
+		}
 	}
 
 	const cachedId = uni.getStorageSync(KNOWLEDGE_DETAIL_ID_KEY)
 	if (typeof cachedId == 'string' && cachedId.length > 0) {
 		detailId.value = cachedId
 	}
+}
+
+function loadKnowledgeFallback() : void {
+	fetchKnowledgeEntryDetail(
+		detailId.value,
+		(detail) => {
+			applyKnowledgeDetail(detail)
+			isLoading.value = false
+			reportBrowse()
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : '详情加载失败'
+			isLoading.value = false
+		}
+	)
+}
+
+function reportBrowse() : void {
+	if (detailId.value.length == 0) {
+		return
+	}
+	reportBrowseHistory(
+		{
+			resourceType: 'book',
+			resourceId: Number(detailId.value)
+		},
+		() => {
+		},
+		() => {
+		}
+	)
 }
 
 function loadDetail() : void {
@@ -184,25 +346,91 @@ function loadDetail() : void {
 	isLoading.value = true
 	errorText.value = ''
 
-	fetchKnowledgeEntryDetail(
+	fetchBookDetail(
 		detailId.value,
 		(detail) => {
-			applyDetail(detail)
+			applyBookDetail(detail)
+			if (title.value.length == 0) {
+				loadKnowledgeFallback()
+				return
+			}
 			isLoading.value = false
+			reportBrowse()
+			if (chapters.value.length > 0) {
+				selectChapter(chapters.value[0].id)
+			}
 		},
-		(message) => {
-			errorText.value = message.length > 0 ? message : '详情加载失败'
-			isLoading.value = false
+		() => {
+			loadKnowledgeFallback()
 		}
 	)
+}
+
+function reloadActiveChapter() : void {
+	if (activeChapterId.value.length == 0) {
+		return
+	}
+	selectChapter(Number(activeChapterId.value))
+}
+
+function selectChapter(chapterId : number) : void {
+	if (detailId.value.length == 0) {
+		return
+	}
+
+	activeChapterId.value = String(chapterId)
+	chapterLoading.value = true
+	chapterErrorText.value = ''
+
+	fetchBookChapterDetail(
+		detailId.value,
+		String(chapterId),
+		(detail) => {
+			applyChapterDetail(detail)
+			reportBrowse()
+			chapterLoading.value = false
+		},
+		(message) => {
+			chapterErrorText.value = message.length > 0 ? message : '章节加载失败'
+			chapterLoading.value = false
+		}
+	)
+}
+
+function switchTab(tabKey : string) : void {
+	activeTab.value = tabKey
+	if (tabKey == 'chapters') {
+		reportBrowse()
+	}
+	if (tabKey == 'chapters' && chapters.value.length > 0 && activeChapterContent.value.length == 0 && !chapterLoading.value) {
+		selectChapter(chapters.value[0].id)
+	}
 }
 
 function goBack() : void {
 	uni.navigateBack()
 }
 
-loadParams()
-loadDetail()
+function goLearningPage() : void {
+	uni.redirectTo({ url: '/pages/index/index' })
+}
+
+function goExamPage() : void {
+	uni.redirectTo({ url: '/pages/exam/index' })
+}
+
+function goConsultPage() : void {
+	uni.redirectTo({ url: '/pages/consult/index' })
+}
+
+function goMinePage() : void {
+	uni.redirectTo({ url: '/pages/mine/index' })
+}
+
+onLoad((options) => {
+	loadParams(options as UTSJSONObject)
+	loadDetail()
+})
 </script>
 
 <style>
@@ -246,34 +474,78 @@ loadDetail()
 	font-weight: 600;
 }
 
+.tab-strip {
+	height: 88rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	align-items: center;
+	padding: 0 18rpx;
+	border-bottom-width: 1rpx;
+	border-bottom-style: solid;
+	border-bottom-color: #efedf5;
+}
+
+.tab-item {
+	margin-right: 28rpx;
+	height: 88rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.tab-text {
+	font-size: 28rpx;
+	color: #666666;
+}
+
+.tab-text-active {
+	color: #d56d79;
+	font-weight: 600;
+}
+
+.tab-line {
+	width: 36rpx;
+	height: 4rpx;
+	border-radius: 999rpx;
+	background-color: #d56d79;
+	margin-top: 10rpx;
+}
+
+.overview-shell {
+	flex: 1;
+	padding-bottom: 104rpx;
+}
+
 .detail-scroll {
 	flex: 1;
 }
 
 .state-wrap {
-	padding: 180rpx 40rpx;
+	padding: 180rpx 40rpx 0;
 	align-items: center;
 }
 
+.chapter-state-wrap {
+	padding-top: 120rpx;
+}
+
 .state-text {
-	font-size: 14px;
-	line-height: 22px;
-	color: #9b9b9b;
+	font-size: 28rpx;
+	color: #a9a9b6;
 	text-align: center;
 }
 
 .retry-btn {
 	margin-top: 24rpx;
-	width: 200rpx;
-	height: 68rpx;
-	border-radius: 12rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
 	background-color: #18b775;
 	align-items: center;
 	justify-content: center;
 }
 
 .retry-btn-text {
-	font-size: 14px;
+	font-size: 28rpx;
 	color: #ffffff;
 	font-weight: 600;
 }
@@ -307,9 +579,9 @@ loadDetail()
 .cover-fallback {
 	width: 180rpx;
 	height: 240rpx;
-	padding: 24rpx 18rpx;
 	align-items: center;
 	justify-content: center;
+	background-color: #f3e2c6;
 }
 
 .cover-fallback-text {
@@ -352,6 +624,22 @@ loadDetail()
 	color: #b1b1b1;
 }
 
+.chapter-entry-btn {
+	margin-top: 20rpx;
+	width: 180rpx;
+	height: 60rpx;
+	border-radius: 30rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.chapter-entry-btn-text {
+	font-size: 24rpx;
+	color: #ffffff;
+	font-weight: 600;
+}
+
 .section-card {
 	margin-top: 18rpx;
 	padding: 22rpx;
@@ -376,5 +664,140 @@ loadDetail()
 
 .rich-content {
 	margin-top: 16rpx;
+}
+
+.chapter-shell {
+	flex: 1;
+	flex-direction: row;
+	padding-bottom: 104rpx;
+}
+
+.drawer-panel {
+	width: 214rpx;
+	background-color: #f2f4fa;
+	border-right-width: 1rpx;
+	border-right-style: solid;
+	border-right-color: #e7e7f0;
+}
+
+.drawer-scroll {
+	flex: 1;
+}
+
+.drawer-item {
+	min-height: 96rpx;
+	padding: 18rpx 16rpx;
+	align-items: flex-start;
+	justify-content: center;
+	border-left-width: 6rpx;
+	border-left-style: solid;
+	border-left-color: transparent;
+}
+
+.drawer-item-active {
+	background-color: #ffffff;
+	border-left-color: #df6876;
+}
+
+.drawer-item-text {
+	font-size: 24rpx;
+	line-height: 34rpx;
+	color: #666a78;
+}
+
+.drawer-item-text-active {
+	color: #df6876;
+	font-weight: 600;
+}
+
+.drawer-empty {
+	padding: 40rpx 16rpx;
+	align-items: center;
+}
+
+.drawer-empty-text {
+	font-size: 22rpx;
+	color: #b4b7c3;
+}
+
+.chapter-content-panel {
+	flex: 1;
+}
+
+.chapter-scroll {
+	flex: 1;
+}
+
+.chapter-content-card {
+	margin: 18rpx;
+	padding: 22rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+}
+
+.chapter-title {
+	font-size: 32rpx;
+	line-height: 44rpx;
+	color: #2a2a2a;
+	font-weight: 700;
+}
+
+.chapter-meta-row {
+	margin-top: 14rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+.chapter-meta {
+	margin-right: 18rpx;
+	font-size: 22rpx;
+	line-height: 32rpx;
+	color: #999daa;
+}
+
+.chapter-text {
+	display: block;
+	margin-top: 20rpx;
+	font-size: 28rpx;
+	line-height: 44rpx;
+	color: #545867;
+}
+
+.tabbar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 104rpx;
+	background-color: #ffffff;
+	border-top-width: 1rpx;
+	border-top-style: solid;
+	border-top-color: #eceaf1;
+	flex-direction: row;
+}
+
+.tab-item {
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+
+.tab-item-active {
+	background-color: #ffffff;
+}
+
+.tab-icon-image {
+	width: 42rpx;
+	height: 42rpx;
+}
+
+.tab-label {
+	margin-top: 6rpx;
+	font-size: 20rpx;
+	color: #a8a8b2;
+}
+
+.tab-label-active {
+	color: #df6876;
 }
 </style>

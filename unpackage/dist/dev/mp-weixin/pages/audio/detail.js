@@ -33,6 +33,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const activeTab = common_vendor.ref("intro");
     const audioTitle = common_vendor.ref("音频详情");
     const audioSummary = common_vendor.ref("这里展示音频简介内容。");
+    const audioCoverUrl = common_vendor.ref("");
     const viewCount = common_vendor.ref("0");
     const favoriteCount = common_vendor.ref("0");
     const currentAudioItemId = common_vendor.ref("");
@@ -60,6 +61,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         isFavorited.value = favorited;
       }, () => {
         isFavorited.value = false;
+      });
+    }
+    function reportBrowse() {
+      if (audioId.value.length == 0) {
+        return null;
+      }
+      utils_auth.reportBrowseHistory(new utils_auth.BrowseHistoryRequest({
+        resourceType: RESOURCE_TYPE,
+        resourceId: Number(audioId.value)
+      }), () => {
+      }, () => {
       });
     }
     function toggleFavorite() {
@@ -90,6 +102,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     function applyAudioDetail(detail) {
       const titleText = safeText(detail.title);
       const summaryText = safeText(detail.summary);
+      audioCoverUrl.value = safeText(detail.coverUrl);
       if (titleText.length > 0) {
         audioTitle.value = titleText;
       }
@@ -132,6 +145,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       utils_auth.fetchAudioDetail(audioId.value, (detail) => {
         applyAudioDetail(detail);
+        reportBrowse();
       }, (message) => {
         common_vendor.index.showToast({
           title: message,
@@ -155,29 +169,33 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const __returned__ = common_vendor.e({
         a: common_assets._imports_0$1,
         b: common_vendor.o(goBack),
-        c: common_vendor.n(activeTab.value == "intro" ? "detail-tab detail-tab-active" : "detail-tab"),
-        d: activeTab.value == "intro"
+        c: audioCoverUrl.value.length > 0
+      }, audioCoverUrl.value.length > 0 ? {
+        d: audioCoverUrl.value
+      } : {}, {
+        e: common_vendor.n(activeTab.value == "intro" ? "detail-tab detail-tab-active" : "detail-tab"),
+        f: activeTab.value == "intro"
       }, activeTab.value == "intro" ? {} : {}, {
-        e: common_vendor.o(($event) => {
+        g: common_vendor.o(($event) => {
           return activeTab.value = "intro";
         }),
-        f: common_vendor.n(activeTab.value == "catalog" ? "detail-tab detail-tab-active" : "detail-tab"),
-        g: activeTab.value == "catalog"
+        h: common_vendor.n(activeTab.value == "catalog" ? "detail-tab detail-tab-active" : "detail-tab"),
+        i: activeTab.value == "catalog"
       }, activeTab.value == "catalog" ? {} : {}, {
-        h: common_vendor.o(($event) => {
+        j: common_vendor.o(($event) => {
           return activeTab.value = "catalog";
         }),
-        i: common_vendor.t(isFavorited.value ? "已收藏" : "收藏"),
-        j: common_vendor.n(isFavorited.value ? "favorite-text-active" : ""),
-        k: common_vendor.o(toggleFavorite),
-        l: activeTab.value == "intro"
+        k: common_vendor.t(isFavorited.value ? "已收藏" : "收藏"),
+        l: common_vendor.n(isFavorited.value ? "favorite-text-active" : ""),
+        m: common_vendor.o(toggleFavorite),
+        n: activeTab.value == "intro"
       }, activeTab.value == "intro" ? {
-        m: common_vendor.t(audioTitle.value),
-        n: common_vendor.t(viewCount.value),
-        o: common_vendor.t(favoriteCount.value),
-        p: common_vendor.t(audioSummary.value)
+        o: common_vendor.t(audioTitle.value),
+        p: common_vendor.t(viewCount.value),
+        q: common_vendor.t(favoriteCount.value),
+        r: common_vendor.t(audioSummary.value)
       } : {
-        q: common_vendor.f(catalogItems.value, (item, k0, i0) => {
+        s: common_vendor.f(catalogItems.value, (item, k0, i0) => {
           return {
             a: common_vendor.t(item.title),
             b: common_vendor.n(item.id == currentAudioItemId.value ? "catalog-title-active" : ""),
@@ -191,7 +209,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           };
         })
       }, {
-        r: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        t: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

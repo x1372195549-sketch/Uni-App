@@ -9,11 +9,13 @@ if (!Math) {
   "./pages/profile/certification.js";
   "./pages/profile/favorites.js";
   "./pages/profile/history.js";
+  "./pages/profile/feedback.js";
   "./pages/index/index.js";
   "./pages/audio/index.js";
   "./pages/audio/detail.js";
   "./pages/live/index.js";
   "./pages/live/detail.js";
+  "./pages/live/player.js";
   "./pages/course/index.js";
   "./pages/course/detail.js";
   "./pages/news/index.js";

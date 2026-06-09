@@ -146,16 +146,16 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       common_vendor.index.redirectTo({ url: "/pages/news/index" });
     };
     const goExamPage = () => {
-      common_vendor.index.switchTab({ url: "/pages/exam/index" });
+      common_vendor.index.redirectTo({ url: "/pages/exam/index" });
     };
     const goConsultPage = () => {
-      common_vendor.index.switchTab({ url: "/pages/consult/index" });
+      common_vendor.index.redirectTo({ url: "/pages/consult/index" });
     };
     const goKnowledgePage = () => {
-      common_vendor.index.switchTab({ url: "/pages/knowledge/index" });
+      common_vendor.index.redirectTo({ url: "/pages/knowledge/index" });
     };
     const goMinePage = () => {
-      common_vendor.index.switchTab({ url: "/pages/mine/index" });
+      common_vendor.index.redirectTo({ url: "/pages/mine/index" });
     };
     loadTopics(false);
     return (_ctx, _cache) => {
@@ -230,18 +230,18 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         w: errorText.value.length > 0,
         A: topicItems.value.length == 0,
         J: common_vendor.o(loadMore),
-        K: common_assets._imports_1$3,
+        K: common_assets._imports_1$2,
         L: common_vendor.t(learningTabText),
-        M: common_assets._imports_2,
+        M: common_assets._imports_2$1,
         N: common_vendor.t(examTabText),
         O: common_vendor.o(goExamPage),
-        P: common_assets._imports_3,
+        P: common_assets._imports_4,
         Q: common_vendor.t(consultTabText),
         R: common_vendor.o(goConsultPage),
-        S: common_assets._imports_4,
+        S: common_assets._imports_5,
         T: common_vendor.t(knowledgeTabText),
         U: common_vendor.o(goKnowledgePage),
-        V: common_assets._imports_5,
+        V: common_assets._imports_6$1,
         W: common_vendor.t(mineTabText),
         X: common_vendor.o(goMinePage),
         Y: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")

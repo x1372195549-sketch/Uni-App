@@ -100,27 +100,28 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const __returned__ = common_vendor.e({
         a: common_assets._imports_0$3,
         b: common_vendor.t(pageTitleText),
-        c: common_vendor.t(bannerTitleLineOne),
-        d: common_vendor.t(bannerTitleLineTwo),
-        e: common_vendor.t(noteTextOne),
-        f: common_vendor.t(noteTextTwo),
-        g: common_vendor.t(noteTextThree),
-        h: sourceName.value.length > 0
+        c: common_assets._imports_1$3,
+        d: common_vendor.t(bannerTitleLineOne),
+        e: common_vendor.t(bannerTitleLineTwo),
+        f: common_vendor.t(noteTextOne),
+        g: common_vendor.t(noteTextTwo),
+        h: common_vendor.t(noteTextThree),
+        i: sourceName.value.length > 0
       }, sourceName.value.length > 0 ? {
-        i: common_vendor.t(sourceLabelText),
-        j: common_vendor.t(sourceName.value)
+        j: common_vendor.t(sourceLabelText),
+        k: common_vendor.t(sourceName.value)
       } : {}, {
-        k: isLoading.value
+        l: isLoading.value
       }, isLoading.value ? {
-        l: common_vendor.t(loadingText)
+        m: common_vendor.t(loadingText)
       } : errorText.value.length > 0 ? {
-        n: common_vendor.t(errorText.value),
-        o: common_vendor.t(retryText),
-        p: common_vendor.o(loadPapers)
+        o: common_vendor.t(errorText.value),
+        p: common_vendor.t(retryText),
+        q: common_vendor.o(loadPapers)
       } : papers.value.length == 0 ? {
-        r: common_vendor.t(emptyText)
+        s: common_vendor.t(emptyText)
       } : {
-        s: common_vendor.f(papers.value, (paper, k0, i0) => {
+        t: common_vendor.f(papers.value, (paper, k0, i0) => {
           return {
             a: common_vendor.t(paper.paperName),
             b: common_vendor.t(paper.description),
@@ -134,30 +135,30 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             h: paper.id
           };
         }),
-        t: common_vendor.t(questionText),
-        v: common_vendor.t(durationText),
-        w: common_vendor.t(minuteText),
-        x: common_vendor.t(totalScoreText),
-        y: common_vendor.t(passScoreText),
-        z: common_vendor.t(startExamText)
+        v: common_vendor.t(questionText),
+        w: common_vendor.t(durationText),
+        x: common_vendor.t(minuteText),
+        y: common_vendor.t(totalScoreText),
+        z: common_vendor.t(passScoreText),
+        A: common_vendor.t(startExamText)
       }, {
-        m: errorText.value.length > 0,
-        q: papers.value.length == 0,
-        A: common_assets._imports_1$2,
-        B: common_vendor.t(learningTabText),
-        C: common_vendor.o(goLearningHome),
-        D: common_assets._imports_2$1,
-        E: common_vendor.t(examTabText),
-        F: common_assets._imports_3,
-        G: common_vendor.t(consultTabText),
-        H: common_vendor.o(goConsultPage),
-        I: common_assets._imports_4,
-        J: common_vendor.t(knowledgeTabText),
-        K: common_vendor.o(goKnowledgePage),
-        L: common_assets._imports_5,
-        M: common_vendor.t(mineTabText),
-        N: common_vendor.o(goMinePage),
-        O: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        n: errorText.value.length > 0,
+        r: papers.value.length == 0,
+        B: common_assets._imports_2,
+        C: common_vendor.t(learningTabText),
+        D: common_vendor.o(goLearningHome),
+        E: common_assets._imports_3$1,
+        F: common_vendor.t(examTabText),
+        G: common_assets._imports_4,
+        H: common_vendor.t(consultTabText),
+        I: common_vendor.o(goConsultPage),
+        J: common_assets._imports_5,
+        K: common_vendor.t(knowledgeTabText),
+        L: common_vendor.o(goKnowledgePage),
+        M: common_assets._imports_6$1,
+        N: common_vendor.t(mineTabText),
+        O: common_vendor.o(goMinePage),
+        P: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

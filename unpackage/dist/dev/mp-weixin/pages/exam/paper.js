@@ -145,7 +145,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }
         const remainRaw = raw["remainingSeconds"];
         if (typeof remainRaw == "number") {
-          remainingSeconds.value = remainRaw;
+          const remainValue = remainRaw;
+          if (remainValue > 0) {
+            remainingSeconds.value = remainValue;
+          }
         }
         const indexRaw = raw["currentQuestionIndex"];
         if (typeof indexRaw == "number") {

@@ -152,6 +152,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       common_vendor.index.redirectTo({ url: "/pages/exam/index" });
     };
     const goNewsDetail = (id) => {
+      common_vendor.index.setStorageSync("article_detail_id", String(id));
       common_vendor.index.navigateTo({ url: "/pages/news/detail?id=" + String(id) });
     };
     const goKnowledgePage = () => {
@@ -230,18 +231,18 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         w: errorText.value.length > 0,
         A: articleItems.value.length == 0,
         I: common_vendor.o(loadMore),
-        J: common_assets._imports_1$3,
+        J: common_assets._imports_1$2,
         K: common_vendor.t(learningTabText),
-        L: common_assets._imports_2,
+        L: common_assets._imports_2$1,
         M: common_vendor.t(examTabText),
         N: common_vendor.o(goExamPage),
-        O: common_assets._imports_3,
+        O: common_assets._imports_4,
         P: common_vendor.t(consultTabText),
         Q: common_vendor.o(goConsultPage),
-        R: common_assets._imports_4,
+        R: common_assets._imports_5,
         S: common_vendor.t(knowledgeTabText),
         T: common_vendor.o(goKnowledgePage),
-        U: common_assets._imports_5,
+        U: common_assets._imports_6$1,
         V: common_vendor.t(mineTabText),
         W: common_vendor.o(goMinePage),
         X: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")

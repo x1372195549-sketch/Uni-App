@@ -7,7 +7,7 @@
 }
 .hero-shell {
 	position: relative;
-	height: 226rpx;
+	height: 254rpx;
 	overflow: hidden;
 }
 .hero-bg {
@@ -15,13 +15,13 @@
 	left: 0;
 	top: 0;
 	width: 750rpx;
-	height: 226rpx;
+	height: 254rpx;
 }
 .header {
 	position: relative;
 	z-index: 1;
-	padding-top: 34rpx;
-	height: 118rpx;
+	padding-top: 62rpx;
+	height: 146rpx;
 	align-items: center;
 	justify-content: center;
 }

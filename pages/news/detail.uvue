@@ -47,11 +47,10 @@
 
 <script setup lang="uts">
 import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { checkFavoriteStatus, fetchArticleDetail, reportBrowseHistory, updateFavoriteStatus, type Article } from '../../utils/auth.uts'
 
 const PRIMARY_RESOURCE_TYPE = 'article'
-const FALLBACK_RESOURCE_TYPE = 'info'
 
 const detailTitleText = '\u8d44\u8baf\u8be6\u60c5'
 const summaryTitle = '\u6458\u8981'
@@ -72,7 +71,6 @@ const tags = ref<string[]>([])
 const isHtmlContent = ref(false)
 const isFavorited = ref(false)
 const isFavoriteLoading = ref(false)
-const favoriteResourceType = ref(PRIMARY_RESOURCE_TYPE)
 
 const safeText = (value : string | null) : string => {
 	return value == null || value.length == 0 ? '' : value
@@ -90,19 +88,31 @@ const detectHtml = (value : string) : boolean => {
 	return value.indexOf('<p') >= 0 || value.indexOf('<div') >= 0 || value.indexOf('<br') >= 0
 }
 
-const loadParams = () => {
-	const pages = getCurrentPages()
-	if (pages.length == 0) {
-		return
+const readArticleIdFromStorage = () : string => {
+	const cachedId = uni.getStorageSync('article_detail_id')
+	return typeof cachedId == 'string' ? cachedId : ''
+}
+
+const resolveArticleId = (options : UTSJSONObject | null) => {
+	let resolvedId = ''
+	if (options != null) {
+		const idValue = options['id']
+		if (typeof idValue == 'string' && idValue.length > 0) {
+			resolvedId = idValue
+		}
+		if (resolvedId.length == 0) {
+			const articleIdValue = options['articleId']
+			if (typeof articleIdValue == 'string' && articleIdValue.length > 0) {
+				resolvedId = articleIdValue
+			}
+		}
 	}
-	const current = pages[pages.length - 1]
-	if (current == null || current.options == null) {
-		return
+	if (resolvedId.length == 0) {
+		resolvedId = readArticleIdFromStorage()
 	}
-	const options = current.options as UTSJSONObject
-	const idValue = options['id']
-	if (typeof idValue == 'string' && idValue.length > 0) {
-		articleId.value = idValue
+	if (resolvedId.length > 0) {
+		articleId.value = resolvedId
+		uni.setStorageSync('article_detail_id', resolvedId)
 	}
 }
 
@@ -118,39 +128,20 @@ const applyDetail = (detail : Article) => {
 	isHtmlContent.value = detectHtml(content.value)
 }
 
-const setFavoriteStatusByType = (
-	resourceType : string,
-	next : () => void
-) => {
-	checkFavoriteStatus(
-		resourceType,
-		Number(articleId.value),
-		(favorited) => {
-			if (favorited) {
-				isFavorited.value = true
-				favoriteResourceType.value = resourceType
-				return
-			}
-			next()
-		},
-		() => {
-			next()
-		}
-	)
-}
-
 const loadFavoriteStatus = () => {
 	if (articleId.value.length == 0) {
 		return
 	}
-	isFavorited.value = false
-	favoriteResourceType.value = PRIMARY_RESOURCE_TYPE
-	setFavoriteStatusByType(PRIMARY_RESOURCE_TYPE, () => {
-		setFavoriteStatusByType(FALLBACK_RESOURCE_TYPE, () => {
+	checkFavoriteStatus(
+		PRIMARY_RESOURCE_TYPE,
+		Number(articleId.value),
+		(favorited) => {
+			isFavorited.value = favorited
+		},
+		() => {
 			isFavorited.value = false
-			favoriteResourceType.value = PRIMARY_RESOURCE_TYPE
-		})
-	})
+		}
+	)
 }
 
 const reportBrowse = () => {
@@ -189,19 +180,17 @@ const loadDetail = () => {
 }
 
 const submitFavoriteRequest = (
-	resourceType : string,
 	favorited : boolean,
 	success : () => void,
 	fail : (message : string) => void
 ) => {
 	updateFavoriteStatus(
 		{
-			resourceType,
+			resourceType: PRIMARY_RESOURCE_TYPE,
 			resourceId: Number(articleId.value),
 			favorited
 		},
 		(result) => {
-			favoriteResourceType.value = resourceType
 			isFavorited.value = result.favorited
 			success()
 		},
@@ -218,11 +207,8 @@ const toggleFavorite = () => {
 	isFavoriteLoading.value = true
 
 	const nextFavorited = !isFavorited.value
-	const primaryType = nextFavorited ? PRIMARY_RESOURCE_TYPE : favoriteResourceType.value
-	const backupType = primaryType == PRIMARY_RESOURCE_TYPE ? FALLBACK_RESOURCE_TYPE : PRIMARY_RESOURCE_TYPE
 
 	submitFavoriteRequest(
-		primaryType,
 		nextFavorited,
 		() => {
 			isFavoriteLoading.value = false
@@ -232,24 +218,11 @@ const toggleFavorite = () => {
 			})
 		},
 		(message) => {
-			submitFavoriteRequest(
-				backupType,
-				nextFavorited,
-				() => {
-					isFavoriteLoading.value = false
-					uni.showToast({
-						title: isFavorited.value ? '\u6536\u85cf\u6210\u529f' : '\u5df2\u53d6\u6d88\u6536\u85cf',
-						icon: 'none'
-					})
-				},
-				(fallbackMessage) => {
-					isFavoriteLoading.value = false
-					uni.showToast({
-						title: fallbackMessage.length > 0 ? fallbackMessage : message,
-						icon: 'none'
-					})
-				}
-			)
+			isFavoriteLoading.value = false
+			uni.showToast({
+				title: message,
+				icon: 'none'
+			})
 		}
 	)
 }
@@ -258,10 +231,18 @@ const goBack = () => {
 	uni.navigateBack()
 }
 
-loadParams()
-loadDetail()
+onLoad((options) => {
+	resolveArticleId(options as UTSJSONObject)
+	loadDetail()
+})
 
 onShow(() => {
+	if (articleId.value.length == 0) {
+		resolveArticleId(null)
+	}
+	if (articleId.value.length > 0 && title.value.length == 0 && content.value.length == 0) {
+		loadDetail()
+	}
 	loadFavoriteStatus()
 })
 </script>

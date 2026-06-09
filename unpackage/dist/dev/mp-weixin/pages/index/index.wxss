@@ -7,7 +7,7 @@
 }
 .hero-shell {
 	position: relative;
-	height: 218rpx;
+	height: 244rpx;
 	overflow: hidden;
 }
 .hero-bg {
@@ -15,13 +15,13 @@
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 218rpx;
+	height: 244rpx;
 }
 .header {
 	position: relative;
 	z-index: 1;
-	padding-top: 34rpx;
-	height: 110rpx;
+	padding-top: 62rpx;
+	height: 136rpx;
 	align-items: center;
 	justify-content: center;
 }
@@ -83,11 +83,26 @@
 .hero-card-top {
 	margin-top: 0;
 }
+.hero-swiper {
+	height: 292rpx;
+}
 .hero-card {
-	padding: 28rpx;
+	position: relative;
+	height: 292rpx;
+	box-sizing: border-box;
+	padding: 24rpx 24rpx;
 	border-radius: 24rpx;
 	background: linear-gradient(135deg, #f7e4c8 0%, #f3efe7 100%);
 	box-shadow: 0 12rpx 28rpx rgba(152, 118, 72, 0.12);
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	overflow: hidden;
+}
+.hero-main {
+	flex: 1;
+	height: 244rpx;
+	padding-right: 22rpx;
 }
 .hero-kicker {
 	font-size: 12px;
@@ -96,32 +111,52 @@
 	font-weight: 600;
 }
 .hero-title {
-	margin-top: 12rpx;
-	font-size: 21px;
-	line-height: 30px;
+	margin-top: 10rpx;
+	font-size: 18px;
+	line-height: 26px;
 	color: #8a5a28;
 	font-weight: 700;
+	height: 52rpx;
+	overflow: hidden;
 }
 .hero-subtitle {
-	margin-top: 14rpx;
-	font-size: 14px;
-	line-height: 22px;
+	margin-top: 12rpx;
+	font-size: 13px;
+	line-height: 20px;
 	color: #7c6e58;
+	height: 40rpx;
+	overflow: hidden;
 }
 .hero-action {
-	margin-top: 22rpx;
-	width: 170rpx;
-	height: 60rpx;
-	border-radius: 30rpx;
+	margin-top: 18rpx;
+	width: 156rpx;
+	height: 56rpx;
+	border-radius: 28rpx;
 	background-color: #18b775;
 	align-items: center;
 	justify-content: center;
 }
 .hero-action-text {
-	font-size: 14px;
+	font-size: 13px;
 	line-height: 20px;
 	color: #ffffff;
 	font-weight: 600;
+}
+.hero-cover {
+	width: 178rpx;
+	height: 208rpx;
+	border-radius: 18rpx;
+}
+.hero-cover-placeholder {
+	background-color: rgba(255, 255, 255, 0.42);
+	align-items: center;
+	justify-content: center;
+}
+.hero-cover-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #d38c42;
+	font-weight: 700;
 }
 .section-head {
 	margin-top: 30rpx;
@@ -143,6 +178,67 @@
 	font-size: 13px;
 	line-height: 20px;
 	color: #b85d69;
+}
+.section-empty {
+	height: 72rpx;
+	align-items: center;
+	justify-content: center;
+}
+.section-empty-text {
+	font-size: 13px;
+	line-height: 20px;
+	color: #b8b8b8;
+}
+.recommend-grid {
+	flex-direction: row;
+	justify-content: space-between;
+}
+.recommend-card {
+	width: 214rpx;
+	padding: 12rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.06);
+}
+.recommend-cover {
+	width: 190rpx;
+	height: 116rpx;
+	border-radius: 14rpx;
+	background-color: #f3e6d6;
+}
+.recommend-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+.recommend-cover-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #c88a54;
+	font-weight: 700;
+}
+.recommend-type {
+	margin-top: 10rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #b85d69;
+	font-weight: 600;
+}
+.recommend-title {
+	margin-top: 4rpx;
+	font-size: 14px;
+	line-height: 20px;
+	color: #2f2f2f;
+	font-weight: 600;
+	height: 40rpx;
+	overflow: hidden;
+}
+.recommend-summary {
+	margin-top: 6rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #8e8e8e;
+	height: 32rpx;
+	overflow: hidden;
 }
 .topic-scroll {
 	white-space: nowrap;
@@ -214,59 +310,6 @@
 	font-size: 11px;
 	line-height: 16px;
 	color: #b1b1b1;
-}
-.article-list {
-	padding-bottom: 16rpx;
-}
-.article-card {
-	margin-bottom: 18rpx;
-	padding: 16rpx;
-	border-radius: 20rpx;
-	background-color: #ffffff;
-	flex-direction: row;
-	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
-}
-.article-cover {
-	width: 156rpx;
-	height: 156rpx;
-	border-radius: 16rpx;
-	background-color: #f3e6d6;
-}
-.article-cover-placeholder {
-	align-items: center;
-	justify-content: center;
-}
-.article-cover-text {
-	font-size: 18px;
-	color: #c88a54;
-	font-weight: 700;
-}
-.article-main {
-	flex: 1;
-	padding-left: 18rpx;
-}
-.article-title {
-	font-size: 16px;
-	line-height: 24px;
-	color: #252525;
-	font-weight: 600;
-}
-.article-summary {
-	margin-top: 10rpx;
-	font-size: 12px;
-	line-height: 18px;
-	color: #8f8f8f;
-	height: 54rpx;
-	overflow: hidden;
-}
-.article-meta {
-	margin-top: 16rpx;
-}
-.article-meta-text {
-	font-size: 11px;
-	line-height: 16px;
-	color: #b1b1b1;
-	margin-top: 4rpx;
 }
 .tabbar {
 	position: absolute;

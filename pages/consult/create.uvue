@@ -74,20 +74,13 @@ const expertName = ref('')
 const title = ref('')
 const content = ref('')
 const isSubmitting = ref(false)
+const isGoingBack = ref(false)
 
 const displayExpertName = computed(() : string => {
 	return expertName.value.length > 0 ? expertName.value : fallbackExpertText
 })
 
-const goBack = () => {
-	const pages = getCurrentPages()
-	if (pages.length > 1) {
-		uni.navigateBack({
-			delta: 1
-		})
-		return
-	}
-
+const fallbackBack = () => {
 	if (expertId.value.length > 0) {
 		let url = '/pages/consult/detail?id=' + expertId.value
 		if (expertName.value.length > 0) {
@@ -98,6 +91,34 @@ const goBack = () => {
 	}
 
 	uni.redirectTo({ url: '/pages/consult/index' })
+}
+
+const goBack = () => {
+	if (isGoingBack.value) {
+		return
+	}
+	isGoingBack.value = true
+
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack({
+			delta: 1,
+			fail: () => {
+				fallbackBack()
+			},
+			complete: () => {
+				setTimeout(() => {
+					isGoingBack.value = false
+				}, 300)
+			}
+		})
+		return
+	}
+
+	fallbackBack()
+	setTimeout(() => {
+		isGoingBack.value = false
+	}, 300)
 }
 
 const readStoredExpert = () : UTSJSONObject | null => {
@@ -229,7 +250,7 @@ loadParams()
 	height: 56rpx;
 	align-items: center;
 	justify-content: center;
-	z-index: 2;
+	z-index: 5;
 }
 
 .nav-back-icon {

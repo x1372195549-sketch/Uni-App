@@ -9,6 +9,7 @@ class CourseItem extends UTS.UTSType {
       get fields() {
         return {
           id: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
           coverTitle: { type: String, optional: false },
           coverSubtitle: { type: String, optional: false },
           title: { type: String, optional: false },
@@ -24,6 +25,7 @@ class CourseItem extends UTS.UTSType {
     super();
     this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
     this.id = this.__props__.id;
+    this.coverUrl = this.__props__.coverUrl;
     this.coverTitle = this.__props__.coverTitle;
     this.coverSubtitle = this.__props__.coverSubtitle;
     this.title = this.__props__.title;
@@ -33,98 +35,35 @@ class CourseItem extends UTS.UTSType {
     delete this.__props__;
   }
 }
-class CourseVideo extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          id: { type: Number, optional: false },
-          courseId: { type: Number, optional: false },
-          title: { type: String, optional: false },
-          videoUrl: { type: String, optional: false },
-          durationSeconds: { type: Number, optional: false },
-          sortOrder: { type: Number, optional: false }
-        };
-      },
-      name: "CourseVideo"
-    };
-  }
-  constructor(options, metadata = CourseVideo.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
-    this.courseId = this.__props__.courseId;
-    this.title = this.__props__.title;
-    this.videoUrl = this.__props__.videoUrl;
-    this.durationSeconds = this.__props__.durationSeconds;
-    this.sortOrder = this.__props__.sortOrder;
-    delete this.__props__;
-  }
-}
-class Course extends UTS.UTSType {
-  static get$UTSMetadata$() {
-    return {
-      kind: 2,
-      get fields() {
-        return {
-          id: { type: Number, optional: false },
-          courseName: { type: String, optional: false },
-          subtitle: { type: String, optional: false },
-          coverUrl: { type: String, optional: false },
-          lecturerName: { type: String, optional: false },
-          introduction: { type: String, optional: false },
-          paperId: { type: Number, optional: false },
-          publishedAt: { type: String, optional: false },
-          progressPercent: { type: Number, optional: false },
-          studySeconds: { type: Number, optional: false },
-          videos: { type: UTS.UTSType.withGenerics(Array, [CourseVideo]), optional: false }
-        };
-      },
-      name: "Course"
-    };
-  }
-  constructor(options, metadata = Course.get$UTSMetadata$(), isJSONParse = false) {
-    super();
-    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
-    this.id = this.__props__.id;
-    this.courseName = this.__props__.courseName;
-    this.subtitle = this.__props__.subtitle;
-    this.coverUrl = this.__props__.coverUrl;
-    this.lecturerName = this.__props__.lecturerName;
-    this.introduction = this.__props__.introduction;
-    this.paperId = this.__props__.paperId;
-    this.publishedAt = this.__props__.publishedAt;
-    this.progressPercent = this.__props__.progressPercent;
-    this.studySeconds = this.__props__.studySeconds;
-    this.videos = this.__props__.videos;
-    delete this.__props__;
-  }
-}
 const PAGE_SIZE = 10;
+const appTitleText = "江苏中医在线";
+const homeTabText = "首页";
+const topicsTabText = "专题";
+const audioTabText = "音频";
+const liveTabText = "直播";
+const pageTitleText = "课程";
+const newsTabText = "资讯";
+const learningTabText = "学习";
+const examTabText = "考核";
+const consultTabText = "咨询";
+const knowledgeTabText = "知识库";
+const mineTabText = "我的";
+const searchPlaceholder = "搜索标题、讲师、课程";
+const searchText = "搜索";
+const loadingText = "加载中...";
+const retryText = "重新加载";
+const emptyText = "暂无课程";
+const loadingMoreText = "加载更多中...";
+const noMoreText = "没有更多了";
+const loadFailedText = "请求失败，请稍后重试";
+const viewText = "浏览";
+const commentText = "评论";
+const fallbackCoverTitle = "课程封面";
+const fallbackTitle = "课程标题";
+const fallbackTeacher = "讲师待定";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "index",
   setup(__props) {
-    [
-      new UTSJSONObject({
-        id: "1",
-        coverTitle: "课程封面占位",
-        coverSubtitle: "第一门课程",
-        title: "课程标题占位一，点击进入课程详情页面",
-        teacher: "讲师名称占位",
-        views: "2600",
-        comments: "420"
-      }),
-      new UTSJSONObject({
-        id: "2",
-        coverTitle: "课程封面占位",
-        coverSubtitle: "第二门课程",
-        title: "课程标题占位二，点击进入课程详情页面",
-        teacher: "讲师名称占位",
-        views: "2600",
-        comments: "420"
-      })
-    ];
     const courseItems = common_vendor.ref([]);
     const keyword = common_vendor.ref("");
     const page = common_vendor.ref(1);
@@ -132,21 +71,26 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const isLoading = common_vendor.ref(true);
     const isListLoading = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
+    const hasLoadedOnce = common_vendor.ref(false);
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
     };
+    const safeNumberText = (value) => {
+      return String(value == null ? 0 : value);
+    };
     const mapCourseToCard = (item, index) => {
-      const courseName = safeText(item.courseName);
+      const title = safeText(item.courseName);
       const subtitle = safeText(item.subtitle);
       const lecturer = safeText(item.lecturerName);
       return new CourseItem({
         id: String(item.id),
-        coverTitle: courseName.length > 0 ? courseName : "课程封面占位",
+        coverUrl: safeText(item.coverUrl),
+        coverTitle: title.length > 0 ? title : fallbackCoverTitle,
         coverSubtitle: subtitle.length > 0 ? subtitle : "第" + String(index + 1) + "门课程",
-        title: courseName.length > 0 ? courseName : "课程标题占位",
-        teacher: lecturer.length > 0 ? lecturer : "讲师名称占位",
-        views: String(item.studySeconds != null ? item.studySeconds : 0),
-        comments: String(item.videos != null ? item.videos.length : 0)
+        title: title.length > 0 ? title : fallbackTitle,
+        teacher: lecturer.length > 0 ? lecturer : fallbackTeacher,
+        views: safeNumberText(item.studySeconds),
+        comments: safeNumberText(item.videos != null ? item.videos.length : 0)
       });
     };
     const loadCourseItems = (loadMoreValue) => {
@@ -164,21 +108,21 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       utils_auth.fetchCourses(page.value, PAGE_SIZE, keyword.value, (pageData) => {
         const records = pageData.records != null ? pageData.records : [];
         const mapped = records.map((item, index) => {
-          return mapCourseToCard(item, index);
+          return mapCourseToCard(item, loadMoreValue ? courseItems.value.length + index : index);
         });
         if (loadMoreValue) {
           courseItems.value = courseItems.value.concat(mapped);
         } else {
           courseItems.value = mapped;
         }
-        hasMore.value = mapped.length >= PAGE_SIZE;
+        hasMore.value = records.length >= PAGE_SIZE;
         if (hasMore.value) {
           page.value += 1;
         }
         isLoading.value = false;
         isListLoading.value = false;
       }, (message) => {
-        errorText.value = message.length > 0 ? message : "课程加载失败";
+        errorText.value = message.length > 0 ? message : loadFailedText;
         isLoading.value = false;
         isListLoading.value = false;
       });
@@ -210,67 +154,103 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goExamPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/exam/index" });
     };
-    const goCourseDetail = (id) => {
-      common_vendor.index.navigateTo({ url: "/pages/course/detail?id=" + id });
-    };
     const goKnowledgePage = () => {
       common_vendor.index.redirectTo({ url: "/pages/knowledge/index" });
     };
     const goConsultPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/consult/index" });
     };
-    loadCourseItems(false);
+    const goCourseDetail = (id) => {
+      common_vendor.index.navigateTo({ url: "/pages/course/detail?id=" + id });
+    };
+    common_vendor.onShow(() => {
+      if (!hasLoadedOnce.value) {
+        hasLoadedOnce.value = true;
+        loadCourseItems(false);
+      }
+    });
     return (_ctx, _cache) => {
       "raw js";
       const __returned__ = common_vendor.e({
         a: common_assets._imports_0$3,
-        b: common_vendor.o(goLearningPage),
-        c: common_vendor.o(goTopicsPage),
-        d: common_vendor.o(goAudioPage),
-        e: common_vendor.o(goLivePage),
-        f: common_vendor.o(goNewsPage),
-        g: common_vendor.o(reloadList),
-        h: keyword.value,
-        i: common_vendor.o(($event) => {
+        b: common_vendor.t(appTitleText),
+        c: common_vendor.t(homeTabText),
+        d: common_vendor.o(goLearningPage),
+        e: common_vendor.t(topicsTabText),
+        f: common_vendor.o(goTopicsPage),
+        g: common_vendor.t(audioTabText),
+        h: common_vendor.o(goAudioPage),
+        i: common_vendor.t(liveTabText),
+        j: common_vendor.o(goLivePage),
+        k: common_vendor.t(pageTitleText),
+        l: common_vendor.t(newsTabText),
+        m: common_vendor.o(goNewsPage),
+        n: searchPlaceholder,
+        o: common_vendor.o(reloadList),
+        p: keyword.value,
+        q: common_vendor.o(($event) => {
           return keyword.value = $event.detail.value;
         }),
-        j: common_vendor.o(reloadList),
-        k: isLoading.value
-      }, isLoading.value ? {} : errorText.value.length > 0 ? {
-        m: common_vendor.t(errorText.value),
-        n: common_vendor.o(reloadList)
-      } : courseItems.value.length == 0 ? {} : common_vendor.e({
-        p: common_vendor.f(courseItems.value, (item, k0, i0) => {
-          return {
-            a: common_vendor.t(item.coverTitle),
-            b: common_vendor.t(item.coverSubtitle),
-            c: common_vendor.t(item.title),
-            d: common_vendor.t(item.teacher),
-            e: common_vendor.t(item.views),
-            f: common_vendor.t(item.comments),
-            g: item.id,
-            h: common_vendor.o(($event) => {
+        r: common_vendor.t(searchText),
+        s: common_vendor.o(reloadList),
+        t: isLoading.value
+      }, isLoading.value ? {
+        v: common_vendor.t(loadingText)
+      } : errorText.value.length > 0 ? {
+        x: common_vendor.t(errorText.value),
+        y: common_vendor.t(retryText),
+        z: common_vendor.o(reloadList)
+      } : courseItems.value.length == 0 ? {
+        B: common_vendor.t(emptyText)
+      } : common_vendor.e({
+        C: common_vendor.f(courseItems.value, (item, k0, i0) => {
+          return common_vendor.e({
+            a: item.coverUrl.length > 0
+          }, item.coverUrl.length > 0 ? {
+            b: item.coverUrl
+          } : {
+            c: common_vendor.t(item.coverTitle),
+            d: common_vendor.t(item.coverSubtitle),
+            e: common_vendor.t(pageTitleText)
+          }, {
+            f: common_vendor.t(item.title),
+            g: common_vendor.t(item.teacher),
+            h: common_vendor.t(item.views),
+            i: common_vendor.t(item.comments),
+            j: item.id,
+            k: common_vendor.o(($event) => {
               return goCourseDetail(item.id);
             }, item.id)
-          };
+          });
         }),
-        q: isListLoading.value
-      }, isListLoading.value ? {} : !hasMore.value ? {} : {}, {
-        r: !hasMore.value
+        D: common_vendor.t(viewText),
+        E: common_vendor.t(commentText),
+        F: isListLoading.value
+      }, isListLoading.value ? {
+        G: common_vendor.t(loadingMoreText)
+      } : !hasMore.value ? {
+        I: common_vendor.t(noMoreText)
+      } : {}, {
+        H: !hasMore.value
       }), {
-        l: errorText.value.length > 0,
-        o: courseItems.value.length == 0,
-        s: common_vendor.o(loadMore),
-        t: common_assets._imports_1$3,
-        v: common_assets._imports_2,
-        w: common_vendor.o(goExamPage),
-        x: common_assets._imports_3,
-        y: common_vendor.o(goConsultPage),
-        z: common_assets._imports_4,
-        A: common_vendor.o(goKnowledgePage),
-        B: common_assets._imports_5,
-        C: common_vendor.o(goMinePage),
-        D: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        w: errorText.value.length > 0,
+        A: courseItems.value.length == 0,
+        J: common_vendor.o(loadMore),
+        K: common_assets._imports_1$2,
+        L: common_vendor.t(learningTabText),
+        M: common_assets._imports_2$1,
+        N: common_vendor.t(examTabText),
+        O: common_vendor.o(goExamPage),
+        P: common_assets._imports_4,
+        Q: common_vendor.t(consultTabText),
+        R: common_vendor.o(goConsultPage),
+        S: common_assets._imports_5,
+        T: common_vendor.t(knowledgeTabText),
+        U: common_vendor.o(goKnowledgePage),
+        V: common_assets._imports_6$1,
+        W: common_vendor.t(mineTabText),
+        X: common_vendor.o(goMinePage),
+        Y: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

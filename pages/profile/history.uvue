@@ -1,6 +1,6 @@
 <template>
 	<view class="page">
-		<view class="nav-back" @click="handleBack">
+		<view class="nav-back" @tap="handleBack">
 			<image class="nav-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
 		</view>
 
@@ -11,49 +11,64 @@
 		<view class="top-tabs">
 			<view
 				v-for="tab in tabs"
-				:key="tab"
+				:key="tab.key"
 				class="top-tab"
-				@click="activeTab = tab"
+				@tap="changeTab(tab.key)"
 			>
-				<text class="top-tab-text" :class="activeTab == tab ? 'top-tab-text-active' : ''">{{ tab }}</text>
-				<view v-if="activeTab == tab" class="top-tab-line"></view>
+				<text class="top-tab-text" :class="activeTab == tab.key ? 'top-tab-text-active' : ''">{{ tab.label }}</text>
+				<view v-if="activeTab == tab.key" class="top-tab-line"></view>
 			</view>
 		</view>
 
-		<scroll-view class="list-scroll" scroll-y="true">
-			<template v-if="activeTab == TAB_BOOK">
-				<view v-for="item in bookItems" :key="item.id" class="book-card">
+		<scroll-view class="list-scroll" scroll-y="true" @scrolltolower="loadMore">
+			<view v-if="isLoading" class="state-wrap">
+				<text class="state-text">{{ loadingText }}</text>
+			</view>
+
+			<view v-else-if="errorText.length > 0" class="state-wrap">
+				<text class="state-text">{{ errorText }}</text>
+				<view class="retry-btn" @tap="reloadHistory">
+					<text class="retry-btn-text">{{ retryText }}</text>
+				</view>
+			</view>
+
+			<view v-else-if="filteredItems.length == 0" class="state-wrap">
+				<text class="state-text">{{ emptyText }}</text>
+			</view>
+
+			<template v-else>
+				<view
+					v-for="item in filteredItems"
+					:key="item.id"
+					class="history-card"
+					@tap="goToDetail(item)"
+				>
 					<view class="book-cover-shell">
-						<image class="book-cover" :src="item.cover" mode="aspectFit"></image>
+						<image v-if="item.coverUrl.length > 0" class="book-cover" :src="item.coverUrl" mode="aspectFill"></image>
+						<view v-else class="book-cover-fallback">
+							<text class="book-cover-fallback-text">{{ item.shortTitle }}</text>
+						</view>
 					</view>
+
 					<view class="book-main">
 						<view class="book-meta-row">
 							<text class="book-type-tag">{{ item.typeLabel }}</text>
 							<text class="book-title">{{ item.title }}</text>
 						</view>
+						<text v-if="item.subtitle.length > 0" class="book-subtitle">{{ item.subtitle }}</text>
 						<text class="book-time">{{ lastLearnPrefix }}{{ item.timeText }}</text>
+						<view class="book-bottom-row">
+							<text class="book-stat">{{ progressPrefix }}{{ item.progressText }}</text>
+							<text class="book-stat">{{ durationPrefix }}{{ item.durationText }}</text>
+						</view>
 					</view>
 				</view>
-			</template>
 
-			<template v-else>
-				<view v-for="item in posterItems" :key="item.id" class="poster-card">
-					<view class="poster-cover" :style="{ backgroundColor: item.coverColor }">
-						<view class="poster-type-badge">
-							<text class="poster-type-badge-text">{{ item.typeLabel }}</text>
-						</view>
-						<view class="poster-main-copy">
-							<text class="poster-main-title">{{ item.posterTitle }}</text>
-							<text class="poster-sub-title">{{ item.posterSubTitle }}</text>
-						</view>
-						<text class="poster-side-text">{{ item.sideText }}</text>
-						<view class="poster-figure-shell">
-							<image class="poster-figure" :src="item.cover" mode="aspectFill"></image>
-						</view>
-					</view>
-					<view class="poster-body">
-						<text class="poster-body-title">{{ item.title }}</text>
-					</view>
+				<view v-if="isListLoading" class="bottom-state">
+					<text class="bottom-state-text">{{ loadingMoreText }}</text>
+				</view>
+				<view v-else-if="!hasMore" class="bottom-state">
+					<text class="bottom-state-text">{{ noMoreText }}</text>
 				</view>
 			</template>
 
@@ -63,64 +78,549 @@
 </template>
 
 <script setup lang="uts">
-type BookItem = {
-	id : number
+import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import {
+	fetchAudioDetail,
+	fetchArticleDetail,
+	fetchBookDetail,
+	fetchCourseDetail,
+	fetchLearningHistory,
+	fetchLiveSessionDetail,
+	fetchTopicDetail,
+	type AppBook,
+	type AppPodcast,
+	type AppResourceRecord,
+	type Article,
+	type Course,
+	type LiveSession,
+	type Topic
+} from '../../utils/auth.uts'
+
+type HistoryTab = {
+	key : string
+	label : string
+}
+
+type HistoryDisplayItem = {
+	id : string
+	resourceType : string
+	resourceId : number
 	title : string
+	subtitle : string
+	coverUrl : string
+	typeLabel : string
 	timeText : string
-	typeLabel : string
-	cover : string
+	progressText : string
+	durationText : string
+	shortTitle : string
+	canOpen : boolean
 }
 
-type PosterItem = {
-	id : number
-	title : string
-	posterTitle : string
-	posterSubTitle : string
-	sideText : string
-	typeLabel : string
-	cover : string
-	coverColor : string
-}
+const TAB_ALL = 'ALL'
+const TAB_BOOK = 'BOOK'
+const TAB_COURSE = 'COURSE'
+const TAB_TOPIC = 'TOPIC'
+const TAB_PODCAST = 'PODCAST'
+const TAB_LIVE = 'LIVE'
+const TAB_ARTICLE = 'ARTICLE'
+const TAB_PAPER = 'EXAM_PAPER'
 
-const TAB_BOOK = '\u4e66\u7c4d'
-const TAB_COURSE = '\u8bfe\u7a0b'
-const TAB_TOPIC = '\u4e13\u9898'
-const TAB_PAPER = '\u8bd5\u9898'
+const pageTitle = '学习历史'
+const loadingText = '加载中...'
+const retryText = '重新加载'
+const emptyText = '暂无学习历史'
+const loadingMoreText = '加载更多中...'
+const noMoreText = '没有更多内容了'
+const loadFailedText = '学习历史加载失败'
+const lastLearnPrefix = '上次学习: '
+const progressPrefix = '进度 '
+const durationPrefix = '学习 '
+const unsupportedOpenText = '暂不支持打开该历史记录'
 
-const pageTitle = '\u5b66\u4e60\u5386\u53f2'
-const lastLearnPrefix = '\u4e0a\u6b21\u5b66\u4e60\uff1a'
+const tabs : HistoryTab[] = [
+	{ key: TAB_ALL, label: '全部' },
+	{ key: TAB_BOOK, label: '书籍' },
+	{ key: TAB_COURSE, label: '课程' },
+	{ key: TAB_TOPIC, label: '专题' },
+	{ key: TAB_PODCAST, label: '音频' },
+	{ key: TAB_LIVE, label: '直播' },
+	{ key: TAB_ARTICLE, label: '资讯' },
+	{ key: TAB_PAPER, label: '试题' }
+]
 
-const tabs = [TAB_BOOK, TAB_COURSE, TAB_TOPIC, TAB_PAPER]
-const activeTab = ref(TAB_COURSE)
+const PAGE_SIZE = 15
 
-const bookItems = ref<BookItem[]>([
-	{ id: 1, title: '\u5bf9\u75c7\u827e\u7078', timeText: '2019-10-10 10:10', typeLabel: TAB_BOOK, cover: '/static/logo.png' },
-	{ id: 2, title: '\u767e\u8349\u826f\u65b9', timeText: '2019-10-10 10:10', typeLabel: TAB_BOOK, cover: '/static/logo.png' },
-	{ id: 3, title: '\u9ec4\u5e1d\u5185\u7ecf', timeText: '2019-10-10 10:10', typeLabel: TAB_BOOK, cover: '/static/logo.png' }
-])
+const activeTab = ref(TAB_ALL)
+const page = ref(1)
+const hasMore = ref(true)
+const isLoading = ref(true)
+const isListLoading = ref(false)
+const errorText = ref('')
+const allItems = ref<HistoryDisplayItem[]>([])
 
-const posterItems = ref<PosterItem[]>([
-	{
-		id: 1,
-		title: '\u5168\u606f\u6613\u8c61\u9488\u7078 \u5168\u606f\u6613\u8c61\u9488\u7078 \u57fa\u7840\u7406\u8bba\u7bc7',
-		posterTitle: '\u5168\u606f\n\u6613\u8c61\u9488\u7078',
-		posterSubTitle: '\u57fa\u7840\u7406\u8bba\u7bc7',
-		sideText: '\u90d1\u536b\u4e1c',
-		typeLabel: TAB_COURSE,
-		cover: '/static/logo.png',
-		coverColor: '#F7E6D8'
-	},
-	{
-		id: 2,
-		title: '\u5168\u606f\u6613\u8c61\u9488\u7078 \u5168\u606f\u6613\u8c61\u9488\u7078 \u57fa\u7840\u7406\u8bba\u7bc7',
-		posterTitle: '\u5168\u606f\n\u6613\u8c61\u9488\u7078',
-		posterSubTitle: '\u57fa\u7840\u7406\u8bba\u7bc7',
-		sideText: '\u90d1\u536b\u4e1c',
-		typeLabel: TAB_TOPIC,
-		cover: '/static/logo.png',
-		coverColor: '#F7E6D8'
+const filteredItems = computed(() : HistoryDisplayItem[] => {
+	if (activeTab.value == TAB_ALL) {
+		return allItems.value
 	}
-])
+	return allItems.value.filter((item : HistoryDisplayItem) : boolean => item.resourceType == activeTab.value)
+})
+
+function safeText(value : string | null) : string {
+	return value == null || value.length == 0 ? '' : value
+}
+
+function normalizeHistoryType(resourceType : string) : string {
+	const normalized = safeText(resourceType).toUpperCase()
+	if (
+		normalized == 'BOOK' ||
+		normalized == 'BOOKS' ||
+		normalized == 'KNOWLEDGE' ||
+		normalized == 'KNOWLEDGE_ENTRY' ||
+		normalized == 'KNOWLEDGEENTRY' ||
+		normalized == 'ENTRY'
+	) {
+		return TAB_BOOK
+	}
+	if (
+		normalized == 'COURSE' ||
+		normalized == 'COURSES' ||
+		normalized == 'VIDEO' ||
+		normalized == 'LESSON'
+	) {
+		return TAB_COURSE
+	}
+	if (
+		normalized == 'TOPIC' ||
+		normalized == 'TOPICS' ||
+		normalized == 'SPECIAL_TOPIC' ||
+		normalized == 'SPECIALTOPIC'
+	) {
+		return TAB_TOPIC
+	}
+	if (
+		normalized == 'PODCAST' ||
+		normalized == 'PODCASTS' ||
+		normalized == 'AUDIO' ||
+		normalized == 'AUDIOBOOK'
+	) {
+		return TAB_PODCAST
+	}
+	if (
+		normalized == 'LIVE' ||
+		normalized == 'LIVE_SESSION' ||
+		normalized == 'LIVESESSION' ||
+		normalized == 'STREAM'
+	) {
+		return TAB_LIVE
+	}
+	if (
+		normalized == 'ARTICLE' ||
+		normalized == 'ARTICLES' ||
+		normalized == 'INFO' ||
+		normalized == 'NEWS' ||
+		normalized == 'CONTENT'
+	) {
+		return TAB_ARTICLE
+	}
+	if (
+		normalized == 'EXAM_PAPER' ||
+		normalized == 'EXAM' ||
+		normalized == 'PAPER' ||
+		normalized == 'QUIZ' ||
+		normalized == 'QUESTION'
+	) {
+		return TAB_PAPER
+	}
+	return normalized
+}
+
+function resolveTypeLabel(resourceType : string, typeLabel : string) : string {
+	const label = safeText(typeLabel)
+	if (label.length > 0) {
+		return label
+	}
+	const normalized = normalizeHistoryType(resourceType)
+	if (normalized == TAB_BOOK) {
+		return '书籍'
+	}
+	if (normalized == TAB_COURSE) {
+		return '课程'
+	}
+	if (normalized == TAB_TOPIC) {
+		return '专题'
+	}
+	if (normalized == TAB_PODCAST) {
+		return '音频'
+	}
+	if (normalized == TAB_LIVE) {
+		return '直播'
+	}
+	if (normalized == TAB_ARTICLE) {
+		return '资讯'
+	}
+	if (normalized == TAB_PAPER) {
+		return '试题'
+	}
+	return '历史'
+}
+
+function formatVisitedTime(value : string) : string {
+	const text = safeText(value)
+	if (text.length == 0) {
+		return '未知时间'
+	}
+	return text.replace('T', ' ')
+}
+
+function formatProgress(value : number) : string {
+	return String(value > 0 ? value : 0) + '%'
+}
+
+function formatDuration(seconds : number) : string {
+	const total = seconds > 0 ? seconds : 0
+	if (total < 60) {
+		return String(total) + '秒'
+	}
+	const minute = Math.floor(total / 60)
+	const remain = total % 60
+	if (remain == 0) {
+		return String(minute) + '分钟'
+	}
+	return String(minute) + '分' + String(remain) + '秒'
+}
+
+function toShortTitle(value : string) : string {
+	const text = safeText(value)
+	if (text.length == 0) {
+		return '历史'
+	}
+	if (text.length <= 4) {
+		return text
+	}
+	return text.substring(0, 4)
+}
+
+function buildFallbackHistoryItem(record : AppResourceRecord) : HistoryDisplayItem {
+	const resourceType = normalizeHistoryType(record.resourceType)
+	const typeLabel = resolveTypeLabel(record.resourceType, '')
+	return {
+		id: String(record.id),
+		resourceType,
+		resourceId: record.resourceId,
+		title: typeLabel + ' #' + String(record.resourceId),
+		subtitle: '',
+		coverUrl: '',
+		typeLabel,
+		timeText: formatVisitedTime(record.occurredAt),
+		progressText: '0%',
+		durationText: formatDuration(record.viewCount),
+		shortTitle: toShortTitle(typeLabel),
+		canOpen: resourceType == TAB_BOOK || resourceType == TAB_COURSE || resourceType == TAB_TOPIC || resourceType == TAB_PODCAST || resourceType == TAB_LIVE || resourceType == TAB_ARTICLE || resourceType == TAB_PAPER
+	}
+}
+
+function mapBookHistory(record : AppResourceRecord, detail : AppBook) : HistoryDisplayItem {
+	return {
+		id: String(record.id),
+		resourceType: TAB_BOOK,
+		resourceId: record.resourceId,
+		title: safeText(detail.bookName).length > 0 ? detail.bookName : '书籍 #' + String(record.resourceId),
+		subtitle: safeText(detail.author),
+		coverUrl: safeText(detail.coverUrl),
+		typeLabel: '书籍',
+		timeText: formatVisitedTime(record.occurredAt),
+		progressText: formatProgress(detail.progressPercent),
+		durationText: formatDuration(detail.studySeconds),
+		shortTitle: toShortTitle(detail.bookName),
+		canOpen: true
+	}
+}
+
+function mapCourseHistory(record : AppResourceRecord, detail : Course) : HistoryDisplayItem {
+	return {
+		id: String(record.id),
+		resourceType: TAB_COURSE,
+		resourceId: record.resourceId,
+		title: safeText(detail.courseName).length > 0 ? detail.courseName : '课程 #' + String(record.resourceId),
+		subtitle: safeText(detail.lecturerName),
+		coverUrl: safeText(detail.coverUrl),
+		typeLabel: '课程',
+		timeText: formatVisitedTime(record.occurredAt),
+		progressText: formatProgress(detail.progressPercent),
+		durationText: formatDuration(detail.studySeconds),
+		shortTitle: toShortTitle(detail.courseName),
+		canOpen: true
+	}
+}
+
+function mapTopicHistory(record : AppResourceRecord, detail : Topic) : HistoryDisplayItem {
+	return {
+		id: String(record.id),
+		resourceType: TAB_TOPIC,
+		resourceId: record.resourceId,
+		title: safeText(detail.title).length > 0 ? detail.title : '专题 #' + String(record.resourceId),
+		subtitle: safeText(detail.summary),
+		coverUrl: safeText(detail.coverUrl),
+		typeLabel: '专题',
+		timeText: formatVisitedTime(record.occurredAt),
+		progressText: '0%',
+		durationText: formatDuration(record.viewCount),
+		shortTitle: toShortTitle(detail.title),
+		canOpen: true
+	}
+}
+
+function mapPodcastHistory(record : AppResourceRecord, detail : AppPodcast) : HistoryDisplayItem {
+	return {
+		id: String(record.id),
+		resourceType: TAB_PODCAST,
+		resourceId: record.resourceId,
+		title: safeText(detail.title).length > 0 ? detail.title : '音频 #' + String(record.resourceId),
+		subtitle: safeText(detail.summary),
+		coverUrl: safeText(detail.coverUrl),
+		typeLabel: '音频',
+		timeText: formatVisitedTime(record.occurredAt),
+		progressText: formatProgress(detail.progressPercent),
+		durationText: formatDuration(detail.studySeconds),
+		shortTitle: toShortTitle(detail.title),
+		canOpen: true
+	}
+}
+
+function mapLiveHistory(record : AppResourceRecord, detail : LiveSession) : HistoryDisplayItem {
+	return {
+		id: String(record.id),
+		resourceType: TAB_LIVE,
+		resourceId: record.resourceId,
+		title: safeText(detail.title).length > 0 ? detail.title : '直播 #' + String(record.resourceId),
+		subtitle: safeText(detail.anchorName),
+		coverUrl: safeText(detail.coverUrl),
+		typeLabel: '直播',
+		timeText: formatVisitedTime(record.occurredAt),
+		progressText: '0%',
+		durationText: formatDuration(record.viewCount),
+		shortTitle: toShortTitle(detail.title),
+		canOpen: true
+	}
+}
+
+function mapArticleHistory(record : AppResourceRecord, detail : Article) : HistoryDisplayItem {
+	return {
+		id: String(record.id),
+		resourceType: TAB_ARTICLE,
+		resourceId: record.resourceId,
+		title: safeText(detail.title).length > 0 ? detail.title : '资讯 #' + String(record.resourceId),
+		subtitle: safeText(detail.source).length > 0 ? detail.source : safeText(detail.authorName),
+		coverUrl: safeText(detail.coverUrl),
+		typeLabel: '资讯',
+		timeText: formatVisitedTime(record.occurredAt),
+		progressText: '0%',
+		durationText: formatDuration(record.viewCount),
+		shortTitle: toShortTitle(detail.title),
+		canOpen: true
+	}
+}
+
+function enrichHistoryRecord(
+	record : AppResourceRecord,
+	success : (item : HistoryDisplayItem) => void
+) : void {
+	const resourceType = normalizeHistoryType(record.resourceType)
+	if (resourceType == TAB_BOOK) {
+		fetchBookDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapBookHistory(record, detail))
+			},
+			() => {
+				success(buildFallbackHistoryItem(record))
+			}
+		)
+		return
+	}
+	if (resourceType == TAB_COURSE) {
+		fetchCourseDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapCourseHistory(record, detail))
+			},
+			() => {
+				success(buildFallbackHistoryItem(record))
+			}
+		)
+		return
+	}
+	if (resourceType == TAB_TOPIC) {
+		fetchTopicDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapTopicHistory(record, detail))
+			},
+			() => {
+				success(buildFallbackHistoryItem(record))
+			}
+		)
+		return
+	}
+	if (resourceType == TAB_PODCAST) {
+		fetchAudioDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapPodcastHistory(record, detail))
+			},
+			() => {
+				success(buildFallbackHistoryItem(record))
+			}
+		)
+		return
+	}
+	if (resourceType == TAB_LIVE) {
+		fetchLiveSessionDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapLiveHistory(record, detail))
+			},
+			() => {
+				success(buildFallbackHistoryItem(record))
+			}
+		)
+		return
+	}
+	if (resourceType == TAB_ARTICLE) {
+		fetchArticleDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapArticleHistory(record, detail))
+			},
+			() => {
+				success(buildFallbackHistoryItem(record))
+			}
+		)
+		return
+	}
+	success(buildFallbackHistoryItem(record))
+}
+
+function finalizeItems(records : AppResourceRecord[], loadMoreValue : boolean) : void {
+	if (records.length == 0) {
+		if (!loadMoreValue) {
+			allItems.value = []
+		}
+		hasMore.value = false
+		isLoading.value = false
+		isListLoading.value = false
+		return
+	}
+
+	const nextItems = new Array<HistoryDisplayItem>()
+	let finished = 0
+	records.forEach((record : AppResourceRecord) => {
+		enrichHistoryRecord(record, (item : HistoryDisplayItem) => {
+			nextItems.push(item)
+			finished += 1
+			if (finished == records.length) {
+				if (loadMoreValue) {
+					allItems.value = allItems.value.concat(nextItems)
+				} else {
+					allItems.value = nextItems
+				}
+				hasMore.value = records.length >= PAGE_SIZE
+				if (hasMore.value) {
+					page.value += 1
+				}
+				isLoading.value = false
+				isListLoading.value = false
+			}
+		})
+	})
+}
+
+function loadHistory(loadMoreValue : boolean) : void {
+	if (!loadMoreValue) {
+		page.value = 1
+		hasMore.value = true
+		errorText.value = ''
+		isLoading.value = true
+	} else {
+		if (!hasMore.value || isListLoading.value) {
+			return
+		}
+		isListLoading.value = true
+	}
+
+	fetchLearningHistory(
+		page.value,
+		PAGE_SIZE,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records : []
+			finalizeItems(records, loadMoreValue)
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : loadFailedText
+			isLoading.value = false
+			isListLoading.value = false
+		}
+	)
+}
+
+function reloadHistory() : void {
+	loadHistory(false)
+}
+
+function changeTab(tabKey : string) : void {
+	activeTab.value = tabKey
+}
+
+function goToDetail(item : HistoryDisplayItem) : void {
+	if (!item.canOpen) {
+		uni.showToast({
+			title: unsupportedOpenText,
+			icon: 'none'
+		})
+		return
+	}
+	if (item.resourceType == TAB_BOOK) {
+		uni.setStorageSync('knowledge_detail_id', String(item.resourceId))
+		uni.navigateTo({ url: '/pages/knowledge/book-detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == TAB_COURSE) {
+		uni.navigateTo({ url: '/pages/course/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == TAB_TOPIC) {
+		uni.setStorageSync('topic_detail_id', String(item.resourceId))
+		uni.navigateTo({ url: '/pages/topics/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == TAB_PODCAST) {
+		uni.navigateTo({ url: '/pages/audio/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == TAB_LIVE) {
+		uni.navigateTo({ url: '/pages/live/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == TAB_ARTICLE) {
+		uni.setStorageSync('article_detail_id', String(item.resourceId))
+		uni.navigateTo({ url: '/pages/news/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == TAB_PAPER) {
+		uni.setStorageSync('exam_paper_id', String(item.resourceId))
+		uni.navigateTo({ url: '/pages/exam/paper?id=' + String(item.resourceId) })
+		return
+	}
+	uni.showToast({
+		title: unsupportedOpenText,
+		icon: 'none'
+	})
+}
+
+function loadMore() : void {
+	loadHistory(true)
+}
 
 const handleBack = () => {
 	const pages = getCurrentPages()
@@ -132,6 +632,10 @@ const handleBack = () => {
 		url: '/pages/mine/index'
 	})
 }
+
+onShow(() => {
+	loadHistory(false)
+})
 </script>
 
 <style>
@@ -167,21 +671,18 @@ const handleBack = () => {
 .header-title {
 	font-size: 34rpx;
 	font-weight: 600;
-	color: #1f1f1f;
+	color: #2f2f2f;
 }
 
 .top-tabs {
 	height: 92rpx;
 	background-color: #ffffff;
-	border-top-width: 1px;
-	border-top-style: solid;
-	border-top-color: #efefef;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-	border-bottom-color: #efefef;
 	flex-direction: row;
 	align-items: center;
-	justify-content: space-around;
+	padding: 0 16rpx;
+	border-top-width: 1rpx;
+	border-top-style: solid;
+	border-top-color: #f1f1f5;
 }
 
 .top-tab {
@@ -189,54 +690,44 @@ const handleBack = () => {
 	height: 92rpx;
 	align-items: center;
 	justify-content: center;
-	position: relative;
 }
 
 .top-tab-text {
 	font-size: 28rpx;
-	color: #303030;
+	color: #595959;
 }
 
 .top-tab-text-active {
-	color: #b45f73;
+	color: #d86d79;
 	font-weight: 600;
 }
 
 .top-tab-line {
-	position: absolute;
-	bottom: 10rpx;
-	width: 48rpx;
-	height: 6rpx;
-	border-radius: 4rpx;
-	background-color: #b45f73;
+	width: 38rpx;
+	height: 4rpx;
+	border-radius: 999rpx;
+	background-color: #d86d79;
+	margin-top: 10rpx;
 }
 
 .list-scroll {
 	flex: 1;
-	padding-top: 20rpx;
 }
 
-.book-card {
-	margin-left: 16rpx;
-	margin-right: 16rpx;
-	margin-bottom: 20rpx;
-	padding: 22rpx 24rpx;
+.history-card {
+	margin: 18rpx 20rpx 0;
+	padding: 18rpx;
 	background-color: #ffffff;
 	border-radius: 22rpx;
 	flex-direction: row;
-	align-items: center;
-	box-shadow: 0 10rpx 24rpx rgba(60, 60, 60, 0.05);
 }
 
 .book-cover-shell {
-	width: 124rpx;
-	height: 164rpx;
-	margin-right: 26rpx;
-	border-radius: 10rpx;
-	background-color: #f1f1f1;
-	align-items: center;
-	justify-content: center;
+	width: 112rpx;
+	height: 152rpx;
+	border-radius: 14rpx;
 	overflow: hidden;
+	background-color: #f6e7d2;
 }
 
 .book-cover {
@@ -244,132 +735,106 @@ const handleBack = () => {
 	height: 152rpx;
 }
 
+.book-cover-fallback {
+	width: 112rpx;
+	height: 152rpx;
+	align-items: center;
+	justify-content: center;
+	background-color: #f3e2c6;
+}
+
+.book-cover-fallback-text {
+	font-size: 26rpx;
+	font-weight: 700;
+	color: #766042;
+}
+
 .book-main {
 	flex: 1;
-	justify-content: center;
+	margin-left: 20rpx;
 }
 
 .book-meta-row {
 	flex-direction: row;
 	align-items: center;
-	margin-bottom: 34rpx;
 }
 
 .book-type-tag {
-	padding-left: 14rpx;
-	padding-right: 14rpx;
-	height: 40rpx;
-	border-radius: 20rpx;
-	background-color: #f7e6d8;
-	color: #c4803f;
-	font-size: 22rpx;
-	line-height: 40rpx;
-	margin-right: 16rpx;
+	padding: 4rpx 12rpx;
+	border-radius: 999rpx;
+	background-color: #fbe6d7;
+	font-size: 20rpx;
+	color: #d69b66;
+	margin-right: 10rpx;
 }
 
 .book-title {
 	flex: 1;
-	font-size: 32rpx;
+	font-size: 30rpx;
 	font-weight: 600;
-	line-height: 42rpx;
-	color: #242424;
+	color: #2f2f2f;
+}
+
+.book-subtitle {
+	margin-top: 10rpx;
+	font-size: 24rpx;
+	line-height: 36rpx;
+	color: #6c6c74;
 }
 
 .book-time {
-	font-size: 24rpx;
-	color: #b1b1b1;
+	margin-top: 10rpx;
+	font-size: 22rpx;
+	color: #a1a1ad;
 }
 
-.poster-card {
-	margin-left: 16rpx;
-	margin-right: 16rpx;
-	margin-bottom: 22rpx;
-	background-color: #ffffff;
-	border-radius: 22rpx;
-	overflow: hidden;
-	box-shadow: 0 10rpx 24rpx rgba(60, 60, 60, 0.05);
+.book-bottom-row {
+	margin-top: 12rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
 }
 
-.poster-cover {
-	height: 314rpx;
-	position: relative;
+.book-stat {
+	font-size: 22rpx;
+	color: #8e8e99;
 }
 
-.poster-type-badge {
-	position: absolute;
-	left: 20rpx;
-	top: 18rpx;
-	padding-left: 14rpx;
-	padding-right: 14rpx;
-	height: 42rpx;
-	border-radius: 21rpx;
-	background-color: #ffffff;
+.state-wrap {
+	padding: 180rpx 40rpx 0;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 28rpx;
+	color: #b0b0ba;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 26rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #21c17a;
 	align-items: center;
 	justify-content: center;
-	z-index: 3;
 }
 
-.poster-type-badge-text {
-	font-size: 20rpx;
-	font-weight: 600;
-	color: #c27a3a;
-}
-
-.poster-main-copy {
-	position: absolute;
-	left: 42rpx;
-	top: 52rpx;
-	z-index: 2;
-}
-
-.poster-main-title {
-	font-size: 64rpx;
-	line-height: 78rpx;
-	font-weight: 600;
-	color: #b6651d;
-	white-space: pre-line;
-}
-
-.poster-sub-title {
-	margin-top: 18rpx;
-	font-size: 34rpx;
-	line-height: 44rpx;
-	color: #8f6136;
-}
-
-.poster-side-text {
-	position: absolute;
-	right: 38rpx;
-	top: 50rpx;
-	font-size: 48rpx;
-	line-height: 62rpx;
-	color: rgba(174, 108, 55, 0.9);
-}
-
-.poster-figure-shell {
-	position: absolute;
-	right: 100rpx;
-	bottom: 18rpx;
-	width: 226rpx;
-	height: 242rpx;
-	border-radius: 14rpx;
-	overflow: hidden;
-}
-
-.poster-figure {
-	width: 226rpx;
-	height: 242rpx;
-}
-
-.poster-body {
-	padding: 18rpx 24rpx 24rpx;
-}
-
-.poster-body-title {
+.retry-btn-text {
 	font-size: 28rpx;
-	line-height: 40rpx;
 	font-weight: 600;
-	color: #222222;
+	color: #ffffff;
+}
+
+.bottom-state {
+	padding: 30rpx 0 10rpx;
+	align-items: center;
+}
+
+.bottom-state-text {
+	font-size: 24rpx;
+	color: #b6b6c1;
 }
 
 .bottom-space {

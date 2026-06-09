@@ -86,6 +86,7 @@ const retryExamText = '\u518d\u7ec3\u4e00\u6b21'
 const EXAM_RECORD_ID_KEY = 'exam_record_id'
 const EXAM_PAPER_ID_KEY = 'exam_paper_id'
 const EXAM_PAPER_TITLE_KEY = 'exam_paper_title'
+const DEFAULT_QUESTION_SCORE = 5
 
 const recordId = ref('')
 const paperId = ref('')
@@ -119,6 +120,30 @@ const readPageOption = (key : string) : string => {
 const readCachedText = (key : string) : string => {
 	const value = uni.getStorageSync(key)
 	return typeof value == 'string' ? value : ''
+}
+
+const computeFallbackTotalScore = (items : ExamAnswerResult[]) : number => {
+	if (items.length == 0) {
+		return 0
+	}
+	return items.length * DEFAULT_QUESTION_SCORE
+}
+
+const computeFallbackScore = (items : ExamAnswerResult[]) : number => {
+	if (items.length == 0) {
+		return 0
+	}
+	const correctItems = items.filter((item : ExamAnswerResult) : boolean => item.correct == 1)
+	if (correctItems.length == 0) {
+		return 0
+	}
+	const summedScore = correctItems.reduce((total : number, item : ExamAnswerResult) : number => {
+		return total + (item.score > 0 ? item.score : 0)
+	}, 0)
+	if (summedScore > 0) {
+		return summedScore
+	}
+	return correctItems.length * DEFAULT_QUESTION_SCORE
 }
 
 const resolveResultContext = () => {
@@ -174,11 +199,11 @@ const loadResult = () => {
 			if (paperName.value.length > 0) {
 				uni.setStorageSync(EXAM_PAPER_TITLE_KEY, paperName.value)
 			}
-			score.value = record.score
-			totalScore.value = record.totalScore
-			passed.value = record.passed == 1
 			answerItems.value = record.answers != null ? record.answers : []
+			score.value = record.score > 0 ? Math.min(record.score, computeFallbackTotalScore(answerItems.value)) : computeFallbackScore(answerItems.value)
+			totalScore.value = record.totalScore > 0 ? record.totalScore : computeFallbackTotalScore(answerItems.value)
 			correctCount.value = answerItems.value.filter((item : ExamAnswerResult) : boolean => item.correct == 1).length
+			passed.value = score.value >= record.passScore && record.passScore > 0 ? true : record.passed == 1
 			isLoading.value = false
 		},
 		(message) => {

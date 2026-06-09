@@ -5,22 +5,22 @@
 		<view class="content">
 			<view class="profile-shell">
 				<view class="profile-head">
-					<image class="avatar" :src="avatarUrl || '/static/mine/avatar.png'" mode="aspectFill"></image>
+					<image class="avatar" :src="avatarUrl || defaultAvatar" mode="aspectFill"></image>
 					<view class="profile-main">
 						<view class="name-row">
-							<text class="nickname">{{ nickname || '微信用户' }}</text>
+							<text class="nickname">{{ nickname.length > 0 ? nickname : defaultNickname }}</text>
 							<text class="user-type">{{ userTypeText }}</text>
 						</view>
 						<view class="sub-row">
 							<text class="student-no">{{ studentNo }}</text>
-							<text v-if="isCertified" class="cert-tag cert-tag-on">学员认证</text>
-							<text v-else class="cert-tag cert-tag-off">学员未认证</text>
+							<text v-if="isCertified" class="cert-tag cert-tag-on">{{ certifiedText }}</text>
+							<text v-else class="cert-tag cert-tag-off">{{ uncertifiedText }}</text>
 						</view>
 					</view>
 				</view>
 
 				<view class="menu">
-					<view class="menu-item" v-for="item in menuItems" :key="item.label" @click="handleMenuClick(item.label)">
+					<view class="menu-item" v-for="item in menuItems" :key="item.label" @tap="handleMenuClick(item.label)">
 						<view class="menu-left">
 							<image class="menu-icon" :src="item.icon" mode="aspectFit"></image>
 							<text class="menu-label">{{ item.label }}</text>
@@ -31,25 +31,25 @@
 			</view>
 
 			<view class="footer">
-				<text class="footer-line">版权所有</text>
-				<text class="footer-line">江苏凤凰科学技术出版社有限公司</text>
+				<text class="footer-line">{{ footerLineOne }}</text>
+				<text class="footer-line">{{ footerLineTwo }}</text>
 			</view>
 		</view>
 
 		<view class="tabbar">
-			<view class="tab-item" @click="goLearningHome">
+			<view class="tab-item" @tap="goLearningHome">
 				<image class="tab-icon-image" src="/static/tabbar/icon_xuexiweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">学习</text>
 			</view>
-			<view class="tab-item" @click="goExamPage">
+			<view class="tab-item" @tap="goExamPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">考核</text>
 			</view>
-			<view class="tab-item" @click="goConsultPage">
+			<view class="tab-item" @tap="goConsultPage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
 				<text class="tab-label">咨询</text>
 			</view>
-			<view class="tab-item" @click="goKnowledgePage">
+			<view class="tab-item" @tap="goKnowledgePage">
 				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
 				<text class="tab-label">知识库</text>
 			</view>
@@ -62,37 +62,52 @@
 </template>
 
 <script setup lang="uts">
+import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import {
-	hasToken,
 	fetchProfile,
 	getCurrentUserFromStorage,
+	hasToken,
 	logout
 } from '../../utils/auth.uts'
-import { onShow } from '@dcloudio/uni-app'
 
 type MineMenuItem = {
 	label : string
 	icon : string
 }
 
+const defaultAvatar = '/static/mine/avatar.png'
+const defaultNickname = '微信用户'
+const certifiedText = '学员认证'
+const uncertifiedText = '学员未认证'
+const footerLineOne = '版权所属'
+const footerLineTwo = '江苏凤凰科学技术出版社有限公司'
+
+const profileLabel = '个人资料'
+const certificationLabel = '学员认证'
+const favoritesLabel = '我的收藏'
+const historyLabel = '学习历史'
+const feedbackLabel = '意见反馈'
+const logoutLabel = '退出登录'
+
 const nickname = ref('')
 const avatarUrl = ref('')
-const userTypeText = ref('')
+const userTypeText = ref('（普通用户）')
 const studentNo = ref('')
 const isCertified = ref(false)
 const isLoggedIn = ref(hasToken())
 
 const menuItems = ref<MineMenuItem[]>([
-	{ label: '个人资料', icon: '/static/mine/icon_about.png' },
-	{ label: '学员认证', icon: '/static/mine/icon_about.png' },
-	{ label: '我的收藏', icon: '/static/mine/icon_favorite.png' },
-	{ label: '学习历史', icon: '/static/mine/icon_history.png' },
-	{ label: '意见反馈', icon: '/static/mine/icon_about.png' },
-	{ label: '退出登录', icon: '/static/mine/icon_about.png' },
-	{ label: '使用手册', icon: '/static/mine/icon_manual.png' }
+	{ label: profileLabel, icon: '/static/mine/icon_about.png' },
+	{ label: certificationLabel, icon: '/static/mine/icon_about.png' },
+	{ label: favoritesLabel, icon: '/static/mine/icon_favorite.png' },
+	{ label: historyLabel, icon: '/static/mine/icon_history.png' },
+	{ label: feedbackLabel, icon: '/static/mine/icon_about.png' },
+	{ label: logoutLabel, icon: '/static/mine/icon_about.png' }
 ])
 
 const loadUserData = () => {
+	isLoggedIn.value = hasToken()
 	if (!isLoggedIn.value) {
 		uni.reLaunch({
 			url: '/pages/login/index'
@@ -110,41 +125,47 @@ const loadUserData = () => {
 	fetchProfile(
 		(profile) => {
 			nickname.value = profile.nickname
-			avatarUrl.value = profile.avatarUrl || avatarUrl.value
+			avatarUrl.value = profile.avatarUrl
 			studentNo.value = profile.studentId != 0 ? '学员' : ''
 			isCertified.value = profile.certificationStatus == '2'
-			userTypeText.value = profile.profileCompleted ? '（已认证）' : '（普通用户）'
+			userTypeText.value = profile.certificationStatus == '2' ? '（已认证）' : '（未认证）'
 		},
 		() => {}
 	)
 }
 
 const handleMenuClick = (label : string) => {
-	if (label == '个人资料') {
+	if (label == profileLabel) {
 		uni.navigateTo({
 			url: '/pages/profile/edit'
 		})
 		return
 	}
-	if (label == '学员认证') {
+	if (label == certificationLabel) {
 		uni.navigateTo({
 			url: '/pages/profile/certification'
 		})
 		return
 	}
-	if (label == '我的收藏') {
+	if (label == favoritesLabel) {
 		uni.navigateTo({
 			url: '/pages/profile/favorites'
 		})
 		return
 	}
-	if (label == '学习历史') {
+	if (label == historyLabel) {
 		uni.navigateTo({
 			url: '/pages/profile/history'
 		})
 		return
 	}
-	if (label == '退出登录') {
+	if (label == feedbackLabel) {
+		uni.navigateTo({
+			url: '/pages/profile/feedback'
+		})
+		return
+	}
+	if (label == logoutLabel) {
 		logout(
 			() => {
 				uni.reLaunch({

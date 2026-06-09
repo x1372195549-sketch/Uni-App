@@ -276,6 +276,7 @@ const goExamPage = () => {
 }
 
 const goNewsDetail = (id : number) => {
+	uni.setStorageSync('article_detail_id', String(id))
 	uni.navigateTo({ url: '/pages/news/detail?id=' + String(id) })
 }
 
@@ -298,7 +299,7 @@ loadArticles(false)
 
 .hero-shell {
 	position: relative;
-	height: 218rpx;
+	height: 244rpx;
 	overflow: hidden;
 }
 
@@ -307,14 +308,14 @@ loadArticles(false)
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 218rpx;
+	height: 244rpx;
 }
 
 .header {
 	position: relative;
 	z-index: 1;
-	padding-top: 34rpx;
-	height: 110rpx;
+	padding-top: 62rpx;
+	height: 136rpx;
 	align-items: center;
 	justify-content: center;
 }
@@ -373,7 +374,7 @@ loadArticles(false)
 }
 
 .search-bar {
-	margin: 18rpx 20rpx 0;
+	margin: 0 20rpx 0;
 	padding-left: 18rpx;
 	padding-right: 10rpx;
 	height: 76rpx;

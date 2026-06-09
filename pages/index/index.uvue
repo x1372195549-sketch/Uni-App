@@ -32,27 +32,82 @@
 
 		<scroll-view class="content" scroll-y="true">
 			<view class="content-shell">
-				<view class="hero-card hero-card-top" @tap="goTopicsPage">
-					<text class="hero-kicker">{{ heroKickerText }}</text>
-					<text class="hero-title">{{ heroTitleText }}</text>
-					<text class="hero-subtitle">{{ heroSubtitleText }}</text>
-					<view class="hero-action">
-						<text class="hero-action-text">{{ heroActionText }}</text>
+				<swiper
+					v-if="heroSlides.length > 0"
+					class="hero-swiper hero-card-top"
+					indicator-dots="true"
+					autoplay="true"
+					circular="true"
+					interval="4000"
+					duration="400"
+				>
+					<swiper-item v-for="item in heroSlides" :key="item.id">
+						<view class="hero-card" @tap="goHeroDetail(item)">
+							<view class="hero-main">
+								<text class="hero-kicker">{{ item.kicker }}</text>
+								<text class="hero-title">{{ item.title }}</text>
+								<text class="hero-subtitle">{{ item.subtitle }}</text>
+								<view class="hero-action">
+									<text class="hero-action-text">{{ item.actionText }}</text>
+								</view>
+							</view>
+							<image v-if="item.coverUrl.length > 0" class="hero-cover" :src="item.coverUrl" mode="aspectFill"></image>
+							<view v-else class="hero-cover hero-cover-placeholder">
+								<text class="hero-cover-text">{{ item.kicker }}</text>
+							</view>
+						</view>
+					</swiper-item>
+				</swiper>
+				<view v-else class="hero-card hero-card-top" @tap="goTopicsPage">
+					<view class="hero-main">
+						<text class="hero-kicker">{{ heroKickerText }}</text>
+						<text class="hero-title">{{ heroTitleText }}</text>
+						<text class="hero-subtitle">{{ heroSubtitleText }}</text>
+						<view class="hero-action">
+							<text class="hero-action-text">{{ heroActionText }}</text>
+						</view>
+					</view>
+					<view class="hero-cover hero-cover-placeholder">
+						<text class="hero-cover-text">{{ topicTabText }}</text>
 					</view>
 				</view>
 
 				<view class="section-head">
+					<text class="section-title">{{ homeRecommendTitle }}</text>
+				</view>
+
+				<view v-if="recommendItems.length > 0" class="recommend-grid">
+					<view
+						v-for="item in recommendItems"
+						:key="item.id"
+						class="recommend-card"
+						@tap="goRecommendDetail(item)"
+					>
+						<image v-if="item.coverUrl.length > 0" class="recommend-cover" :src="item.coverUrl" mode="aspectFill"></image>
+						<view v-else class="recommend-cover recommend-cover-placeholder">
+							<text class="recommend-cover-text">{{ item.typeLabel }}</text>
+						</view>
+						<text class="recommend-type">{{ item.typeLabel }}</text>
+						<text class="recommend-title">{{ item.title }}</text>
+						<text class="recommend-summary">{{ item.summary }}</text>
+					</view>
+				</view>
+				<view v-else class="section-empty">
+					<text class="section-empty-text">{{ emptyRecommendText }}</text>
+				</view>
+
+				<view class="section-head section-gap">
 					<text class="section-title">{{ recommendTopicTitle }}</text>
 					<text class="section-more" @tap="goTopicsPage">{{ moreText }}</text>
 				</view>
 
-				<scroll-view class="topic-scroll" scroll-x="true" show-scrollbar="false">
+				<scroll-view v-if="topicItems.length > 0" class="topic-scroll" scroll-x="true" show-scrollbar="false">
 					<view class="topic-row">
 						<view
 							v-for="item in topicItems"
 							:key="item.id"
 							class="topic-card"
-							@tap="goTopicDetail(item.id)"
+							@tap="goHomeTopicDetail(item)"
 						>
 							<image v-if="item.coverUrl.length > 0" class="topic-cover" :src="item.coverUrl" mode="aspectFill"></image>
 							<view v-else class="topic-cover topic-cover-placeholder">
@@ -70,33 +125,10 @@
 						</view>
 					</view>
 				</scroll-view>
-
-				<view class="section-head section-gap">
-					<text class="section-title">{{ recommendNewsTitle }}</text>
-					<text class="section-more" @tap="goNewsPage">{{ moreText }}</text>
+				<view v-else class="section-empty">
+					<text class="section-empty-text">{{ emptyTopicText }}</text>
 				</view>
 
-				<view class="article-list">
-					<view
-						v-for="item in articleItems"
-						:key="item.id"
-						class="article-card"
-						@tap="goArticleDetail(item.id)"
-					>
-						<image v-if="item.coverUrl.length > 0" class="article-cover" :src="item.coverUrl" mode="aspectFill"></image>
-						<view v-else class="article-cover article-cover-placeholder">
-							<text class="article-cover-text">NEWS</text>
-						</view>
-						<view class="article-main">
-							<text class="article-title">{{ item.title }}</text>
-							<text class="article-summary">{{ item.summary }}</text>
-							<view class="article-meta">
-								<text class="article-meta-text">{{ item.source }}</text>
-								<text class="article-meta-text">{{ item.publishedAt }}</text>
-							</view>
-						</view>
-					</view>
-				</view>
 			</view>
 		</scroll-view>
 
@@ -127,10 +159,16 @@
 
 <script setup lang="uts">
 import { ref } from 'vue'
-import { fetchArticles, fetchTopicCards, type Article, type TopicCard } from '../../utils/auth.uts'
+import {
+	fetchAppHome,
+	type AppHomeItem,
+	type AppHomeSection
+} from '../../utils/auth.uts'
 
 type HomeTopicCard = {
 	id : number
+	resourceType : string
+	resourceId : number
 	title : string
 	summary : string
 	coverUrl : string
@@ -139,13 +177,25 @@ type HomeTopicCard = {
 	favoriteCount : number
 }
 
-type HomeArticleCard = {
-	id : number
+type HomeRecommendItem = {
+	id : string
+	resourceType : string
+	resourceId : number
+	typeLabel : string
 	title : string
 	summary : string
 	coverUrl : string
-	source : string
-	publishedAt : string
+}
+
+type HomeHeroSlide = {
+	id : string
+	resourceType : string
+	resourceId : number
+	kicker : string
+	title : string
+	subtitle : string
+	coverUrl : string
+	actionText : string
 }
 
 const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
@@ -164,83 +214,284 @@ const heroKickerText = '\u5b66\u4e60\u4e13\u9898'
 const heroTitleText = '\u5206\u573a\u666f\u3001\u5206\u8d44\u6e90\u7684\u4e2d\u533b\u5b66\u4e60\u8bbe\u8ba1'
 const heroSubtitleText = '\u7528\u4e13\u9898\u628a\u56fe\u4e66\u3001\u8bfe\u7a0b\u3001\u97f3\u9891\u4e32\u6210\u5b8c\u6574\u5b66\u4e60\u8def\u5f84\u3002'
 const heroActionText = '\u8fdb\u5165\u4e13\u9898'
+const heroActionAudioText = '\u8fdb\u5165\u97f3\u9891'
+const heroActionLiveText = '\u8fdb\u5165\u76f4\u64ad'
+const heroActionCourseText = '\u8fdb\u5165\u8bfe\u7a0b'
+const heroActionNewsText = '\u67e5\u770b\u8d44\u8baf'
+const homeRecommendTitle = '\u9996\u9875\u63a8\u8350'
 const recommendTopicTitle = '\u70ed\u95e8\u4e13\u9898'
-const recommendNewsTitle = '\u6700\u65b0\u8d44\u8baf'
+const emptyRecommendText = '\u6682\u65e0\u9996\u9875\u63a8\u8350'
+const emptyTopicText = '\u6682\u65e0\u70ed\u95e8\u4e13\u9898'
 const moreText = '\u66f4\u591a'
 const viewText = '\u6d4f\u89c8'
 const favoriteText = '\u6536\u85cf'
 const fallbackTopicSummary = '\u66f4\u9002\u5408\u6309\u4e3b\u9898\u5316\u5b66\u4e60\u7684\u5185\u5bb9\u7ec4\u5408\u3002'
-const fallbackArticleSummary = '\u6682\u65e0\u6458\u8981'
+const fallbackAudioSummary = '\u4ece\u97f3\u9891\u89d2\u5ea6\u7ee7\u7eed\u5b66\u4e60\u3002'
+const fallbackLiveSummary = '\u67e5\u770b\u6700\u65b0\u76f4\u64ad\u4e0e\u56de\u653e\u5185\u5bb9\u3002'
+const fallbackCourseSummary = '\u8fdb\u5165\u7cfb\u7edf\u8bfe\u7a0b\u5b66\u4e60\u3002'
+const fallbackNewsSlideSummary = '\u4e86\u89e3\u6700\u65b0\u8d44\u8baf\u5185\u5bb9\u3002'
 const TOPIC_DETAIL_ID_KEY = 'topic_detail_id'
 
 const topicItems = ref<HomeTopicCard[]>([])
-const articleItems = ref<HomeArticleCard[]>([])
+const recommendItems = ref<HomeRecommendItem[]>([])
+const heroSlides = ref<HomeHeroSlide[]>([])
 
 const safeText = (value : string | null) : string => {
 	return value == null || value.length == 0 ? '' : value
 }
 
-const formatDate = (value : string) : string => {
-	const text = safeText(value)
-	if (text.length == 0) {
-		return ''
-	}
-	return text.replace('T', ' ').substring(0, 16)
+const safeNumber = (value : number | null) : number => {
+	return value == null ? 0 : value
 }
 
-const mapTopic = (item : TopicCard) : HomeTopicCard => {
+const normalizeResourceType = (value : string) : string => {
+	const text = safeText(value).toUpperCase()
+	if (text == 'PODCAST' || text == 'PODCASTS' || text == 'AUDIO' || text == 'AUDIOS' || text == 'APP_PODCAST' || text == '\u97f3\u9891') {
+		return 'AUDIO'
+	}
+	if (text == 'ARTICLE' || text == 'ARTICLES' || text == 'NEWS' || text == 'INFO' || text == '\u8d44\u8baf') {
+		return 'ARTICLE'
+	}
+	if (text == 'TOPIC' || text == 'TOPICS' || text == 'SPECIAL' || text == 'SPECIAL_TOPIC' || text == 'SUBJECT' || text == '\u4e13\u9898') {
+		return 'TOPIC'
+	}
+	if (text == 'LIVE' || text == 'LIVES' || text == 'LIVESESSION' || text == 'LIVE_SESSION' || text == 'LIVE_STREAM' || text == '\u76f4\u64ad') {
+		return 'LIVE'
+	}
+	if (text == 'COURSE' || text == 'COURSES' || text == 'APP_COURSE' || text == '\u8bfe\u7a0b') {
+		return 'COURSE'
+	}
+	return text
+}
+
+const labelByResourceType = (type : string, fallback : string) : string => {
+	if (fallback.length > 0) {
+		return fallback
+	}
+	if (type == 'AUDIO') {
+		return audioTabText
+	}
+	if (type == 'LIVE') {
+		return liveTabText
+	}
+	if (type == 'COURSE') {
+		return courseTabText
+	}
+	if (type == 'ARTICLE') {
+		return newsTabText
+	}
+	if (type == 'TOPIC') {
+		return topicTabText
+	}
+	return fallback
+}
+
+const fallbackSummaryByResourceType = (type : string) : string => {
+	if (type == 'AUDIO') {
+		return fallbackAudioSummary
+	}
+	if (type == 'LIVE') {
+		return fallbackLiveSummary
+	}
+	if (type == 'COURSE') {
+		return fallbackCourseSummary
+	}
+	if (type == 'ARTICLE') {
+		return fallbackNewsSlideSummary
+	}
+	return fallbackTopicSummary
+}
+
+const actionTextByResourceType = (type : string) : string => {
+	if (type == 'AUDIO') {
+		return heroActionAudioText
+	}
+	if (type == 'LIVE') {
+		return heroActionLiveText
+	}
+	if (type == 'COURSE') {
+		return heroActionCourseText
+	}
+	if (type == 'ARTICLE') {
+		return heroActionNewsText
+	}
+	return heroActionText
+}
+
+const mapRecommendItem = (item : AppHomeItem) : HomeRecommendItem => {
+	const type = normalizeResourceType(item.contentType)
+	const label = labelByResourceType(type, safeText(item.contentTypeLabel))
+	const summary = safeText(item.summary).length > 0 ? safeText(item.summary) : safeText(item.subtitle)
+	return {
+		id: type + '-' + String(item.id),
+		resourceType: type,
+		resourceId: safeNumber(item.targetId),
+		typeLabel: label,
+		title: safeText(item.title),
+		summary: summary.length > 0 ? summary : fallbackSummaryByResourceType(type),
+		coverUrl: safeText(item.coverUrl)
+	}
+}
+
+const mapTopicItem = (item : AppHomeItem) : HomeTopicCard => {
+	const type = normalizeResourceType(item.contentType)
 	return {
 		id: item.id,
+		resourceType: type,
+		resourceId: safeNumber(item.targetId),
 		title: safeText(item.title),
 		summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackTopicSummary,
 		coverUrl: safeText(item.coverUrl),
-		tags: item.tags != null ? item.tags.slice(0, 2) : [],
-		viewCount: item.viewCount,
-		favoriteCount: item.favoriteCount
+		tags: [],
+		viewCount: 0,
+		favoriteCount: 0
 	}
 }
 
-const mapArticle = (item : Article) : HomeArticleCard => {
+const mapHeroSlide = (item : AppHomeItem) : HomeHeroSlide => {
+	const type = normalizeResourceType(item.contentType)
 	return {
-		id: item.id,
+		id: type + '-' + String(item.id),
+		resourceType: type,
+		resourceId: safeNumber(item.targetId),
+		kicker: labelByResourceType(type, safeText(item.contentTypeLabel)),
 		title: safeText(item.title),
-		summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackArticleSummary,
+		subtitle: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryByResourceType(type),
 		coverUrl: safeText(item.coverUrl),
-		source: safeText(item.source),
-		publishedAt: formatDate(item.publishedAt)
+		actionText: actionTextByResourceType(type)
 	}
+}
+
+const findSection = (sections : AppHomeSection[], codeKeywords : string[], nameKeywords : string[]) : AppHomeSection | null => {
+	for (let i = 0; i < sections.length; i++) {
+		const section = sections[i]
+		const code = safeText(section.categoryCode).toLowerCase()
+		const name = safeText(section.categoryName)
+		for (let j = 0; j < codeKeywords.length; j++) {
+			if (code.indexOf(codeKeywords[j]) >= 0) {
+				return section
+			}
+		}
+		for (let k = 0; k < nameKeywords.length; k++) {
+			if (name.indexOf(nameKeywords[k]) >= 0) {
+				return section
+			}
+		}
+	}
+	return null
+}
+
+const collectSectionItems = (sections : AppHomeSection[]) : AppHomeItem[] => {
+	const items : AppHomeItem[] = []
+	for (let i = 0; i < sections.length; i++) {
+		const sectionItems = sections[i].items != null ? sections[i].items : []
+		for (let j = 0; j < sectionItems.length; j++) {
+			items.push(sectionItems[j])
+		}
+	}
+	return items
+}
+
+const filterItemsByResourceType = (items : AppHomeItem[], resourceType : string) : AppHomeItem[] => {
+	const result : AppHomeItem[] = []
+	for (let i = 0; i < items.length; i++) {
+		if (normalizeResourceType(items[i].contentType) == resourceType) {
+			result.push(items[i])
+		}
+	}
+	return result
+}
+
+const filterRecommendItems = (items : AppHomeItem[]) : AppHomeItem[] => {
+	const result : AppHomeItem[] = []
+	for (let i = 0; i < items.length; i++) {
+		const type = normalizeResourceType(items[i].contentType)
+		if (type == 'AUDIO' || type == 'LIVE' || type == 'COURSE' || type == 'ARTICLE') {
+			result.push(items[i])
+		}
+	}
+	return result
 }
 
 const loadHomeData = () => {
-	fetchTopicCards(
-		1,
-		6,
-		'',
-		(pageData) => {
-			const records = pageData.records != null ? pageData.records : []
-			topicItems.value = records.map((item : TopicCard) : HomeTopicCard => {
-				return mapTopic(item)
-			})
-		},
-		() => {
-			topicItems.value = []
-		}
-	)
+	fetchAppHome(
+		(data) => {
+			const sections = data.sections != null ? data.sections : []
+			const recommendSection = findSection(sections, ['recommend', 'home_recommend', 'index_recommend'], ['\u9996\u9875\u63a8\u8350', '\u63a8\u8350'])
+			const topicSection = findSection(sections, ['topic', 'hot_topic', 'popular_topic'], ['\u70ed\u95e8\u4e13\u9898', '\u4e13\u9898'])
+			const allItems = collectSectionItems(sections)
+			const matchedRecommendSource = recommendSection != null && recommendSection.items != null ? recommendSection.items : []
+			const matchedTopicSource = topicSection != null && topicSection.items != null ? topicSection.items : []
+			const fallbackRecommendSource = filterRecommendItems(allItems)
+			const fallbackTopicSource = filterItemsByResourceType(allItems, 'TOPIC')
+			const recommendSource = matchedRecommendSource.length > 0 ? matchedRecommendSource : fallbackRecommendSource
+			const topicSource = matchedTopicSource.length > 0 ? matchedTopicSource : fallbackTopicSource
+			const heroSource = recommendSource.length > 0 ? recommendSource : allItems
 
-	fetchArticles(
-		1,
-		5,
-		'',
-		(pageData) => {
-			const records = pageData.records != null ? pageData.records : []
-			articleItems.value = records.map((item : Article) : HomeArticleCard => {
-				return mapArticle(item)
+			recommendItems.value = recommendSource.slice(0, 3).map((item : AppHomeItem) : HomeRecommendItem => {
+				return mapRecommendItem(item)
+			})
+			topicItems.value = topicSource.slice(0, 6).map((item : AppHomeItem) : HomeTopicCard => {
+				return mapTopicItem(item)
+			})
+			heroSlides.value = heroSource.slice(0, 5).map((item : AppHomeItem) : HomeHeroSlide => {
+				return mapHeroSlide(item)
 			})
 		},
 		() => {
-			articleItems.value = []
+			recommendItems.value = []
+			topicItems.value = []
+			heroSlides.value = []
 		}
 	)
+}
+
+const goHeroDetail = (item : HomeHeroSlide) => {
+	if (item.resourceType == 'TOPIC') {
+		goTopicDetail(item.resourceId)
+		return
+	}
+	if (item.resourceType == 'AUDIO') {
+		uni.navigateTo({ url: '/pages/audio/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == 'LIVE') {
+		uni.navigateTo({ url: '/pages/live/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == 'COURSE') {
+		uni.navigateTo({ url: '/pages/course/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == 'ARTICLE') {
+		goArticleDetail(item.resourceId)
+		return
+	}
+	if (item.resourceType == 'TOPIC') {
+		goTopicDetail(item.resourceId)
+	}
+}
+
+const goRecommendDetail = (item : HomeRecommendItem) => {
+	if (item.resourceType == 'AUDIO') {
+		uni.navigateTo({ url: '/pages/audio/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == 'LIVE') {
+		uni.navigateTo({ url: '/pages/live/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == 'COURSE') {
+		uni.navigateTo({ url: '/pages/course/detail?id=' + String(item.resourceId) })
+		return
+	}
+	if (item.resourceType == 'ARTICLE') {
+		goArticleDetail(item.resourceId)
+		return
+	}
+	if (item.resourceType == 'TOPIC') {
+		goTopicDetail(item.resourceId)
+	}
 }
 
 const goTopicsPage = () => {
@@ -250,6 +501,11 @@ const goTopicsPage = () => {
 const goTopicDetail = (id : number) => {
 	uni.setStorageSync(TOPIC_DETAIL_ID_KEY, String(id))
 	uni.navigateTo({ url: '/pages/topics/detail?id=' + String(id) })
+}
+
+const goHomeTopicDetail = (item : HomeTopicCard) => {
+	const id = item.resourceId > 0 ? item.resourceId : item.id
+	goTopicDetail(id)
 }
 
 const goArticleDetail = (id : number) => {
@@ -299,7 +555,7 @@ loadHomeData()
 
 .hero-shell {
 	position: relative;
-	height: 218rpx;
+	height: 244rpx;
 	overflow: hidden;
 }
 
@@ -308,14 +564,14 @@ loadHomeData()
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 218rpx;
+	height: 244rpx;
 }
 
 .header {
 	position: relative;
 	z-index: 1;
-	padding-top: 34rpx;
-	height: 110rpx;
+	padding-top: 62rpx;
+	height: 136rpx;
 	align-items: center;
 	justify-content: center;
 }
@@ -388,11 +644,28 @@ loadHomeData()
 	margin-top: 0;
 }
 
+.hero-swiper {
+	height: 292rpx;
+}
+
 .hero-card {
-	padding: 28rpx;
+	position: relative;
+	height: 292rpx;
+	box-sizing: border-box;
+	padding: 24rpx 24rpx;
 	border-radius: 24rpx;
 	background: linear-gradient(135deg, #f7e4c8 0%, #f3efe7 100%);
 	box-shadow: 0 12rpx 28rpx rgba(152, 118, 72, 0.12);
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	overflow: hidden;
+}
+
+.hero-main {
+	flex: 1;
+	height: 244rpx;
+	padding-right: 22rpx;
 }
 
 .hero-kicker {
@@ -403,35 +676,58 @@ loadHomeData()
 }
 
 .hero-title {
-	margin-top: 12rpx;
-	font-size: 21px;
-	line-height: 30px;
+	margin-top: 10rpx;
+	font-size: 18px;
+	line-height: 26px;
 	color: #8a5a28;
 	font-weight: 700;
+	height: 52rpx;
+	overflow: hidden;
 }
 
 .hero-subtitle {
-	margin-top: 14rpx;
-	font-size: 14px;
-	line-height: 22px;
+	margin-top: 12rpx;
+	font-size: 13px;
+	line-height: 20px;
 	color: #7c6e58;
+	height: 40rpx;
+	overflow: hidden;
 }
 
 .hero-action {
-	margin-top: 22rpx;
-	width: 170rpx;
-	height: 60rpx;
-	border-radius: 30rpx;
+	margin-top: 18rpx;
+	width: 156rpx;
+	height: 56rpx;
+	border-radius: 28rpx;
 	background-color: #18b775;
 	align-items: center;
 	justify-content: center;
 }
 
 .hero-action-text {
-	font-size: 14px;
+	font-size: 13px;
 	line-height: 20px;
 	color: #ffffff;
 	font-weight: 600;
+}
+
+.hero-cover {
+	width: 178rpx;
+	height: 208rpx;
+	border-radius: 18rpx;
+}
+
+.hero-cover-placeholder {
+	background-color: rgba(255, 255, 255, 0.42);
+	align-items: center;
+	justify-content: center;
+}
+
+.hero-cover-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #d38c42;
+	font-weight: 700;
 }
 
 .section-head {
@@ -457,6 +753,77 @@ loadHomeData()
 	font-size: 13px;
 	line-height: 20px;
 	color: #b85d69;
+}
+
+.section-empty {
+	height: 72rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.section-empty-text {
+	font-size: 13px;
+	line-height: 20px;
+	color: #b8b8b8;
+}
+
+.recommend-grid {
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.recommend-card {
+	width: 214rpx;
+	padding: 12rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.06);
+}
+
+.recommend-cover {
+	width: 190rpx;
+	height: 116rpx;
+	border-radius: 14rpx;
+	background-color: #f3e6d6;
+}
+
+.recommend-cover-placeholder {
+	align-items: center;
+	justify-content: center;
+}
+
+.recommend-cover-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #c88a54;
+	font-weight: 700;
+}
+
+.recommend-type {
+	margin-top: 10rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #b85d69;
+	font-weight: 600;
+}
+
+.recommend-title {
+	margin-top: 4rpx;
+	font-size: 14px;
+	line-height: 20px;
+	color: #2f2f2f;
+	font-weight: 600;
+	height: 40rpx;
+	overflow: hidden;
+}
+
+.recommend-summary {
+	margin-top: 6rpx;
+	font-size: 11px;
+	line-height: 16px;
+	color: #8e8e8e;
+	height: 32rpx;
+	overflow: hidden;
 }
 
 .topic-scroll {
@@ -540,69 +907,6 @@ loadHomeData()
 	font-size: 11px;
 	line-height: 16px;
 	color: #b1b1b1;
-}
-
-.article-list {
-	padding-bottom: 16rpx;
-}
-
-.article-card {
-	margin-bottom: 18rpx;
-	padding: 16rpx;
-	border-radius: 20rpx;
-	background-color: #ffffff;
-	flex-direction: row;
-	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.05);
-}
-
-.article-cover {
-	width: 156rpx;
-	height: 156rpx;
-	border-radius: 16rpx;
-	background-color: #f3e6d6;
-}
-
-.article-cover-placeholder {
-	align-items: center;
-	justify-content: center;
-}
-
-.article-cover-text {
-	font-size: 18px;
-	color: #c88a54;
-	font-weight: 700;
-}
-
-.article-main {
-	flex: 1;
-	padding-left: 18rpx;
-}
-
-.article-title {
-	font-size: 16px;
-	line-height: 24px;
-	color: #252525;
-	font-weight: 600;
-}
-
-.article-summary {
-	margin-top: 10rpx;
-	font-size: 12px;
-	line-height: 18px;
-	color: #8f8f8f;
-	height: 54rpx;
-	overflow: hidden;
-}
-
-.article-meta {
-	margin-top: 16rpx;
-}
-
-.article-meta-text {
-	font-size: 11px;
-	line-height: 16px;
-	color: #b1b1b1;
-	margin-top: 4rpx;
 }
 
 .tabbar {

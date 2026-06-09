@@ -70,9 +70,9 @@
 </template>
 
 <script setup lang="uts">
-import { computed, onUnmounted, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
-import { fetchExamPaperDetail, submitExamPaper, type ExamPaper, type ExamQuestion, type ExamSubmitRequest } from '../../utils/auth.uts'
+	import { computed, onUnmounted, ref } from 'vue'
+	import { onLoad, onShow } from '@dcloudio/uni-app'
+	import { fetchExamPaperDetail, submitExamPaper, type ExamPaper, type ExamQuestion, type ExamSubmitRequest } from '../../utils/auth.uts'
 
 const pageTitleText = '\u4e2d\u533b\u77e5\u8bc6\u7b54\u9898'
 const loadingText = '\u52a0\u8f7d\u4e2d...'
@@ -90,9 +90,9 @@ const nextText = '\u4e0b\u4e00\u9898'
 const submitText = '\u63d0\u4ea4\u7b54\u5377'
 const submitConfirmText = '\u786e\u8ba4\u63d0\u4ea4\u5f53\u524d\u8bd5\u5377\u5417\uff1f'
 const submitFailedText = '\u63d0\u4ea4\u8bd5\u5377\u5931\u8d25'
-const EXAM_PAPER_ID_KEY = 'exam_paper_id'
-const EXAM_PAPER_TITLE_KEY = 'exam_paper_title'
-const EXAM_RECORD_ID_KEY = 'exam_record_id'
+	const EXAM_PAPER_ID_KEY = 'exam_paper_id'
+	const EXAM_PAPER_TITLE_KEY = 'exam_paper_title'
+	const EXAM_RECORD_ID_KEY = 'exam_record_id'
 
 const paperId = ref('')
 const paperTitle = ref('')
@@ -227,7 +227,10 @@ const restoreDraft = () => {
 		}
 		const remainRaw = raw['remainingSeconds']
 		if (typeof remainRaw == 'number') {
-			remainingSeconds.value = remainRaw as number
+			const remainValue = remainRaw as number
+			if (remainValue > 0) {
+				remainingSeconds.value = remainValue
+			}
 		}
 		const indexRaw = raw['currentQuestionIndex']
 		if (typeof indexRaw == 'number') {
@@ -276,7 +279,7 @@ const stopTimer = () => {
 	}
 }
 
-const loadPaper = () => {
+	const loadPaper = () => {
 	resolvePaperContext()
 	if (paperId.value.length == 0) {
 		resetRuntimeState()
@@ -289,9 +292,9 @@ const loadPaper = () => {
 	}
 	isLoading.value = true
 	errorText.value = ''
-	fetchExamPaperDetail(
-		paperId.value,
-		(paper : ExamPaper) => {
+		fetchExamPaperDetail(
+			paperId.value,
+			(paper : ExamPaper) => {
 			lastLoadedPaperId = paperId.value
 			uni.setStorageSync(EXAM_PAPER_ID_KEY, paperId.value)
 			paperTitle.value = safeText(paper.paperName).length > 0 ? paper.paperName : paperTitle.value
@@ -299,15 +302,15 @@ const loadPaper = () => {
 				uni.setStorageSync(EXAM_PAPER_TITLE_KEY, paperTitle.value)
 			}
 			durationMinutes.value = paper.durationMinutes > 0 ? paper.durationMinutes : 10
-			questions.value = paper.questions != null ? paper.questions.slice().sort((left : ExamQuestion, right : ExamQuestion) : number => left.sortOrder - right.sortOrder) : []
-			remainingSeconds.value = durationMinutes.value * 60
-			restoreDraft()
-			if (currentQuestionIndex.value >= questions.value.length) {
-				currentQuestionIndex.value = 0
-			}
-			isLoading.value = false
-			startTimer()
-		},
+				questions.value = paper.questions != null ? paper.questions.slice().sort((left : ExamQuestion, right : ExamQuestion) : number => left.sortOrder - right.sortOrder) : []
+				remainingSeconds.value = durationMinutes.value * 60
+				restoreDraft()
+				if (currentQuestionIndex.value >= questions.value.length) {
+					currentQuestionIndex.value = 0
+				}
+				isLoading.value = false
+				startTimer()
+			},
 		(message) => {
 			lastLoadedPaperId = ''
 			errorText.value = message.length > 0 ? message : loadFailedText

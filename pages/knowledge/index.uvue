@@ -147,6 +147,8 @@ import {
 	type KnowledgeEntry
 } from '../../utils/auth.uts'
 
+const KNOWLEDGE_DETAIL_ID_KEY = 'knowledge_detail_id'
+
 type CategoryDisplayItem = {
 	id : number
 	displayName : string
@@ -315,6 +317,7 @@ function loadMore() : void {
 }
 
 function goBookDetail(item : KnowledgeDisplayItem) : void {
+	uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, String(item.id))
 	uni.navigateTo({
 		url: '/pages/knowledge/book-detail?id=' + String(item.id)
 	})
@@ -347,7 +350,7 @@ loadInitialData()
 
 .hero-shell {
 	position: relative;
-	height: 118rpx;
+	height: 146rpx;
 	overflow: hidden;
 }
 
@@ -356,14 +359,14 @@ loadInitialData()
 	top: 0;
 	left: 0;
 	width: 750rpx;
-	height: 236rpx;
+	height: 264rpx;
 }
 
 .header {
 	position: relative;
 	z-index: 1;
-	height: 118rpx;
-	padding-top: 34rpx;
+	height: 146rpx;
+	padding-top: 62rpx;
 	align-items: center;
 	justify-content: center;
 	background-color: transparent;

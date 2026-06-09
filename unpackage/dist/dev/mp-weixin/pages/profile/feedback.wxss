@@ -1,0 +1,131 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+}
+.nav-back {
+	position: absolute;
+	left: 24rpx;
+	top: 88rpx;
+	width: 64rpx;
+	height: 64rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 5;
+}
+.nav-back-icon {
+	width: 32rpx;
+	height: 32rpx;
+}
+.header {
+	padding-top: 92rpx;
+	padding-bottom: 28rpx;
+	align-items: center;
+	justify-content: center;
+}
+.header-title {
+	font-size: 18px;
+	line-height: 26px;
+	color: #1f1f1f;
+	font-weight: 600;
+}
+.form-scroll {
+	flex: 1;
+}
+.form-card {
+	margin-left: 20rpx;
+	margin-right: 20rpx;
+	padding: 24rpx;
+	background-color: #ffffff;
+	border-radius: 20rpx;
+}
+.form-item {
+	margin-bottom: 28rpx;
+}
+.form-item:last-child {
+	margin-bottom: 0;
+}
+.label-row {
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: 14rpx;
+}
+.label {
+	font-size: 15px;
+	line-height: 22px;
+	color: #2d2d2d;
+	font-weight: 500;
+	margin-bottom: 14rpx;
+}
+.required {
+	font-size: 15px;
+	line-height: 22px;
+	color: #ef6b6b;
+	margin-left: 6rpx;
+	margin-top: -14rpx;
+}
+.picker-value,
+.input,
+.textarea {
+	width: 100%;
+	background-color: #f8f6f1;
+	border-radius: 14rpx;
+}
+.picker-value {
+	height: 84rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	align-items: center;
+	justify-content: center;
+}
+.picker-value-text {
+	font-size: 14px;
+	line-height: 20px;
+	color: #333333;
+}
+.input {
+	height: 84rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	font-size: 14px;
+	color: #333333;
+	box-sizing: border-box;
+}
+.textarea {
+	min-height: 240rpx;
+	padding: 20rpx;
+	font-size: 14px;
+	line-height: 22px;
+	color: #333333;
+}
+.counter-row {
+	margin-top: 12rpx;
+	align-items: flex-end;
+}
+.counter-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #999999;
+}
+.submit-wrap {
+	margin-left: 20rpx;
+	margin-right: 20rpx;
+	margin-top: 28rpx;
+}
+.submit-btn {
+	height: 88rpx;
+	line-height: 88rpx;
+	background-color: #17b96d;
+	border-radius: 14rpx;
+	color: #ffffff;
+	font-size: 16px;
+	font-weight: 600;
+}
+.submit-btn::after {
+	border-width: 0;
+}
+.bottom-space {
+	height: 36rpx;
+}

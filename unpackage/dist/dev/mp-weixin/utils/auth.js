@@ -245,6 +245,29 @@ let AppProfileUpdateRequest$1 = class AppProfileUpdateRequest extends UTS.UTSTyp
     delete this.__props__;
   }
 };
+let AppFeedbackRequest$1 = class AppFeedbackRequest extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          feedbackType: { type: String, optional: false },
+          content: { type: String, optional: false },
+          contact: { type: String, optional: false }
+        };
+      },
+      name: "AppFeedbackRequest"
+    };
+  }
+  constructor(options, metadata = AppFeedbackRequest.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.feedbackType = this.__props__.feedbackType;
+    this.content = this.__props__.content;
+    this.contact = this.__props__.contact;
+    delete this.__props__;
+  }
+};
 let AppStudentCertification$1 = class AppStudentCertification extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -329,6 +352,37 @@ let AppStudentCertificationRequest$1 = class AppStudentCertificationRequest exte
     delete this.__props__;
   }
 };
+let LiveSessionVideo$1 = class LiveSessionVideo extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          liveSessionId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          videoUrl: { type: String, optional: false },
+          durationSeconds: { type: Number, optional: false },
+          sortOrder: { type: Number, optional: false },
+          status: { type: String, optional: false }
+        };
+      },
+      name: "LiveSessionVideo"
+    };
+  }
+  constructor(options, metadata = LiveSessionVideo.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.liveSessionId = this.__props__.liveSessionId;
+    this.title = this.__props__.title;
+    this.videoUrl = this.__props__.videoUrl;
+    this.durationSeconds = this.__props__.durationSeconds;
+    this.sortOrder = this.__props__.sortOrder;
+    this.status = this.__props__.status;
+    delete this.__props__;
+  }
+};
 let LiveSession$1 = class LiveSession extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -339,12 +393,18 @@ let LiveSession$1 = class LiveSession extends UTS.UTSType {
           title: { type: String, optional: false },
           coverUrl: { type: String, optional: false },
           anchorName: { type: String, optional: false },
+          speakerName: { type: String, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false },
           liveUrl: { type: String, optional: false },
           playbackUrl: { type: String, optional: false },
           startAt: { type: String, optional: false },
           endAt: { type: String, optional: false },
           reviewStatus: { type: String, optional: false },
-          liveStatus: { type: String, optional: false }
+          liveStatus: { type: String, optional: false },
+          browseCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          videos: { type: UTS.UTSType.withGenerics(Array, [LiveSessionVideo$1]), optional: false }
         };
       },
       name: "LiveSession"
@@ -357,12 +417,18 @@ let LiveSession$1 = class LiveSession extends UTS.UTSType {
     this.title = this.__props__.title;
     this.coverUrl = this.__props__.coverUrl;
     this.anchorName = this.__props__.anchorName;
+    this.speakerName = this.__props__.speakerName;
+    this.tags = this.__props__.tags;
     this.liveUrl = this.__props__.liveUrl;
     this.playbackUrl = this.__props__.playbackUrl;
     this.startAt = this.__props__.startAt;
     this.endAt = this.__props__.endAt;
     this.reviewStatus = this.__props__.reviewStatus;
     this.liveStatus = this.__props__.liveStatus;
+    this.browseCount = this.__props__.browseCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.videos = this.__props__.videos;
     delete this.__props__;
   }
 };
@@ -1068,6 +1134,90 @@ let KnowledgeEntry$1 = class KnowledgeEntry extends UTS.UTSType {
     delete this.__props__;
   }
 };
+let AppBookChapter$1 = class AppBookChapter extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          bookId: { type: Number, optional: false },
+          parentId: { type: Number, optional: false },
+          chapterTitle: { type: String, optional: false },
+          content: { type: String, optional: false },
+          startPage: { type: Number, optional: false },
+          pageCount: { type: Number, optional: false },
+          paperId: { type: Number, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "AppBookChapter"
+    };
+  }
+  constructor(options, metadata = AppBookChapter.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.bookId = this.__props__.bookId;
+    this.parentId = this.__props__.parentId;
+    this.chapterTitle = this.__props__.chapterTitle;
+    this.content = this.__props__.content;
+    this.startPage = this.__props__.startPage;
+    this.pageCount = this.__props__.pageCount;
+    this.paperId = this.__props__.paperId;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+};
+let AppBook$1 = class AppBook extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          categoryId: { type: Number, optional: false },
+          bookName: { type: String, optional: false },
+          author: { type: String, optional: false },
+          publisher: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          introduction: { type: String, optional: false },
+          totalPages: { type: Number, optional: false },
+          paperId: { type: Number, optional: false },
+          publishedAt: { type: String, optional: false },
+          browseCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          progressPercent: { type: Number, optional: false },
+          studySeconds: { type: Number, optional: false },
+          chapters: { type: UTS.UTSType.withGenerics(Array, [AppBookChapter$1]), optional: false }
+        };
+      },
+      name: "AppBook"
+    };
+  }
+  constructor(options, metadata = AppBook.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.categoryId = this.__props__.categoryId;
+    this.bookName = this.__props__.bookName;
+    this.author = this.__props__.author;
+    this.publisher = this.__props__.publisher;
+    this.coverUrl = this.__props__.coverUrl;
+    this.introduction = this.__props__.introduction;
+    this.totalPages = this.__props__.totalPages;
+    this.paperId = this.__props__.paperId;
+    this.publishedAt = this.__props__.publishedAt;
+    this.browseCount = this.__props__.browseCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.progressPercent = this.__props__.progressPercent;
+    this.studySeconds = this.__props__.studySeconds;
+    this.chapters = this.__props__.chapters;
+    delete this.__props__;
+  }
+};
 let PageResponse$1 = class PageResponse extends UTS.UTSType {
   static get$UTSMetadata$(T) {
     return {
@@ -1119,6 +1269,43 @@ let AppResourceRecord$1 = class AppResourceRecord extends UTS.UTSType {
     this.source = this.__props__.source;
     this.viewCount = this.__props__.viewCount;
     this.occurredAt = this.__props__.occurredAt;
+    delete this.__props__;
+  }
+};
+let LearningHistoryRecord$1 = class LearningHistoryRecord extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          subtitle: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          resourceTypeLabel: { type: String, optional: false },
+          visitedTime: { type: String, optional: false },
+          progressPercent: { type: Number, optional: false },
+          studySeconds: { type: Number, optional: false }
+        };
+      },
+      name: "LearningHistoryRecord"
+    };
+  }
+  constructor(options, metadata = LearningHistoryRecord.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.title = this.__props__.title;
+    this.subtitle = this.__props__.subtitle;
+    this.coverUrl = this.__props__.coverUrl;
+    this.resourceTypeLabel = this.__props__.resourceTypeLabel;
+    this.visitedTime = this.__props__.visitedTime;
+    this.progressPercent = this.__props__.progressPercent;
+    this.studySeconds = this.__props__.studySeconds;
     delete this.__props__;
   }
 };
@@ -1241,6 +1428,93 @@ let HomeContent$1 = class HomeContent extends UTS.UTSType {
     this.startAt = this.__props__.startAt;
     this.endAt = this.__props__.endAt;
     this.status = this.__props__.status;
+    delete this.__props__;
+  }
+};
+let AppHomeItem$1 = class AppHomeItem extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          contentType: { type: String, optional: false },
+          contentTypeLabel: { type: String, optional: false },
+          targetId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          subtitle: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          linkUrl: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "AppHomeItem"
+    };
+  }
+  constructor(options, metadata = AppHomeItem.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.contentType = this.__props__.contentType;
+    this.contentTypeLabel = this.__props__.contentTypeLabel;
+    this.targetId = this.__props__.targetId;
+    this.title = this.__props__.title;
+    this.subtitle = this.__props__.subtitle;
+    this.summary = this.__props__.summary;
+    this.coverUrl = this.__props__.coverUrl;
+    this.linkUrl = this.__props__.linkUrl;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+};
+let AppHomeSection$1 = class AppHomeSection extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          categoryName: { type: String, optional: false },
+          categoryCode: { type: String, optional: false },
+          iconUrl: { type: String, optional: false },
+          description: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false },
+          items: { type: UTS.UTSType.withGenerics(Array, [AppHomeItem$1]), optional: false }
+        };
+      },
+      name: "AppHomeSection"
+    };
+  }
+  constructor(options, metadata = AppHomeSection.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.categoryName = this.__props__.categoryName;
+    this.categoryCode = this.__props__.categoryCode;
+    this.iconUrl = this.__props__.iconUrl;
+    this.description = this.__props__.description;
+    this.sortOrder = this.__props__.sortOrder;
+    this.items = this.__props__.items;
+    delete this.__props__;
+  }
+};
+let AppHomeResponse$1 = class AppHomeResponse extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          sections: { type: UTS.UTSType.withGenerics(Array, [AppHomeSection$1]), optional: false }
+        };
+      },
+      name: "AppHomeResponse"
+    };
+  }
+  constructor(options, metadata = AppHomeResponse.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.sections = this.__props__.sections;
     delete this.__props__;
   }
 };
@@ -1390,7 +1664,11 @@ function normalizeExternalUrl(rawUrl) {
   return rawUrl;
 }
 function normalizeAppUrl(rawUrl) {
-  return normalizeExternalUrl(rawUrl);
+  const normalized = normalizeExternalUrl(rawUrl);
+  if (normalized.indexOf("https://example.com/assets/") == 0 || normalized.indexOf("http://example.com/assets/") == 0) {
+    return "";
+  }
+  return normalized;
 }
 function normalizeUploadUrlResponse(data) {
   const rawUploadUrl = data["uploadUrl"] || data["signedUrl"] || data["presignedUrl"] || data["url"] || "";
@@ -1492,14 +1770,22 @@ function fetchLiveSessions(page, size, keyword, success, fail) {
     path += "&keyword=" + encodeURIComponent(keyword);
   }
   request(path, "GET", null, true, false, (pageData) => {
-    success(pageData);
+    const records = pageData.records != null ? pageData.records : [];
+    success(new PageResponse$1({
+      records: records.map((item) => {
+        return normalizeLiveSession(item);
+      }),
+      total: pageData.total,
+      page: pageData.page,
+      size: pageData.size
+    }));
   }, (message) => {
     fail(message);
   });
 }
 function fetchLiveSessionDetail(id, success, fail) {
   request("/api/v1/app/live-sessions/" + id, "GET", null, true, false, (detail) => {
-    success(detail);
+    success(normalizeLiveSession(detail));
   }, (message) => {
     fail(message);
   });
@@ -1961,6 +2247,45 @@ function normalizeArticle(raw) {
     publishedAt: readStringField(raw, "publishedAt")
   });
 }
+function normalizeLiveSessionVideo(raw) {
+  return new LiveSessionVideo$1({
+    id: typeof raw["id"] == "number" ? raw["id"] : 0,
+    liveSessionId: typeof raw["liveSessionId"] == "number" ? raw["liveSessionId"] : 0,
+    title: typeof raw["title"] == "string" ? raw["title"] : "",
+    videoUrl: normalizeAppUrl(typeof raw["videoUrl"] == "string" ? raw["videoUrl"] : ""),
+    durationSeconds: typeof raw["durationSeconds"] == "number" ? raw["durationSeconds"] : 0,
+    sortOrder: typeof raw["sortOrder"] == "number" ? raw["sortOrder"] : 0,
+    status: typeof raw["status"] == "string" ? raw["status"] : ""
+  });
+}
+function normalizeLiveSession(raw) {
+  const videoRaw = raw["videos"];
+  const videos = Array.isArray(videoRaw) ? videoRaw.map((item) => {
+    return normalizeLiveSessionVideo(item);
+  }) : [];
+  const tagRaw = raw["tags"];
+  const tags = Array.isArray(tagRaw) ? tagRaw.filter((item) => {
+    return item != null && item.length > 0;
+  }) : [];
+  return new LiveSession$1({
+    id: typeof raw["id"] == "number" ? raw["id"] : 0,
+    title: typeof raw["title"] == "string" ? raw["title"] : "",
+    coverUrl: normalizeAppUrl(typeof raw["coverUrl"] == "string" ? raw["coverUrl"] : ""),
+    anchorName: typeof raw["anchorName"] == "string" ? raw["anchorName"] : "",
+    speakerName: typeof raw["speakerName"] == "string" ? raw["speakerName"] : "",
+    tags,
+    liveUrl: normalizeAppUrl(typeof raw["liveUrl"] == "string" ? raw["liveUrl"] : ""),
+    playbackUrl: normalizeAppUrl(typeof raw["playbackUrl"] == "string" ? raw["playbackUrl"] : ""),
+    startAt: typeof raw["startAt"] == "string" ? raw["startAt"] : "",
+    endAt: typeof raw["endAt"] == "string" ? raw["endAt"] : "",
+    reviewStatus: typeof raw["reviewStatus"] == "string" ? raw["reviewStatus"] : "",
+    liveStatus: typeof raw["liveStatus"] == "string" ? raw["liveStatus"] : "",
+    browseCount: typeof raw["browseCount"] == "number" ? raw["browseCount"] : 0,
+    favoriteCount: typeof raw["favoriteCount"] == "number" ? raw["favoriteCount"] : 0,
+    favorited: typeof raw["favorited"] == "boolean" ? raw["favorited"] : false,
+    videos
+  });
+}
 function normalizeExamQuestionOption(raw) {
   const optionKey = readStringField(raw, "optionKey").length > 0 ? readStringField(raw, "optionKey") : readStringField(raw, "key").length > 0 ? readStringField(raw, "key") : readStringField(raw, "label");
   const optionContent = readStringField(raw, "optionContent").length > 0 ? readStringField(raw, "optionContent") : readStringField(raw, "content").length > 0 ? readStringField(raw, "content") : readStringField(raw, "optionText").length > 0 ? readStringField(raw, "optionText") : readStringField(raw, "label");
@@ -2132,6 +2457,43 @@ function normalizeKnowledgeEntry(raw) {
     sortOrder: readNumberField(raw, "sortOrder")
   });
 }
+function normalizeBookChapter(raw) {
+  return new AppBookChapter$1({
+    id: readNumberField(raw, "id"),
+    bookId: readNumberField(raw, "bookId"),
+    parentId: readNumberField(raw, "parentId"),
+    chapterTitle: readStringField(raw, "chapterTitle"),
+    content: readStringField(raw, "content"),
+    startPage: readNumberField(raw, "startPage"),
+    pageCount: readNumberField(raw, "pageCount"),
+    paperId: readNumberField(raw, "paperId"),
+    sortOrder: readNumberField(raw, "sortOrder")
+  });
+}
+function normalizeBook(raw) {
+  const chaptersValue = raw["chapters"];
+  const chapters = chaptersValue != null && UTS.isInstanceOf(chaptersValue, Array) ? chaptersValue : [];
+  return new AppBook$1({
+    id: readNumberField(raw, "id"),
+    categoryId: readNumberField(raw, "categoryId"),
+    bookName: readStringField(raw, "bookName").length > 0 ? readStringField(raw, "bookName") : readStringField(raw, "title"),
+    author: readStringField(raw, "author"),
+    publisher: readStringField(raw, "publisher"),
+    coverUrl: normalizeAppUrl(readStringField(raw, "coverUrl")),
+    introduction: readStringField(raw, "introduction").length > 0 ? readStringField(raw, "introduction") : readStringField(raw, "summary"),
+    totalPages: readNumberField(raw, "totalPages"),
+    paperId: readNumberField(raw, "paperId"),
+    publishedAt: readStringField(raw, "publishedAt"),
+    browseCount: readNumberField(raw, "browseCount"),
+    favoriteCount: readNumberField(raw, "favoriteCount"),
+    favorited: readBooleanField(raw, "favorited"),
+    progressPercent: readNumberField(raw, "progressPercent"),
+    studySeconds: readNumberField(raw, "studySeconds"),
+    chapters: chapters.map((item) => {
+      return normalizeBookChapter(item);
+    })
+  });
+}
 function fetchKnowledgeCategoryTree(success, fail) {
   request("/api/v1/app/knowledge/categories/tree", "GET", null, true, false, (categories) => {
     const categoryList = categories != null && UTS.isInstanceOf(categories, Array) ? categories : [];
@@ -2174,6 +2536,27 @@ function fetchKnowledgeEntryDetail(id, success, fail) {
     fail(message);
   });
 }
+function fetchBookDetail(id, success, fail) {
+  request("/api/v1/app/learning/books/" + id, "GET", null, true, false, (detail) => {
+    success(normalizeBook(detail));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchBookChapterDetail(bookId, chapterId, success, fail) {
+  request("/api/v1/app/learning/books/" + bookId + "/chapters/" + chapterId, "GET", null, true, false, (detail) => {
+    success(normalizeBookChapter(detail));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchAppHome(success, fail) {
+  request("/api/v1/app/home", "GET", null, true, false, (data) => {
+    success(data);
+  }, (message) => {
+    fail(message);
+  });
+}
 function fetchTopicDetail(id, success, fail) {
   request("/api/v1/app/learning/topics/" + id, "GET", null, true, false, (detail) => {
     success(detail);
@@ -2183,6 +2566,13 @@ function fetchTopicDetail(id, success, fail) {
 }
 function fetchProfileFavorites(page, size, success, fail) {
   request("/api/v1/app/profile/favorites?page=" + String(page) + "&size=" + String(size), "GET", null, true, false, (pageData) => {
+    success(pageData);
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchLearningHistory(page, size, success, fail) {
+  request("/api/v1/app/profile/browse-histories?page=" + String(page) + "&size=" + String(size) + "&sort=occurredAt,desc", "GET", null, true, false, (pageData) => {
     success(pageData);
   }, (message) => {
     fail(message);
@@ -2345,6 +2735,13 @@ function updateFavoriteStatus(data, success, fail) {
     fail(message);
   });
 }
+function submitFeedback(data, success, fail) {
+  request("/api/v1/app/interaction/feedbacks", "POST", data, true, true, () => {
+    success();
+  }, (message) => {
+    fail(message);
+  });
+}
 function requestAvatarUploadUrl(requestData, success, fail) {
   request("/api/v1/app/profile/avatar/upload-url", "POST", requestData, true, false, (data) => {
     const normalized = normalizeUploadUrlResponse(data);
@@ -2478,6 +2875,15 @@ function getBindToken() {
 function clearBindToken() {
   common_vendor.index.removeStorageSync(BIND_TOKEN_KEY);
 }
+function redirectToLogin() {
+  common_vendor.index.showToast({
+    title: "请先登录",
+    icon: "none"
+  });
+  common_vendor.index.navigateTo({
+    url: "/pages/login/index"
+  });
+}
 function request(path, method, data = null, needAuth, allowEmptyData, success, fail) {
   const header = new UTSJSONObject({
     "Content-Type": "application/json"
@@ -2485,6 +2891,8 @@ function request(path, method, data = null, needAuth, allowEmptyData, success, f
   if (needAuth) {
     const authorization = buildAuthorization();
     if (authorization == "") {
+      clearAuthStorage();
+      redirectToLogin();
       fail("登录状态已失效，请重新登录");
       return null;
     }
@@ -2498,6 +2906,12 @@ function request(path, method, data = null, needAuth, allowEmptyData, success, f
     success: (res) => {
       const statusCode = res.statusCode;
       const body = res.data;
+      if (statusCode == 401 || body != null && body.code == "UNAUTHORIZED") {
+        clearAuthStorage();
+        redirectToLogin();
+        fail(body != null && body.message != null && body.message != "" ? body.message : "登录状态已失效，请重新登录");
+        return null;
+      }
       if (statusCode >= 200 && statusCode < 300 && body != null && body.success == true) {
         if (body.data != null) {
           success(body.data);
@@ -2853,6 +3267,29 @@ class AppProfileUpdateRequest2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+class AppFeedbackRequest2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          feedbackType: { type: String, optional: false },
+          content: { type: String, optional: false },
+          contact: { type: String, optional: false }
+        };
+      },
+      name: "AppFeedbackRequest"
+    };
+  }
+  constructor(options, metadata = AppFeedbackRequest2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.feedbackType = this.__props__.feedbackType;
+    this.content = this.__props__.content;
+    this.contact = this.__props__.contact;
+    delete this.__props__;
+  }
+}
 class AppStudentCertification2 extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -2937,6 +3374,37 @@ class AppStudentCertificationRequest2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+class LiveSessionVideo2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          liveSessionId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          videoUrl: { type: String, optional: false },
+          durationSeconds: { type: Number, optional: false },
+          sortOrder: { type: Number, optional: false },
+          status: { type: String, optional: false }
+        };
+      },
+      name: "LiveSessionVideo"
+    };
+  }
+  constructor(options, metadata = LiveSessionVideo2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.liveSessionId = this.__props__.liveSessionId;
+    this.title = this.__props__.title;
+    this.videoUrl = this.__props__.videoUrl;
+    this.durationSeconds = this.__props__.durationSeconds;
+    this.sortOrder = this.__props__.sortOrder;
+    this.status = this.__props__.status;
+    delete this.__props__;
+  }
+}
 class LiveSession2 extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -2947,12 +3415,18 @@ class LiveSession2 extends UTS.UTSType {
           title: { type: String, optional: false },
           coverUrl: { type: String, optional: false },
           anchorName: { type: String, optional: false },
+          speakerName: { type: String, optional: false },
+          tags: { type: UTS.UTSType.withGenerics(Array, [String]), optional: false },
           liveUrl: { type: String, optional: false },
           playbackUrl: { type: String, optional: false },
           startAt: { type: String, optional: false },
           endAt: { type: String, optional: false },
           reviewStatus: { type: String, optional: false },
-          liveStatus: { type: String, optional: false }
+          liveStatus: { type: String, optional: false },
+          browseCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          videos: { type: UTS.UTSType.withGenerics(Array, [LiveSessionVideo2]), optional: false }
         };
       },
       name: "LiveSession"
@@ -2965,12 +3439,18 @@ class LiveSession2 extends UTS.UTSType {
     this.title = this.__props__.title;
     this.coverUrl = this.__props__.coverUrl;
     this.anchorName = this.__props__.anchorName;
+    this.speakerName = this.__props__.speakerName;
+    this.tags = this.__props__.tags;
     this.liveUrl = this.__props__.liveUrl;
     this.playbackUrl = this.__props__.playbackUrl;
     this.startAt = this.__props__.startAt;
     this.endAt = this.__props__.endAt;
     this.reviewStatus = this.__props__.reviewStatus;
     this.liveStatus = this.__props__.liveStatus;
+    this.browseCount = this.__props__.browseCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.videos = this.__props__.videos;
     delete this.__props__;
   }
 }
@@ -3676,6 +4156,90 @@ class KnowledgeEntry2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+class AppBookChapter2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          bookId: { type: Number, optional: false },
+          parentId: { type: Number, optional: false },
+          chapterTitle: { type: String, optional: false },
+          content: { type: String, optional: false },
+          startPage: { type: Number, optional: false },
+          pageCount: { type: Number, optional: false },
+          paperId: { type: Number, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "AppBookChapter"
+    };
+  }
+  constructor(options, metadata = AppBookChapter2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.bookId = this.__props__.bookId;
+    this.parentId = this.__props__.parentId;
+    this.chapterTitle = this.__props__.chapterTitle;
+    this.content = this.__props__.content;
+    this.startPage = this.__props__.startPage;
+    this.pageCount = this.__props__.pageCount;
+    this.paperId = this.__props__.paperId;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+}
+class AppBook2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          categoryId: { type: Number, optional: false },
+          bookName: { type: String, optional: false },
+          author: { type: String, optional: false },
+          publisher: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          introduction: { type: String, optional: false },
+          totalPages: { type: Number, optional: false },
+          paperId: { type: Number, optional: false },
+          publishedAt: { type: String, optional: false },
+          browseCount: { type: Number, optional: false },
+          favoriteCount: { type: Number, optional: false },
+          favorited: { type: Boolean, optional: false },
+          progressPercent: { type: Number, optional: false },
+          studySeconds: { type: Number, optional: false },
+          chapters: { type: UTS.UTSType.withGenerics(Array, [AppBookChapter2]), optional: false }
+        };
+      },
+      name: "AppBook"
+    };
+  }
+  constructor(options, metadata = AppBook2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.categoryId = this.__props__.categoryId;
+    this.bookName = this.__props__.bookName;
+    this.author = this.__props__.author;
+    this.publisher = this.__props__.publisher;
+    this.coverUrl = this.__props__.coverUrl;
+    this.introduction = this.__props__.introduction;
+    this.totalPages = this.__props__.totalPages;
+    this.paperId = this.__props__.paperId;
+    this.publishedAt = this.__props__.publishedAt;
+    this.browseCount = this.__props__.browseCount;
+    this.favoriteCount = this.__props__.favoriteCount;
+    this.favorited = this.__props__.favorited;
+    this.progressPercent = this.__props__.progressPercent;
+    this.studySeconds = this.__props__.studySeconds;
+    this.chapters = this.__props__.chapters;
+    delete this.__props__;
+  }
+}
 class PageResponse2 extends UTS.UTSType {
   static get$UTSMetadata$(T) {
     return {
@@ -3727,6 +4291,43 @@ class AppResourceRecord2 extends UTS.UTSType {
     this.source = this.__props__.source;
     this.viewCount = this.__props__.viewCount;
     this.occurredAt = this.__props__.occurredAt;
+    delete this.__props__;
+  }
+}
+class LearningHistoryRecord2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          resourceType: { type: String, optional: false },
+          resourceId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          subtitle: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          resourceTypeLabel: { type: String, optional: false },
+          visitedTime: { type: String, optional: false },
+          progressPercent: { type: Number, optional: false },
+          studySeconds: { type: Number, optional: false }
+        };
+      },
+      name: "LearningHistoryRecord"
+    };
+  }
+  constructor(options, metadata = LearningHistoryRecord2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.resourceType = this.__props__.resourceType;
+    this.resourceId = this.__props__.resourceId;
+    this.title = this.__props__.title;
+    this.subtitle = this.__props__.subtitle;
+    this.coverUrl = this.__props__.coverUrl;
+    this.resourceTypeLabel = this.__props__.resourceTypeLabel;
+    this.visitedTime = this.__props__.visitedTime;
+    this.progressPercent = this.__props__.progressPercent;
+    this.studySeconds = this.__props__.studySeconds;
     delete this.__props__;
   }
 }
@@ -3849,6 +4450,93 @@ class HomeContent2 extends UTS.UTSType {
     this.startAt = this.__props__.startAt;
     this.endAt = this.__props__.endAt;
     this.status = this.__props__.status;
+    delete this.__props__;
+  }
+}
+class AppHomeItem2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          contentType: { type: String, optional: false },
+          contentTypeLabel: { type: String, optional: false },
+          targetId: { type: Number, optional: false },
+          title: { type: String, optional: false },
+          subtitle: { type: String, optional: false },
+          summary: { type: String, optional: false },
+          coverUrl: { type: String, optional: false },
+          linkUrl: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "AppHomeItem"
+    };
+  }
+  constructor(options, metadata = AppHomeItem2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.contentType = this.__props__.contentType;
+    this.contentTypeLabel = this.__props__.contentTypeLabel;
+    this.targetId = this.__props__.targetId;
+    this.title = this.__props__.title;
+    this.subtitle = this.__props__.subtitle;
+    this.summary = this.__props__.summary;
+    this.coverUrl = this.__props__.coverUrl;
+    this.linkUrl = this.__props__.linkUrl;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+}
+class AppHomeSection2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          categoryName: { type: String, optional: false },
+          categoryCode: { type: String, optional: false },
+          iconUrl: { type: String, optional: false },
+          description: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false },
+          items: { type: UTS.UTSType.withGenerics(Array, [AppHomeItem2]), optional: false }
+        };
+      },
+      name: "AppHomeSection"
+    };
+  }
+  constructor(options, metadata = AppHomeSection2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.categoryName = this.__props__.categoryName;
+    this.categoryCode = this.__props__.categoryCode;
+    this.iconUrl = this.__props__.iconUrl;
+    this.description = this.__props__.description;
+    this.sortOrder = this.__props__.sortOrder;
+    this.items = this.__props__.items;
+    delete this.__props__;
+  }
+}
+class AppHomeResponse2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          sections: { type: UTS.UTSType.withGenerics(Array, [AppHomeSection2]), optional: false }
+        };
+      },
+      name: "AppHomeResponse"
+    };
+  }
+  constructor(options, metadata = AppHomeResponse2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.sections = this.__props__.sections;
     delete this.__props__;
   }
 }
@@ -4114,6 +4802,7 @@ class AppQaQuestionRequest2 extends UTS.UTSType {
   }
 }
 exports.AppFavoriteRequest = AppFavoriteRequest2;
+exports.AppFeedbackRequest = AppFeedbackRequest$1;
 exports.AppQaQuestionRequest = AppQaQuestionRequest2;
 exports.AppStudentCertificationRequest = AppStudentCertificationRequest2;
 exports.AvatarBinaryUploadConfig = AvatarBinaryUploadConfig2;
@@ -4125,9 +4814,12 @@ exports.checkFavoriteStatus = checkFavoriteStatus;
 exports.clearBindToken = clearBindToken;
 exports.confirmAvatarUpload = confirmAvatarUpload;
 exports.createQaQuestion = createQaQuestion;
+exports.fetchAppHome = fetchAppHome;
 exports.fetchArticleDetail = fetchArticleDetail;
 exports.fetchArticles = fetchArticles;
 exports.fetchAudioDetail = fetchAudioDetail;
+exports.fetchBookChapterDetail = fetchBookChapterDetail;
+exports.fetchBookDetail = fetchBookDetail;
 exports.fetchCertificationStatus = fetchCertificationStatus;
 exports.fetchCourseDetail = fetchCourseDetail;
 exports.fetchCourses = fetchCourses;
@@ -4139,6 +4831,7 @@ exports.fetchExperts = fetchExperts;
 exports.fetchKnowledgeCategoryTree = fetchKnowledgeCategoryTree;
 exports.fetchKnowledgeEntries = fetchKnowledgeEntries;
 exports.fetchKnowledgeEntryDetail = fetchKnowledgeEntryDetail;
+exports.fetchLearningHistory = fetchLearningHistory;
 exports.fetchLiveSessionDetail = fetchLiveSessionDetail;
 exports.fetchLiveSessions = fetchLiveSessions;
 exports.fetchProfile = fetchProfile;
@@ -4163,6 +4856,7 @@ exports.saveLogin = saveLogin;
 exports.sendSmsCode = sendSmsCode;
 exports.submitCertification = submitCertification;
 exports.submitExamPaper = submitExamPaper;
+exports.submitFeedback = submitFeedback;
 exports.updateFavoriteStatus = updateFavoriteStatus;
 exports.updateProfile = updateProfile;
 exports.uploadAvatarBinaryFile = uploadAvatarBinaryFile;

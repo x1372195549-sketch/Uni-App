@@ -3,7 +3,6 @@ const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
 const PRIMARY_RESOURCE_TYPE = "article";
-const FALLBACK_RESOURCE_TYPE = "info";
 const detailTitleText = "资讯详情";
 const summaryTitle = "摘要";
 const contentTitle = "正文";
@@ -25,7 +24,6 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const isHtmlContent = common_vendor.ref(false);
     const isFavorited = common_vendor.ref(false);
     const isFavoriteLoading = common_vendor.ref(false);
-    const favoriteResourceType = common_vendor.ref(PRIMARY_RESOURCE_TYPE);
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
     };
@@ -39,19 +37,30 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const detectHtml = (value) => {
       return value.indexOf("<p") >= 0 || value.indexOf("<div") >= 0 || value.indexOf("<br") >= 0;
     };
-    const loadParams = () => {
-      const pages = getCurrentPages();
-      if (pages.length == 0) {
-        return null;
+    const readArticleIdFromStorage = () => {
+      const cachedId = common_vendor.index.getStorageSync("article_detail_id");
+      return typeof cachedId == "string" ? cachedId : "";
+    };
+    const resolveArticleId = (options = null) => {
+      let resolvedId = "";
+      if (options != null) {
+        const idValue = options["id"];
+        if (typeof idValue == "string" && idValue.length > 0) {
+          resolvedId = idValue;
+        }
+        if (resolvedId.length == 0) {
+          const articleIdValue = options["articleId"];
+          if (typeof articleIdValue == "string" && articleIdValue.length > 0) {
+            resolvedId = articleIdValue;
+          }
+        }
       }
-      const current = pages[pages.length - 1];
-      if (current == null || current.options == null) {
-        return null;
+      if (resolvedId.length == 0) {
+        resolvedId = readArticleIdFromStorage();
       }
-      const options = current.options;
-      const idValue = options["id"];
-      if (typeof idValue == "string" && idValue.length > 0) {
-        articleId.value = idValue;
+      if (resolvedId.length > 0) {
+        articleId.value = resolvedId;
+        common_vendor.index.setStorageSync("article_detail_id", resolvedId);
       }
     };
     const applyDetail = (detail) => {
@@ -65,29 +74,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       tags.value = detail.tags != null ? detail.tags : [];
       isHtmlContent.value = detectHtml(content.value);
     };
-    const setFavoriteStatusByType = (resourceType, next) => {
-      utils_auth.checkFavoriteStatus(resourceType, Number(articleId.value), (favorited) => {
-        if (favorited) {
-          isFavorited.value = true;
-          favoriteResourceType.value = resourceType;
-          return null;
-        }
-        next();
-      }, () => {
-        next();
-      });
-    };
     const loadFavoriteStatus = () => {
       if (articleId.value.length == 0) {
         return null;
       }
-      isFavorited.value = false;
-      favoriteResourceType.value = PRIMARY_RESOURCE_TYPE;
-      setFavoriteStatusByType(PRIMARY_RESOURCE_TYPE, () => {
-        setFavoriteStatusByType(FALLBACK_RESOURCE_TYPE, () => {
-          isFavorited.value = false;
-          favoriteResourceType.value = PRIMARY_RESOURCE_TYPE;
-        });
+      utils_auth.checkFavoriteStatus(PRIMARY_RESOURCE_TYPE, Number(articleId.value), (favorited) => {
+        isFavorited.value = favorited;
+      }, () => {
+        isFavorited.value = false;
       });
     };
     const reportBrowse = () => {
@@ -115,13 +109,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         });
       });
     };
-    const submitFavoriteRequest = (resourceType, favorited, success, fail) => {
+    const submitFavoriteRequest = (favorited, success, fail) => {
       utils_auth.updateFavoriteStatus(new utils_auth.AppFavoriteRequest({
-        resourceType,
+        resourceType: PRIMARY_RESOURCE_TYPE,
         resourceId: Number(articleId.value),
         favorited
       }), (result) => {
-        favoriteResourceType.value = resourceType;
         isFavorited.value = result.favorited;
         success();
       }, (message) => {
@@ -134,36 +127,34 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       isFavoriteLoading.value = true;
       const nextFavorited = !isFavorited.value;
-      const primaryType = nextFavorited ? PRIMARY_RESOURCE_TYPE : favoriteResourceType.value;
-      const backupType = primaryType == PRIMARY_RESOURCE_TYPE ? FALLBACK_RESOURCE_TYPE : PRIMARY_RESOURCE_TYPE;
-      submitFavoriteRequest(primaryType, nextFavorited, () => {
+      submitFavoriteRequest(nextFavorited, () => {
         isFavoriteLoading.value = false;
         common_vendor.index.showToast({
           title: isFavorited.value ? "收藏成功" : "已取消收藏",
           icon: "none"
         });
       }, (message) => {
-        submitFavoriteRequest(backupType, nextFavorited, () => {
-          isFavoriteLoading.value = false;
-          common_vendor.index.showToast({
-            title: isFavorited.value ? "收藏成功" : "已取消收藏",
-            icon: "none"
-          });
-        }, (fallbackMessage) => {
-          isFavoriteLoading.value = false;
-          common_vendor.index.showToast({
-            title: fallbackMessage.length > 0 ? fallbackMessage : message,
-            icon: "none"
-          });
+        isFavoriteLoading.value = false;
+        common_vendor.index.showToast({
+          title: message,
+          icon: "none"
         });
       });
     };
     const goBack = () => {
       common_vendor.index.navigateBack();
     };
-    loadParams();
-    loadDetail();
+    common_vendor.onLoad((options = null) => {
+      resolveArticleId(options);
+      loadDetail();
+    });
     common_vendor.onShow(() => {
+      if (articleId.value.length == 0) {
+        resolveArticleId(null);
+      }
+      if (articleId.value.length > 0 && title.value.length == 0 && content.value.length == 0) {
+        loadDetail();
+      }
       loadFavoriteStatus();
     });
     return (_ctx, _cache) => {

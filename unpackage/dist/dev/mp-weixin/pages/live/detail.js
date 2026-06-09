@@ -2,43 +2,115 @@
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
+class DetailVideoItem extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: String, optional: false },
+          title: { type: String, optional: false },
+          videoUrl: { type: String, optional: false },
+          durationText: { type: String, optional: false }
+        };
+      },
+      name: "DetailVideoItem"
+    };
+  }
+  constructor(options, metadata = DetailVideoItem.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.title = this.__props__.title;
+    this.videoUrl = this.__props__.videoUrl;
+    this.durationText = this.__props__.durationText;
+    delete this.__props__;
+  }
+}
 const RESOURCE_TYPE = "live";
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "detail",
   setup(__props) {
     const liveId = common_vendor.ref("");
     const liveTitle = common_vendor.ref("直播详情");
-    const liveMetaLeft = common_vendor.ref("未安排");
-    const liveFavoriteCount = common_vendor.ref("0");
-    const liveIntro = common_vendor.ref("这里展示直播基础信息。");
+    const coverUrl = common_vendor.ref("");
+    const anchorText = common_vendor.ref("待定");
+    const speakerText = common_vendor.ref("待定");
+    const startText = common_vendor.ref("待定");
+    const endText = common_vendor.ref("待定");
+    const statusLabel = common_vendor.ref("未开始");
+    const tagText = common_vendor.ref("");
+    const favoriteCountText = common_vendor.ref("0");
+    const liveIntro = common_vendor.ref("暂无直播介绍");
+    const liveUrl = common_vendor.ref("");
+    const playbackUrl = common_vendor.ref("");
     const isFavorited = common_vendor.ref(false);
     const isFavoriteLoading = common_vendor.ref(false);
+    const videoItems = common_vendor.ref([]);
+    const actionButtonText = common_vendor.computed(() => {
+      if (statusLabel.value == "直播中") {
+        return "进入直播";
+      }
+      if (statusLabel.value == "已结束") {
+        return playbackUrl.value.length > 0 ? "观看回放" : "直播已结束";
+      }
+      if (statusLabel.value == "已取消") {
+        return "直播已取消";
+      }
+      return "等待开播";
+    });
     function safeText(value = null) {
       return value == null || value.length == 0 ? "" : value;
     }
-    function goBack() {
-      common_vendor.index.navigateBack();
-    }
     function formatDateTime(value) {
-      if (value.length == 0) {
-        return "未安排";
+      const text = safeText(value);
+      if (text.length == 0) {
+        return "待定";
       }
-      if (value.length >= 16) {
-        return value.slice(0, 16).replace("T", " ");
+      if (text.length >= 16) {
+        return text.slice(0, 16).replace("T", " ");
       }
-      return value.replace("T", " ");
+      return text.replace("T", " ");
+    }
+    function formatDuration(seconds) {
+      if (seconds <= 0) {
+        return "时长待定";
+      }
+      const minute = Math.floor(seconds / 60);
+      if (minute <= 0) {
+        return seconds + "秒";
+      }
+      return minute + "分钟";
     }
     function mapLiveStatus(status) {
-      if (status == "1") {
+      const normalized = safeText(status).toUpperCase();
+      if (normalized == "LIVE" || normalized == "1") {
         return "直播中";
       }
-      if (status == "2") {
+      if (normalized == "ENDED" || normalized == "2") {
         return "已结束";
       }
-      if (status == "3") {
-        return "回放";
+      if (normalized == "CANCELED" || normalized == "3") {
+        return "已取消";
       }
       return "未开始";
+    }
+    function mapVideoItem(item, index) {
+      const titleText = safeText(item.title);
+      return new DetailVideoItem({
+        id: String(item.id > 0 ? item.id : index + 1),
+        title: titleText.length > 0 ? titleText : "视频 " + String(index + 1),
+        videoUrl: utils_auth.normalizeAppUrl(safeText(item.videoUrl)),
+        durationText: formatDuration(item.durationSeconds)
+      });
+    }
+    function goBack() {
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        common_vendor.index.navigateBack();
+        return null;
+      }
+      common_vendor.index.redirectTo({ url: "/pages/live/index" });
     }
     function loadFavoriteStatus() {
       if (liveId.value.length == 0) {
@@ -48,6 +120,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         isFavorited.value = favorited;
       }, () => {
         isFavorited.value = false;
+      });
+    }
+    function reportBrowse() {
+      if (liveId.value.length == 0) {
+        return null;
+      }
+      utils_auth.reportBrowseHistory(new utils_auth.BrowseHistoryRequest({
+        resourceType: RESOURCE_TYPE,
+        resourceId: Number(liveId.value)
+      }), () => {
+      }, () => {
       });
     }
     function toggleFavorite() {
@@ -61,63 +144,59 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         favorited: !isFavorited.value
       }), (result) => {
         isFavorited.value = result.favorited;
-        liveFavoriteCount.value = String(result.favoriteCount != null ? result.favoriteCount : 0);
+        favoriteCountText.value = String(result.favoriteCount != null ? result.favoriteCount : 0);
         isFavoriteLoading.value = false;
         common_vendor.index.showToast({
           title: result.favorited ? "收藏成功" : "已取消收藏",
-          icon: "success"
+          icon: "none"
         });
       }, (message) => {
         isFavoriteLoading.value = false;
         common_vendor.index.showToast({
-          title: message,
+          title: message.length > 0 ? message : "收藏操作失败",
           icon: "none"
         });
       });
     }
     function applyLiveDetail(detail) {
       const titleText = safeText(detail.title);
-      if (titleText.length > 0) {
-        liveTitle.value = titleText;
-      }
-      const anchorText = safeText(detail.anchorName);
-      const timeText = safeText(detail.startAt);
-      const endText = safeText(detail.endAt);
-      const playbackText = safeText(detail.playbackUrl);
-      const liveUrlText = safeText(detail.liveUrl);
-      const statusText = safeText(detail.liveStatus);
-      liveMetaLeft.value = formatDateTime(timeText);
+      liveTitle.value = titleText.length > 0 ? titleText : "直播详情";
+      coverUrl.value = safeText(detail.coverUrl);
+      anchorText.value = safeText(detail.anchorName).length > 0 ? safeText(detail.anchorName) : "待定";
+      speakerText.value = safeText(detail.speakerName).length > 0 ? safeText(detail.speakerName) : anchorText.value;
+      startText.value = formatDateTime(detail.startAt);
+      endText.value = formatDateTime(detail.endAt);
+      statusLabel.value = mapLiveStatus(detail.liveStatus);
+      tagText.value = detail.tags != null ? detail.tags.join(" / ") : "";
+      favoriteCountText.value = String(detail.favoriteCount);
+      liveUrl.value = utils_auth.normalizeAppUrl(safeText(detail.liveUrl));
+      playbackUrl.value = utils_auth.normalizeAppUrl(safeText(detail.playbackUrl));
+      isFavorited.value = detail.favorited;
+      videoItems.value = detail.videos != null ? detail.videos.filter((item) => {
+        return item.videoUrl.length > 0;
+      }).sort((left, right) => {
+        return left.sortOrder - right.sortOrder;
+      }).map((item, index) => {
+        return mapVideoItem(item, index);
+      }) : [];
       const introParts = new Array();
-      if (anchorText.length > 0) {
-        introParts.push("主讲人：" + anchorText);
+      introParts.push("主播：" + anchorText.value);
+      introParts.push("主讲：" + speakerText.value);
+      introParts.push("开始时间：" + startText.value);
+      introParts.push("结束时间：" + endText.value);
+      if (tagText.value.length > 0) {
+        introParts.push("标签：" + tagText.value);
       }
-      if (timeText.length > 0) {
-        introParts.push("开始时间：" + formatDateTime(timeText));
+      if (statusLabel.value == "直播中" && liveUrl.value.length > 0) {
+        introParts.push("当前可进入直播观看。");
+      } else if (statusLabel.value == "已结束" && playbackUrl.value.length > 0) {
+        introParts.push("当前可观看回放。");
+      } else if (statusLabel.value == "已取消") {
+        introParts.push("本场直播已取消。");
+      } else {
+        introParts.push("当前直播尚未开始。");
       }
-      if (endText.length > 0) {
-        introParts.push("结束时间：" + formatDateTime(endText));
-      }
-      if (statusText.length > 0) {
-        introParts.push("直播状态：" + mapLiveStatus(statusText));
-      }
-      if (playbackText.length > 0) {
-        introParts.push("回放地址：" + playbackText);
-      } else if (liveUrlText.length > 0) {
-        introParts.push("直播地址：" + liveUrlText);
-      }
-      if (introParts.length > 0) {
-        liveIntro.value = introParts.join("；");
-      }
-    }
-    function loadParams() {
-      const pages = getCurrentPages();
-      if (pages.length == 0) {
-        return null;
-      }
-      const current = pages[pages.length - 1];
-      if (current != null && current.options != null && current.options["id"] != null) {
-        liveId.value = current.options["id"];
-      }
+      liveIntro.value = introParts.join("\n");
     }
     function loadLiveDetail() {
       if (liveId.value.length == 0) {
@@ -125,15 +204,61 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       utils_auth.fetchLiveSessionDetail(liveId.value, (detail) => {
         applyLiveDetail(detail);
+        reportBrowse();
       }, (message) => {
         common_vendor.index.showToast({
-          title: message,
+          title: message.length > 0 ? message : "直播详情加载失败",
           icon: "none"
         });
       });
     }
-    common_vendor.onMounted(() => {
-      loadParams();
+    function openPlayer(url, title, playMode) {
+      const targetUrl = utils_auth.normalizeAppUrl(url);
+      if (targetUrl.length == 0) {
+        common_vendor.index.showToast({
+          title: "暂无可用地址",
+          icon: "none"
+        });
+        return null;
+      }
+      common_vendor.index.navigateTo({
+        url: "/pages/live/player?mode=" + encodeURIComponent(playMode) + "&title=" + encodeURIComponent(title) + "&url=" + encodeURIComponent(targetUrl)
+      });
+    }
+    function enterLive() {
+      if (statusLabel.value == "已取消") {
+        common_vendor.index.showToast({
+          title: "直播已取消",
+          icon: "none"
+        });
+        return null;
+      }
+      if (statusLabel.value == "直播中") {
+        openPlayer(liveUrl.value, liveTitle.value, "live");
+        return null;
+      }
+      if (statusLabel.value == "已结束") {
+        if (playbackUrl.value.length == 0) {
+          common_vendor.index.showToast({
+            title: "暂无回放地址",
+            icon: "none"
+          });
+          return null;
+        }
+        openPlayer(playbackUrl.value, liveTitle.value, "playback");
+        return null;
+      }
+      common_vendor.index.showToast({
+        title: "直播尚未开始",
+        icon: "none"
+      });
+    }
+    common_vendor.onLoad((options = null) => {
+      const routeOptions = options;
+      const idValue = routeOptions["id"];
+      if (typeof idValue == "string" && idValue.length > 0) {
+        liveId.value = idValue;
+      }
       loadLiveDetail();
       loadFavoriteStatus();
     });
@@ -142,18 +267,46 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     });
     return (_ctx, _cache) => {
       "raw js";
-      const __returned__ = {
+      const __returned__ = common_vendor.e({
         a: common_assets._imports_0$1,
         b: common_vendor.o(goBack),
-        c: common_vendor.t(liveTitle.value),
-        d: common_vendor.t(isFavorited.value ? "已收藏" : "收藏"),
-        e: common_vendor.n(isFavorited.value ? "favorite-text-active" : ""),
-        f: common_vendor.o(toggleFavorite),
-        g: common_vendor.t(liveMetaLeft.value),
-        h: common_vendor.t(liveFavoriteCount.value),
-        i: common_vendor.t(liveIntro.value),
-        j: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
-      };
+        c: coverUrl.value.length > 0
+      }, coverUrl.value.length > 0 ? {
+        d: coverUrl.value
+      } : {}, {
+        e: common_vendor.t(statusLabel.value),
+        f: common_vendor.t(liveTitle.value),
+        g: common_vendor.t(isFavorited.value ? "已收藏" : "收藏"),
+        h: common_vendor.n(isFavorited.value ? "favorite-text-active" : ""),
+        i: common_vendor.o(toggleFavorite),
+        j: common_vendor.t(startText.value),
+        k: common_vendor.t(favoriteCountText.value),
+        l: common_vendor.t(anchorText.value),
+        m: common_vendor.t(speakerText.value),
+        n: common_vendor.t(statusLabel.value),
+        o: common_vendor.t(endText.value),
+        p: tagText.value.length > 0
+      }, tagText.value.length > 0 ? {
+        q: common_vendor.t(tagText.value)
+      } : {}, {
+        r: common_vendor.t(liveIntro.value),
+        s: videoItems.value.length > 0
+      }, videoItems.value.length > 0 ? {
+        t: common_vendor.f(videoItems.value, (item, k0, i0) => {
+          return {
+            a: common_vendor.t(item.title),
+            b: common_vendor.t(item.durationText),
+            c: item.id,
+            d: common_vendor.o(($event) => {
+              return openPlayer(item.videoUrl, item.title, "video");
+            }, item.id)
+          };
+        })
+      } : {}, {
+        v: common_vendor.t(actionButtonText.value),
+        w: common_vendor.o(enterLive),
+        x: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+      });
       return __returned__;
     };
   }

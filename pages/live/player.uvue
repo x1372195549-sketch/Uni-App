@@ -1,0 +1,198 @@
+<template>
+	<view class="page">
+		<view class="header">
+			<view class="back-btn" @tap="goBack">
+				<image class="back-icon-image" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+			</view>
+			<text class="header-title">{{ pageTitle }}</text>
+		</view>
+
+		<view v-if="errorText.length > 0" class="state-wrap">
+			<text class="state-text">{{ errorText }}</text>
+		</view>
+
+		<view v-else-if="useVideoPlayer" class="player-shell">
+			<video
+				class="video-player"
+				:src="playUrl"
+				:title="pageTitle"
+				:autoplay="autoPlay"
+				:controls="true"
+				:show-center-play-btn="true"
+				:enable-progress-gesture="true"
+				:show-fullscreen-btn="true"
+				object-fit="contain"
+			></video>
+		</view>
+
+		<web-view v-else-if="useWebView" class="web-player" :src="playUrl"></web-view>
+
+		<view v-else class="state-wrap">
+			<text class="state-text">当前地址暂不支持页面内播放</text>
+			<view class="copy-btn" @tap="copyLink">
+				<text class="copy-btn-text">复制播放地址</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { computed, ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { normalizeAppUrl } from '../../utils/auth.uts'
+
+const pageTitle = ref('直播播放')
+const playUrl = ref('')
+const mode = ref('live')
+const errorText = ref('')
+const autoPlay = ref(true)
+
+const useVideoPlayer = computed(() : boolean => {
+	const url = playUrl.value.toLowerCase()
+	return url.startsWith('http://') || url.startsWith('https://')
+		? (url.indexOf('.m3u8') > -1 || url.indexOf('.mp4') > -1)
+		: false
+})
+
+const useWebView = computed(() : boolean => {
+	if (useVideoPlayer.value) {
+		return false
+	}
+	const url = playUrl.value.toLowerCase()
+	return url.startsWith('http://') || url.startsWith('https://')
+})
+
+function goBack() : void {
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack()
+		return
+	}
+	uni.redirectTo({ url: '/pages/live/index' })
+}
+
+function copyLink() : void {
+	if (playUrl.value.length == 0) {
+		return
+	}
+	uni.setClipboardData({
+		data: playUrl.value,
+		success: () => {
+			uni.showToast({
+				title: '播放地址已复制',
+				icon: 'none'
+			})
+		}
+	})
+}
+
+onLoad((options) => {
+	const routeOptions = options as UTSJSONObject
+	const titleValue = routeOptions['title']
+	const urlValue = routeOptions['url']
+	const modeValue = routeOptions['mode']
+
+	if (typeof titleValue == 'string' && titleValue.length > 0) {
+		pageTitle.value = decodeURIComponent(titleValue)
+	}
+	if (typeof modeValue == 'string' && modeValue.length > 0) {
+		mode.value = modeValue
+	}
+	if (typeof urlValue == 'string' && urlValue.length > 0) {
+		playUrl.value = normalizeAppUrl(decodeURIComponent(urlValue))
+	}
+
+	if (playUrl.value.length == 0) {
+		errorText.value = '缺少播放地址'
+		return
+	}
+})
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #111111;
+}
+
+.header {
+	height: 88rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	background-color: #111111;
+	position: relative;
+}
+
+.back-btn {
+	position: absolute;
+	left: 16rpx;
+	top: 0;
+	bottom: 0;
+	width: 56rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.back-icon-image {
+	width: 24rpx;
+	height: 24rpx;
+}
+
+.header-title {
+	font-size: 18px;
+	line-height: 28px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.player-shell {
+	flex: 1;
+	padding: 20rpx;
+}
+
+.video-player {
+	width: 100%;
+	height: 420rpx;
+	border-radius: 18rpx;
+	background-color: #000000;
+}
+
+.web-player {
+	flex: 1;
+}
+
+.state-wrap {
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	padding-left: 40rpx;
+	padding-right: 40rpx;
+}
+
+.state-text {
+	font-size: 14px;
+	line-height: 22px;
+	color: rgba(255, 255, 255, 0.72);
+	text-align: center;
+}
+
+.copy-btn {
+	margin-top: 28rpx;
+	width: 240rpx;
+	height: 72rpx;
+	border-radius: 16rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.copy-btn-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #ffffff;
+	font-weight: 600;
+}
+</style>

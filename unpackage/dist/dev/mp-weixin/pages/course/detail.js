@@ -35,6 +35,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const courseViews = common_vendor.ref("0");
     const courseFavorites = common_vendor.ref("0");
     const courseIntro = common_vendor.ref("这里展示课程基础信息。");
+    const courseCoverUrl = common_vendor.ref("");
     const isFavorited = common_vendor.ref(false);
     const isFavoriteLoading = common_vendor.ref(false);
     const catalogItems = common_vendor.ref([]);
@@ -56,6 +57,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         isFavorited.value = favorited;
       }, () => {
         isFavorited.value = false;
+      });
+    }
+    function reportBrowse() {
+      if (courseId.value.length == 0) {
+        return null;
+      }
+      utils_auth.reportBrowseHistory(new utils_auth.BrowseHistoryRequest({
+        resourceType: RESOURCE_TYPE,
+        resourceId: Number(courseId.value)
+      }), () => {
+      }, () => {
       });
     }
     function toggleFavorite() {
@@ -85,6 +97,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     }
     function applyCourseDetail(detail) {
       const titleText = safeText(detail.courseName);
+      courseCoverUrl.value = safeText(detail.coverUrl);
       if (titleText.length > 0) {
         courseTitle.value = titleText;
       }
@@ -150,6 +163,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       utils_auth.fetchCourseDetail(courseId.value, (detail) => {
         applyCourseDetail(detail);
+        reportBrowse();
       }, (message) => {
         common_vendor.index.showToast({
           title: message,
@@ -170,29 +184,35 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const __returned__ = common_vendor.e({
         a: common_assets._imports_0$1,
         b: common_vendor.o(goBack),
-        c: common_vendor.n(activeTab.value == "intro" ? "tab-text tab-text-active" : "tab-text"),
-        d: activeTab.value == "intro"
+        c: courseCoverUrl.value.length > 0
+      }, courseCoverUrl.value.length > 0 ? {
+        d: courseCoverUrl.value
+      } : {}, {
+        e: courseCoverUrl.value.length == 0
+      }, courseCoverUrl.value.length == 0 ? {} : {}, {
+        f: common_vendor.n(activeTab.value == "intro" ? "tab-text tab-text-active" : "tab-text"),
+        g: activeTab.value == "intro"
       }, activeTab.value == "intro" ? {} : {}, {
-        e: common_vendor.o(($event) => {
+        h: common_vendor.o(($event) => {
           return activeTab.value = "intro";
         }),
-        f: common_vendor.n(activeTab.value == "catalog" ? "tab-text tab-text-active" : "tab-text"),
-        g: activeTab.value == "catalog"
+        i: common_vendor.n(activeTab.value == "catalog" ? "tab-text tab-text-active" : "tab-text"),
+        j: activeTab.value == "catalog"
       }, activeTab.value == "catalog" ? {} : {}, {
-        h: common_vendor.o(($event) => {
+        k: common_vendor.o(($event) => {
           return activeTab.value = "catalog";
         }),
-        i: common_vendor.t(isFavorited.value ? "已收藏" : "收藏"),
-        j: common_vendor.n(isFavorited.value ? "favorite-text-active" : ""),
-        k: common_vendor.o(toggleFavorite),
-        l: activeTab.value == "intro"
+        l: common_vendor.t(isFavorited.value ? "已收藏" : "收藏"),
+        m: common_vendor.n(isFavorited.value ? "favorite-text-active" : ""),
+        n: common_vendor.o(toggleFavorite),
+        o: activeTab.value == "intro"
       }, activeTab.value == "intro" ? {
-        m: common_vendor.t(courseTitle.value),
-        n: common_vendor.t(courseViews.value),
-        o: common_vendor.t(courseFavorites.value),
-        p: common_vendor.t(courseIntro.value)
+        p: common_vendor.t(courseTitle.value),
+        q: common_vendor.t(courseViews.value),
+        r: common_vendor.t(courseFavorites.value),
+        s: common_vendor.t(courseIntro.value)
       } : {
-        q: common_vendor.f(catalogItems.value, (item, k0, i0) => {
+        t: common_vendor.f(catalogItems.value, (item, k0, i0) => {
           return {
             a: common_vendor.t(item.title),
             b: common_vendor.t(item.duration),
@@ -200,7 +220,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           };
         })
       }, {
-        r: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        v: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

@@ -9,7 +9,8 @@
 
     <scroll-view class="detail-scroll" scroll-y="true">
       <view class="detail-cover">
-        <view class="audio-disc audio-disc-large">
+        <image v-if="audioCoverUrl.length > 0" class="detail-cover-image" :src="audioCoverUrl" mode="aspectFill"></image>
+        <view v-else class="audio-disc audio-disc-large">
           <view class="audio-disc-center audio-disc-center-large"></view>
         </view>
       </view>
@@ -61,6 +62,7 @@ import { onShow } from '@dcloudio/uni-app'
 import {
   checkFavoriteStatus,
   fetchAudioDetail,
+  reportBrowseHistory,
   updateFavoriteStatus,
   type AppPodcast,
   type AppPodcastAudio
@@ -78,6 +80,7 @@ const audioId = ref('')
 const activeTab = ref('intro')
 const audioTitle = ref('音频详情')
 const audioSummary = ref('这里展示音频简介内容。')
+const audioCoverUrl = ref('')
 const viewCount = ref('0')
 const favoriteCount = ref('0')
 const currentAudioItemId = ref('')
@@ -118,6 +121,22 @@ function loadFavoriteStatus() : void {
   )
 }
 
+function reportBrowse() : void {
+  if (audioId.value.length == 0) {
+    return
+  }
+  reportBrowseHistory(
+    {
+      resourceType: RESOURCE_TYPE,
+      resourceId: Number(audioId.value)
+    },
+    () => {
+    },
+    () => {
+    }
+  )
+}
+
 function toggleFavorite() : void {
   if (audioId.value.length == 0 || isFavoriteLoading.value) {
     return
@@ -152,6 +171,7 @@ function toggleFavorite() : void {
 function applyAudioDetail(detail : AppPodcast) : void {
   const titleText = safeText(detail.title)
   const summaryText = safeText(detail.summary)
+  audioCoverUrl.value = safeText(detail.coverUrl)
 
   if (titleText.length > 0) {
     audioTitle.value = titleText
@@ -204,6 +224,7 @@ function loadAudioDetail() : void {
     audioId.value,
     (detail) => {
       applyAudioDetail(detail)
+      reportBrowse()
     },
     (message) => {
       uni.showToast({
@@ -276,10 +297,17 @@ onShow(() => {
 }
 
 .detail-cover {
+  position: relative;
   height: 232px;
   align-items: center;
   justify-content: center;
   background-color: #cabca7;
+  overflow: hidden;
+}
+
+.detail-cover-image {
+  width: 100%;
+  height: 232px;
 }
 
 .audio-disc {

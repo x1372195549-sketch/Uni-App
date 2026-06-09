@@ -1,0 +1,325 @@
+<template>
+	<view class="page">
+		<view class="nav-back" @tap="handleBack">
+			<image class="nav-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+		</view>
+
+		<view class="header">
+			<text class="header-title">{{ pageTitle }}</text>
+		</view>
+
+		<scroll-view class="form-scroll" scroll-y="true">
+			<view class="form-card">
+				<view class="form-item">
+					<text class="label">{{ typeLabel }}</text>
+					<picker class="picker" mode="selector" :range="typeOptions" @change="handleTypeChange">
+						<view class="picker-value">
+							<text class="picker-value-text">{{ form.feedbackType }}</text>
+						</view>
+					</picker>
+				</view>
+
+				<view class="form-item">
+					<view class="label-row">
+						<text class="label">{{ contentLabel }}</text>
+						<text class="required">{{ requiredMark }}</text>
+					</view>
+					<textarea
+						class="textarea"
+						v-model="form.content"
+						:maxlength="500"
+						:show-confirm-bar="false"
+						:placeholder="contentPlaceholder"
+					></textarea>
+					<view class="counter-row">
+						<text class="counter-text">{{ form.content.length }}/500</text>
+					</view>
+				</view>
+
+				<view class="form-item">
+					<text class="label">{{ contactLabel }}</text>
+					<input
+						class="input"
+						v-model="form.contact"
+						:maxlength="50"
+						:placeholder="contactPlaceholder"
+					/>
+				</view>
+			</view>
+
+			<view class="submit-wrap">
+				<button class="submit-btn" :disabled="submitting" @tap="handleSubmit">
+					{{ submitting ? submittingText : submitText }}
+				</button>
+			</view>
+
+			<view class="bottom-space"></view>
+		</scroll-view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { ref } from 'vue'
+import { submitFeedback, type AppFeedbackRequest } from '../../utils/auth.uts'
+
+const pageTitle = '意见反馈'
+const typeLabel = '反馈类型'
+const contentLabel = '反馈内容'
+const contactLabel = '联系方式'
+const requiredMark = '*'
+const submitText = '提交反馈'
+const submittingText = '提交中...'
+const contentPlaceholder = '请详细描述您的问题或建议'
+const contactPlaceholder = '手机号或微信号（选填）'
+const emptyContentText = '请填写反馈内容'
+const successText = '提交成功'
+const failedText = '提交失败，请稍后重试'
+
+const typeOptions = ['功能建议', '体验问题', '其他']
+const submitting = ref(false)
+
+const form = ref<AppFeedbackRequest>({
+	feedbackType: typeOptions[0],
+	content: '',
+	contact: ''
+})
+
+const handleBack = () => {
+	uni.navigateBack({
+		fail: () => {
+			uni.redirectTo({
+				url: '/pages/mine/index'
+			})
+		}
+	})
+}
+
+const handleTypeChange = (event : UniPickerChangeEvent) => {
+	const rawValue = event.detail.value
+	const index = Number(rawValue)
+	if (index >= 0 && index < typeOptions.length) {
+		form.value.feedbackType = typeOptions[index]
+	}
+}
+
+const validate = () : boolean => {
+	const content = form.value.content.trim()
+	if (content.length == 0) {
+		uni.showToast({
+			title: emptyContentText,
+			icon: 'none'
+		})
+		return false
+	}
+	if (content.length > 500) {
+		uni.showToast({
+			title: emptyContentText,
+			icon: 'none'
+		})
+		return false
+	}
+	return true
+}
+
+const resetForm = () => {
+	form.value = {
+		feedbackType: typeOptions[0],
+		content: '',
+		contact: ''
+	}
+}
+
+const handleSubmit = () => {
+	if (submitting.value || !validate()) {
+		return
+	}
+
+	submitting.value = true
+	const requestData : AppFeedbackRequest = {
+		feedbackType: form.value.feedbackType,
+		content: form.value.content.trim(),
+		contact: form.value.contact.trim()
+	}
+
+	submitFeedback(
+		requestData,
+		() => {
+			submitting.value = false
+			resetForm()
+			uni.showToast({
+				title: successText,
+				icon: 'success'
+			})
+			setTimeout(() => {
+				uni.navigateBack({
+					fail: () => {
+						uni.redirectTo({
+							url: '/pages/mine/index'
+						})
+					}
+				})
+			}, 1500)
+		},
+		(message) => {
+			submitting.value = false
+			uni.showToast({
+				title: message.length > 0 ? message : failedText,
+				icon: 'none'
+			})
+		}
+	)
+}
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+}
+
+.nav-back {
+	position: absolute;
+	left: 24rpx;
+	top: 88rpx;
+	width: 64rpx;
+	height: 64rpx;
+	align-items: center;
+	justify-content: center;
+	z-index: 5;
+}
+
+.nav-back-icon {
+	width: 32rpx;
+	height: 32rpx;
+}
+
+.header {
+	padding-top: 92rpx;
+	padding-bottom: 28rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.header-title {
+	font-size: 18px;
+	line-height: 26px;
+	color: #1f1f1f;
+	font-weight: 600;
+}
+
+.form-scroll {
+	flex: 1;
+}
+
+.form-card {
+	margin-left: 20rpx;
+	margin-right: 20rpx;
+	padding: 24rpx;
+	background-color: #ffffff;
+	border-radius: 20rpx;
+}
+
+.form-item {
+	margin-bottom: 28rpx;
+}
+
+.form-item:last-child {
+	margin-bottom: 0;
+}
+
+.label-row {
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: 14rpx;
+}
+
+.label {
+	font-size: 15px;
+	line-height: 22px;
+	color: #2d2d2d;
+	font-weight: 500;
+	margin-bottom: 14rpx;
+}
+
+.required {
+	font-size: 15px;
+	line-height: 22px;
+	color: #ef6b6b;
+	margin-left: 6rpx;
+	margin-top: -14rpx;
+}
+
+.picker-value,
+.input,
+.textarea {
+	width: 100%;
+	background-color: #f8f6f1;
+	border-radius: 14rpx;
+}
+
+.picker-value {
+	height: 84rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.picker-value-text {
+	font-size: 14px;
+	line-height: 20px;
+	color: #333333;
+}
+
+.input {
+	height: 84rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	font-size: 14px;
+	color: #333333;
+	box-sizing: border-box;
+}
+
+.textarea {
+	min-height: 240rpx;
+	padding: 20rpx;
+	font-size: 14px;
+	line-height: 22px;
+	color: #333333;
+}
+
+.counter-row {
+	margin-top: 12rpx;
+	align-items: flex-end;
+}
+
+.counter-text {
+	font-size: 12px;
+	line-height: 18px;
+	color: #999999;
+}
+
+.submit-wrap {
+	margin-left: 20rpx;
+	margin-right: 20rpx;
+	margin-top: 28rpx;
+}
+
+.submit-btn {
+	height: 88rpx;
+	line-height: 88rpx;
+	background-color: #17b96d;
+	border-radius: 14rpx;
+	color: #ffffff;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.submit-btn::after {
+	border-width: 0;
+}
+
+.bottom-space {
+	height: 36rpx;
+}
+</style>

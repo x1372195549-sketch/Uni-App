@@ -2,6 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const common_assets = require("../../common/assets.js");
 const utils_auth = require("../../utils/auth.js");
+const KNOWLEDGE_DETAIL_ID_KEY = "knowledge_detail_id";
 class CategoryDisplayItem extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -180,6 +181,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       loadKnowledgeList(true);
     }
     function goBookDetail(item) {
+      common_vendor.index.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, String(item.id));
       common_vendor.index.navigateTo({
         url: "/pages/knowledge/book-detail?id=" + String(item.id)
       });
@@ -272,14 +274,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         s: isRefreshing.value,
         t: common_vendor.o(handleRefresh),
         v: common_vendor.o(loadMore),
-        w: common_assets._imports_1$2,
+        w: common_assets._imports_2,
         x: common_vendor.o(goLearningPage),
-        y: common_assets._imports_2,
+        y: common_assets._imports_2$1,
         z: common_vendor.o(goExamPage),
-        A: common_assets._imports_3,
+        A: common_assets._imports_4,
         B: common_vendor.o(goConsultPage),
         C: common_assets._imports_4$1,
-        D: common_assets._imports_5,
+        D: common_assets._imports_6$1,
         E: common_vendor.o(goMinePage),
         F: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
