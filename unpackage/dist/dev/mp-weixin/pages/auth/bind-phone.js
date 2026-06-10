@@ -31,7 +31,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }, 1e3);
     };
     const handleBack = () => {
-      common_vendor.index.navigateBack();
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        common_vendor.index.navigateBack();
+        return null;
+      }
+      common_vendor.index.redirectTo({ url: "/pages/login/index" });
     };
     const handleSendCode = () => {
       if (isSendingCode.value || countdown.value > 0) {

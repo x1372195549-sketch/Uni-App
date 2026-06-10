@@ -68,8 +68,8 @@ const capitalize = cacheStringFunction((str) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 });
 const toHandlerKey = cacheStringFunction((str) => {
-  const s = str ? `on${capitalize(str)}` : ``;
-  return s;
+  const s2 = str ? `on${capitalize(str)}` : ``;
+  return s2;
 });
 const hasChanged = (value, oldValue) => !Object.is(value, oldValue);
 const invokeArrayFns$1 = (fns, arg) => {
@@ -5846,6 +5846,7 @@ function genUniElementId(_ctx, idBinding, genId) {
 }
 const o = (value, key) => vOn(value, key);
 const f = (source, renderItem) => vFor(source, renderItem);
+const s = (value) => stringifyStyle(value);
 const e = (target, ...sources) => extend(target, ...sources);
 const n = (value) => normalizeClass(value);
 const t = (val) => toDisplayString(val);
@@ -7840,7 +7841,7 @@ function isConsoleWritable() {
 function initRuntimeSocketService() {
   const hosts = "26.111.21.246,10.21.146.83,127.0.0.1";
   const port = "8090";
-  const id = "mp-weixin_n-1-NL";
+  const id = "mp-weixin__kkErp";
   const lazy = typeof swan !== "undefined";
   let restoreError = lazy ? () => {
   } : initOnError();
@@ -9499,8 +9500,18 @@ const onShow = /* @__PURE__ */ createLifeCycleHook(
   1 | 2
   /* HookFlags.PAGE */
 );
+const onHide = /* @__PURE__ */ createLifeCycleHook(
+  ON_HIDE,
+  1 | 2
+  /* HookFlags.PAGE */
+);
 const onLoad = /* @__PURE__ */ createLifeCycleHook(
   ON_LOAD,
+  2
+  /* HookFlags.PAGE */
+);
+const onUnload = /* @__PURE__ */ createLifeCycleHook(
+  ON_UNLOAD,
   2
   /* HookFlags.PAGE */
 );
@@ -9514,11 +9525,14 @@ exports.index = index;
 exports.isRef = isRef;
 exports.n = n;
 exports.o = o;
+exports.onHide = onHide;
 exports.onLoad = onLoad;
 exports.onMounted = onMounted;
 exports.onShow = onShow;
+exports.onUnload = onUnload;
 exports.onUnmounted = onUnmounted;
 exports.ref = ref;
+exports.s = s;
 exports.sei = sei;
 exports.t = t;
 exports.unref = unref;

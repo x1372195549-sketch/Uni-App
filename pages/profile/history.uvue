@@ -124,7 +124,6 @@ const TAB_TOPIC = 'TOPIC'
 const TAB_PODCAST = 'PODCAST'
 const TAB_LIVE = 'LIVE'
 const TAB_ARTICLE = 'ARTICLE'
-const TAB_PAPER = 'EXAM_PAPER'
 
 const pageTitle = '学习历史'
 const loadingText = '加载中...'
@@ -145,8 +144,7 @@ const tabs : HistoryTab[] = [
 	{ key: TAB_TOPIC, label: '专题' },
 	{ key: TAB_PODCAST, label: '音频' },
 	{ key: TAB_LIVE, label: '直播' },
-	{ key: TAB_ARTICLE, label: '资讯' },
-	{ key: TAB_PAPER, label: '试题' }
+	{ key: TAB_ARTICLE, label: '资讯' }
 ]
 
 const PAGE_SIZE = 15
@@ -223,15 +221,6 @@ function normalizeHistoryType(resourceType : string) : string {
 	) {
 		return TAB_ARTICLE
 	}
-	if (
-		normalized == 'EXAM_PAPER' ||
-		normalized == 'EXAM' ||
-		normalized == 'PAPER' ||
-		normalized == 'QUIZ' ||
-		normalized == 'QUESTION'
-	) {
-		return TAB_PAPER
-	}
 	return normalized
 }
 
@@ -258,9 +247,6 @@ function resolveTypeLabel(resourceType : string, typeLabel : string) : string {
 	}
 	if (normalized == TAB_ARTICLE) {
 		return '资讯'
-	}
-	if (normalized == TAB_PAPER) {
-		return '试题'
 	}
 	return '历史'
 }
@@ -316,7 +302,7 @@ function buildFallbackHistoryItem(record : AppResourceRecord) : HistoryDisplayIt
 		progressText: '0%',
 		durationText: formatDuration(record.viewCount),
 		shortTitle: toShortTitle(typeLabel),
-		canOpen: resourceType == TAB_BOOK || resourceType == TAB_COURSE || resourceType == TAB_TOPIC || resourceType == TAB_PODCAST || resourceType == TAB_LIVE || resourceType == TAB_ARTICLE || resourceType == TAB_PAPER
+		canOpen: resourceType == TAB_BOOK || resourceType == TAB_COURSE || resourceType == TAB_TOPIC || resourceType == TAB_PODCAST || resourceType == TAB_LIVE || resourceType == TAB_ARTICLE
 	}
 }
 
@@ -582,7 +568,7 @@ function goToDetail(item : HistoryDisplayItem) : void {
 	}
 	if (item.resourceType == TAB_BOOK) {
 		uni.setStorageSync('knowledge_detail_id', String(item.resourceId))
-		uni.navigateTo({ url: '/pages/knowledge/book-detail?id=' + String(item.resourceId) })
+		uni.navigateTo({ url: '/pages/book/detail?id=' + String(item.resourceId) })
 		return
 	}
 	if (item.resourceType == TAB_COURSE) {
@@ -605,11 +591,6 @@ function goToDetail(item : HistoryDisplayItem) : void {
 	if (item.resourceType == TAB_ARTICLE) {
 		uni.setStorageSync('article_detail_id', String(item.resourceId))
 		uni.navigateTo({ url: '/pages/news/detail?id=' + String(item.resourceId) })
-		return
-	}
-	if (item.resourceType == TAB_PAPER) {
-		uni.setStorageSync('exam_paper_id', String(item.resourceId))
-		uni.navigateTo({ url: '/pages/exam/paper?id=' + String(item.resourceId) })
 		return
 	}
 	uni.showToast({

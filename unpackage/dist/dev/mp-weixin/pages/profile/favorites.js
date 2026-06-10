@@ -60,8 +60,9 @@ class FavoriteDisplayItem extends UTS.UTSType {
 }
 const TYPE_ALL = "ALL";
 const TYPE_AUDIO = "AUDIO";
-const TYPE_LIVE = "LIVE";
 const TYPE_COURSE = "COURSE";
+const TYPE_LIVE = "LIVE";
+const TYPE_BOOK = "BOOK";
 const TYPE_TOPIC = "TOPIC";
 const TYPE_INFO = "INFO";
 const pageTitleText = "我的收藏";
@@ -78,8 +79,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const tabs = [
       new FavoriteTab({ key: TYPE_ALL, label: "全部" }),
       new FavoriteTab({ key: TYPE_AUDIO, label: "音频" }),
-      new FavoriteTab({ key: TYPE_LIVE, label: "直播" }),
       new FavoriteTab({ key: TYPE_COURSE, label: "课程" }),
+      new FavoriteTab({ key: TYPE_LIVE, label: "直播" }),
+      new FavoriteTab({ key: TYPE_BOOK, label: "图书" }),
       new FavoriteTab({ key: TYPE_TOPIC, label: "专题" }),
       new FavoriteTab({ key: TYPE_INFO, label: "资讯" })
     ];
@@ -116,6 +118,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (normalizedType == "course") {
         return TYPE_COURSE;
       }
+      if (normalizedType == "book" || normalizedType == "books" || normalizedType == "learning") {
+        return TYPE_BOOK;
+      }
       if (normalizedType == "topic") {
         return TYPE_TOPIC;
       }
@@ -135,6 +140,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (normalizedType == TYPE_COURSE) {
         return "课程";
       }
+      if (normalizedType == TYPE_BOOK) {
+        return "图书";
+      }
       if (normalizedType == TYPE_TOPIC) {
         return "专题";
       }
@@ -153,6 +161,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       if (normalizedType == TYPE_COURSE) {
         return "#F3E3D8";
+      }
+      if (normalizedType == TYPE_BOOK) {
+        return "#F2DFCA";
       }
       if (normalizedType == TYPE_TOPIC) {
         return "#EDE3D4";
@@ -224,6 +235,19 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         coverColor: getCoverColor(record.resourceType)
       });
     };
+    const mapBookFavorite = (record, detail) => {
+      return new FavoriteDisplayItem({
+        id: String(record.id),
+        resourceType: normalizeFavoriteType(record.resourceType),
+        resourceId: record.resourceId,
+        typeLabel: getTypeLabel(record.resourceType),
+        title: safeText(detail.bookName).length > 0 ? detail.bookName : "图书 #" + String(record.resourceId),
+        source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.author),
+        timeText: formatOccurredAt(safeText(record.occurredAt)),
+        coverUrl: sanitizeCoverUrl(detail.coverUrl),
+        coverColor: getCoverColor(record.resourceType)
+      });
+    };
     const mapTopicFavorite = (record, detail) => {
       return new FavoriteDisplayItem({
         id: String(record.id),
@@ -271,6 +295,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (normalizedType == TYPE_COURSE) {
         utils_auth.fetchCourseDetail(String(record.resourceId), (detail) => {
           success(mapCourseFavorite(record, detail));
+        }, () => {
+          success(buildFallbackItem(record));
+        });
+        return null;
+      }
+      if (normalizedType == TYPE_BOOK) {
+        utils_auth.fetchBookDetail(String(record.resourceId), (detail) => {
+          success(mapBookFavorite(record, detail));
         }, () => {
           success(buildFallbackItem(record));
         });
@@ -325,7 +357,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         errorText.value = message.length > 0 ? message : loadFailedText;
         allItems.value = [];
         isLoading.value = false;
-      });
+      }, "occurredAt,desc");
     };
     const changeTab = (tabKey) => {
       activeTab.value = tabKey;
@@ -356,6 +388,8 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         url = "/pages/live/detail?id=" + String(item.resourceId);
       } else if (item.resourceType == TYPE_COURSE) {
         url = "/pages/course/detail?id=" + String(item.resourceId);
+      } else if (item.resourceType == TYPE_BOOK) {
+        url = "/pages/book/detail?id=" + String(item.resourceId);
       } else if (item.resourceType == TYPE_TOPIC) {
         url = "/pages/topics/detail?id=" + String(item.resourceId);
       } else if (item.resourceType == TYPE_INFO) {

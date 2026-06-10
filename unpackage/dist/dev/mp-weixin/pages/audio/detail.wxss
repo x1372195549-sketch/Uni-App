@@ -6,7 +6,8 @@
   background-color: #f8f6f0;
 }
 .detail-header {
-  height: 96rpx;
+  height: calc(96rpx + var(--status-bar-height));
+  padding-top: var(--status-bar-height);
   padding-left: 24rpx;
   padding-right: 24rpx;
   flex-direction: row;
@@ -21,6 +22,7 @@
 .header-back {
   position: absolute;
   left: 20rpx;
+  top: var(--status-bar-height);
   width: 68rpx;
   height: 68rpx;
   align-items: center;
@@ -42,15 +44,80 @@
 }
 .detail-cover {
   position: relative;
-  height: 232px;
+  height: 420rpx;
   align-items: center;
   justify-content: center;
-  background-color: #cabca7;
+  background-color: #000000;
   overflow: hidden;
 }
 .detail-cover-image {
-  width: 100%;
-  height: 232px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 750rpx;
+  height: 420rpx;
+}
+.detail-cover-placeholder {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 750rpx;
+  height: 420rpx;
+  background-color: #e7d7c6;
+}
+.audio-video-mask {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.12);
+}
+.audio-play-button {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 55rpx;
+  background-color: rgba(255, 255, 255, 0.46);
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.audio-play-triangle {
+  width: 0;
+  height: 0;
+  margin-left: 8rpx;
+  border-top-width: 24rpx;
+  border-top-style: solid;
+  border-top-color: transparent;
+  border-bottom-width: 24rpx;
+  border-bottom-style: solid;
+  border-bottom-color: transparent;
+  border-left-width: 34rpx;
+  border-left-style: solid;
+  border-left-color: rgba(255, 255, 255, 0.94);
+}
+.audio-pause-bars {
+  width: 38rpx;
+  height: 44rpx;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.audio-pause-bar {
+  width: 12rpx;
+  height: 44rpx;
+  border-radius: 6rpx;
+  background-color: rgba(255, 255, 255, 0.94);
+}
+.audio-video-duration {
+  position: absolute;
+  right: 24rpx;
+  bottom: 24rpx;
+  font-size: 15px;
+  line-height: 22px;
+  color: #ffffff;
+  text-align: right;
+  z-index: 2;
 }
 .audio-disc {
   border-radius: 999px;

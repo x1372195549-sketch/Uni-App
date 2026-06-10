@@ -10,18 +10,21 @@
         <view class="top-tab" @tap="goLearningPage">
           <text class="top-tab-text">{{ homeTabText }}</text>
         </view>
-        <view class="top-tab" @tap="goTopicsPage">
-          <text class="top-tab-text">{{ topicsTabText }}</text>
-        </view>
         <view class="top-tab" @tap="goAudioPage">
           <text class="top-tab-text">{{ audioTabText }}</text>
-        </view>
-        <view class="top-tab" @tap="goLivePage">
-          <text class="top-tab-text">{{ liveTabText }}</text>
         </view>
         <view class="top-tab top-tab-active">
           <text class="top-tab-text top-tab-text-active">{{ pageTitleText }}</text>
           <view class="top-tab-line"></view>
+        </view>
+        <view class="top-tab" @tap="goLivePage">
+          <text class="top-tab-text">{{ liveTabText }}</text>
+        </view>
+        <view class="top-tab" @tap="goBookPage">
+          <text class="top-tab-text">{{ bookTabText }}</text>
+        </view>
+        <view class="top-tab" @tap="goTopicsPage">
+          <text class="top-tab-text">{{ topicsTabText }}</text>
         </view>
         <view class="top-tab" @tap="goNewsPage">
           <text class="top-tab-text">{{ newsTabText }}</text>
@@ -44,8 +47,15 @@
 
     <scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
       <view class="content-shell">
-        <view v-if="isLoading" class="state-wrap">
-          <text class="state-text">{{ loadingText }}</text>
+        <view v-if="isLoading" class="skeleton-list">
+          <view class="skeleton-card" v-for="item in skeletonItems" :key="item">
+            <view class="skeleton-cover"></view>
+            <view class="skeleton-main">
+              <view class="skeleton-line skeleton-line-title"></view>
+              <view class="skeleton-line skeleton-line-meta"></view>
+              <view class="skeleton-line skeleton-line-short"></view>
+            </view>
+          </view>
         </view>
 
         <view v-else-if="errorText.length > 0" class="state-wrap">
@@ -141,6 +151,7 @@ const PAGE_SIZE = 10
 const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
 const homeTabText = '\u9996\u9875'
 const topicsTabText = '\u4e13\u9898'
+const bookTabText = '\u56fe\u4e66'
 const audioTabText = '\u97f3\u9891'
 const liveTabText = '\u76f4\u64ad'
 const pageTitleText = '\u8bfe\u7a0b'
@@ -152,7 +163,6 @@ const knowledgeTabText = '\u77e5\u8bc6\u5e93'
 const mineTabText = '\u6211\u7684'
 const searchPlaceholder = '\u641c\u7d22\u6807\u9898\u3001\u8bb2\u5e08\u3001\u8bfe\u7a0b'
 const searchText = '\u641c\u7d22'
-const loadingText = '\u52a0\u8f7d\u4e2d...'
 const retryText = '\u91cd\u65b0\u52a0\u8f7d'
 const emptyText = '\u6682\u65e0\u8bfe\u7a0b'
 const loadingMoreText = '\u52a0\u8f7d\u66f4\u591a\u4e2d...'
@@ -172,6 +182,8 @@ const isLoading = ref(true)
 const isListLoading = ref(false)
 const errorText = ref('')
 const hasLoadedOnce = ref(false)
+const isNavigating = ref(false)
+const skeletonItems : number[] = [1, 2, 3]
 
 const safeText = (value : string | null) : string => {
   return value == null || value.length == 0 ? '' : value
@@ -247,51 +259,74 @@ const loadMore = () => {
   loadCourseItems(true)
 }
 
+const redirectToPage = (url : string) => {
+  if (isNavigating.value) {
+    return
+  }
+  isNavigating.value = true
+  uni.redirectTo({
+    url: url,
+    complete: () => {
+      isNavigating.value = false
+    }
+  })
+}
+
 const goLearningPage = () => {
-  uni.redirectTo({ url: '/pages/index/index' })
+  redirectToPage('/pages/index/index')
 }
 
 const goTopicsPage = () => {
-  uni.redirectTo({ url: '/pages/topics/list' })
+  redirectToPage('/pages/topics/list')
+}
+
+const goBookPage = () => {
+  redirectToPage('/pages/book/index')
 }
 
 const goAudioPage = () => {
-  uni.redirectTo({ url: '/pages/audio/index' })
+  redirectToPage('/pages/audio/index')
 }
 
 const goLivePage = () => {
-  uni.redirectTo({ url: '/pages/live/index' })
+  redirectToPage('/pages/live/index')
 }
 
 const goNewsPage = () => {
-  uni.redirectTo({ url: '/pages/news/index' })
+  redirectToPage('/pages/news/index')
 }
 
 const goMinePage = () => {
-  uni.redirectTo({ url: '/pages/mine/index' })
+  redirectToPage('/pages/mine/index')
 }
 
 const goExamPage = () => {
-  uni.redirectTo({ url: '/pages/exam/index' })
+  redirectToPage('/pages/exam/index')
 }
 
 const goKnowledgePage = () => {
-  uni.redirectTo({ url: '/pages/knowledge/index' })
+  redirectToPage('/pages/knowledge/index')
 }
 
 const goConsultPage = () => {
-  uni.redirectTo({ url: '/pages/consult/index' })
+  redirectToPage('/pages/consult/index')
 }
 
 const goCourseDetail = (id : string) => {
   uni.navigateTo({ url: '/pages/course/detail?id=' + id })
 }
 
-onShow(() => {
+const ensureLoaded = () => {
   if (!hasLoadedOnce.value) {
     hasLoadedOnce.value = true
     loadCourseItems(false)
   }
+}
+
+ensureLoaded()
+
+onShow(() => {
+  ensureLoaded()
 })
 </script>
 
@@ -299,6 +334,7 @@ onShow(() => {
 .page {
   flex: 1;
   background-color: #f7f7f2;
+  min-height: 100vh;
 }
 
 .hero-shell {
@@ -440,6 +476,46 @@ onShow(() => {
 
 .list-wrap {
   gap: 18rpx;
+}
+
+.skeleton-list {
+  gap: 18rpx;
+}
+
+.skeleton-card {
+  min-height: 300rpx;
+  border-radius: 22rpx;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.skeleton-cover {
+  height: 196rpx;
+  background-color: #efe6dc;
+}
+
+.skeleton-main {
+  padding: 20rpx 24rpx 24rpx;
+}
+
+.skeleton-line {
+  height: 24rpx;
+  border-radius: 999rpx;
+  background-color: #eee9e1;
+}
+
+.skeleton-line-title {
+  width: 70%;
+}
+
+.skeleton-line-meta {
+  width: 48%;
+  margin-top: 18rpx;
+}
+
+.skeleton-line-short {
+  width: 34%;
+  margin-top: 14rpx;
 }
 
 .course-card {

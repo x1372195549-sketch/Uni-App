@@ -188,7 +188,7 @@ const goResourceDetail = (item : TopicSectionResource) => {
 			return
 		}
 		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, String(item.resourceId))
-		uni.navigateTo({ url: '/pages/knowledge/book-detail?id=' + String(item.resourceId) })
+		uni.navigateTo({ url: '/pages/book/detail?id=' + String(item.resourceId) })
 		return
 	}
 	if (type == 'course') {

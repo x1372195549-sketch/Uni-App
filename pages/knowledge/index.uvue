@@ -68,28 +68,24 @@
 					</view>
 				</view>
 
-				<view v-else-if="bookList.length == 0" class="state-wrap">
+				<view v-else-if="knowledgeList.length == 0" class="state-wrap">
 					<text class="state-text">暂无知识内容</text>
 				</view>
 
 				<view v-else class="book-list">
 					<view
-						v-for="item in bookList"
+						v-for="item in knowledgeList"
 						:key="item.id"
 						class="book-card"
-						@click="goBookDetail(item)"
-					>
-						<view class="book-cover-shell">
-							<image
-								v-if="item.coverUrl.length > 0"
-								class="book-cover"
-								:src="item.coverUrl"
-								mode="aspectFill"
-							></image>
-							<view v-else class="book-cover-fallback">
-								<text class="book-cover-fallback-text">{{ item.shortTitle }}</text>
+						@click="goKnowledgeDetail(item)"
+						>
+							<view v-if="item.coverUrl.length > 0" class="book-cover-shell">
+								<image
+									class="book-cover"
+									:src="item.coverUrl"
+									mode="aspectFill"
+								></image>
 							</view>
-						</view>
 
 						<view class="book-main">
 							<text class="book-title">{{ item.title }}</text>
@@ -142,6 +138,7 @@
 import { ref } from 'vue'
 import {
 	fetchKnowledgeCategoryTree,
+	fetchKnowledgeEntryDetail,
 	fetchKnowledgeEntries,
 	type KnowledgeCategory,
 	type KnowledgeEntry
@@ -171,13 +168,14 @@ const PAGE_SIZE = 10
 const searchKeyword = ref('')
 const selectedCategoryId = ref(0)
 const flatCategories = ref<CategoryDisplayItem[]>([])
-const bookList = ref<KnowledgeDisplayItem[]>([])
+const knowledgeList = ref<KnowledgeDisplayItem[]>([])
 const page = ref(1)
 const hasMore = ref(true)
 const isInitialLoading = ref(true)
 const isListLoading = ref(false)
 const isRefreshing = ref(false)
 const errorText = ref('')
+const coverLoadingIds = ref<number[]>([])
 
 function safeText(value : string | null) : string {
 	return value == null || value.length == 0 ? '' : value
@@ -226,6 +224,58 @@ function mapKnowledgeItem(item : KnowledgeEntry) : KnowledgeDisplayItem {
 	} as KnowledgeDisplayItem
 }
 
+function hasCoverLoading(id : number) : boolean {
+	return coverLoadingIds.value.indexOf(id) >= 0
+}
+
+function updateKnowledgeCover(id : number, coverUrl : string) : void {
+	const normalizedCover = safeText(coverUrl)
+	if (normalizedCover.length == 0) {
+		return
+	}
+	knowledgeList.value = knowledgeList.value.map((item : KnowledgeDisplayItem) : KnowledgeDisplayItem => {
+		if (item.id == id) {
+			return {
+				id: item.id,
+				title: item.title,
+				summary: item.summary,
+				author: item.author,
+				categoryName: item.categoryName,
+				coverUrl: normalizedCover,
+				viewCount: item.viewCount,
+				publishedAt: item.publishedAt,
+				shortTitle: item.shortTitle
+			} as KnowledgeDisplayItem
+		}
+		return item
+	})
+}
+
+function markCoverLoaded(id : number) : void {
+	coverLoadingIds.value = coverLoadingIds.value.filter((itemId : number) : boolean => {
+		return itemId != id
+	})
+}
+
+function hydrateMissingCovers(items : KnowledgeDisplayItem[]) : void {
+	items.forEach((item : KnowledgeDisplayItem) => {
+		if (item.coverUrl.length > 0 || hasCoverLoading(item.id)) {
+			return
+		}
+		coverLoadingIds.value = coverLoadingIds.value.concat([item.id])
+		fetchKnowledgeEntryDetail(
+			String(item.id),
+			(detail) => {
+				updateKnowledgeCover(item.id, detail.coverUrl)
+				markCoverLoaded(item.id)
+			},
+			() => {
+				markCoverLoaded(item.id)
+			}
+		)
+	})
+}
+
 function loadCategories() : void {
 	fetchKnowledgeCategoryTree(
 		(categories) => {
@@ -268,10 +318,11 @@ function loadKnowledgeList(loadMore : boolean) : void {
 			}) : []
 
 			if (loadMore) {
-				bookList.value = bookList.value.concat(mapped)
+				knowledgeList.value = knowledgeList.value.concat(mapped)
 			} else {
-				bookList.value = mapped
+				knowledgeList.value = mapped
 			}
+			hydrateMissingCovers(mapped)
 
 			hasMore.value = mapped.length >= PAGE_SIZE
 			if (hasMore.value) {
@@ -316,10 +367,10 @@ function loadMore() : void {
 	loadKnowledgeList(true)
 }
 
-function goBookDetail(item : KnowledgeDisplayItem) : void {
+function goKnowledgeDetail(item : KnowledgeDisplayItem) : void {
 	uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, String(item.id))
 	uni.navigateTo({
-		url: '/pages/knowledge/book-detail?id=' + String(item.id)
+		url: '/pages/knowledge/detail?id=' + String(item.id)
 	})
 }
 
@@ -519,23 +570,6 @@ loadInitialData()
 .book-cover {
 	width: 132rpx;
 	height: 176rpx;
-}
-
-.book-cover-fallback {
-	width: 132rpx;
-	height: 176rpx;
-	padding: 20rpx 14rpx;
-	align-items: center;
-	justify-content: center;
-	background-color: #e8dcc5;
-}
-
-.book-cover-fallback-text {
-	font-size: 18px;
-	line-height: 26px;
-	color: #6e6049;
-	font-weight: 600;
-	text-align: center;
 }
 
 .book-main {

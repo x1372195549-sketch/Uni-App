@@ -71,7 +71,6 @@ const TAB_TOPIC = "TOPIC";
 const TAB_PODCAST = "PODCAST";
 const TAB_LIVE = "LIVE";
 const TAB_ARTICLE = "ARTICLE";
-const TAB_PAPER = "EXAM_PAPER";
 const pageTitle = "学习历史";
 const loadingText = "加载中...";
 const retryText = "重新加载";
@@ -94,8 +93,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       new HistoryTab({ key: TAB_TOPIC, label: "专题" }),
       new HistoryTab({ key: TAB_PODCAST, label: "音频" }),
       new HistoryTab({ key: TAB_LIVE, label: "直播" }),
-      new HistoryTab({ key: TAB_ARTICLE, label: "资讯" }),
-      new HistoryTab({ key: TAB_PAPER, label: "试题" })
+      new HistoryTab({ key: TAB_ARTICLE, label: "资讯" })
     ];
     const activeTab = common_vendor.ref(TAB_ALL);
     const page = common_vendor.ref(1);
@@ -135,9 +133,6 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (normalized == "ARTICLE" || normalized == "ARTICLES" || normalized == "INFO" || normalized == "NEWS" || normalized == "CONTENT") {
         return TAB_ARTICLE;
       }
-      if (normalized == "EXAM_PAPER" || normalized == "EXAM" || normalized == "PAPER" || normalized == "QUIZ" || normalized == "QUESTION") {
-        return TAB_PAPER;
-      }
       return normalized;
     }
     function resolveTypeLabel(resourceType, typeLabel) {
@@ -163,9 +158,6 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       if (normalized == TAB_ARTICLE) {
         return "资讯";
-      }
-      if (normalized == TAB_PAPER) {
-        return "试题";
       }
       return "历史";
     }
@@ -216,7 +208,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         progressText: "0%",
         durationText: formatDuration(record.viewCount),
         shortTitle: toShortTitle(typeLabel),
-        canOpen: resourceType == TAB_BOOK || resourceType == TAB_COURSE || resourceType == TAB_TOPIC || resourceType == TAB_PODCAST || resourceType == TAB_LIVE || resourceType == TAB_ARTICLE || resourceType == TAB_PAPER
+        canOpen: resourceType == TAB_BOOK || resourceType == TAB_COURSE || resourceType == TAB_TOPIC || resourceType == TAB_PODCAST || resourceType == TAB_LIVE || resourceType == TAB_ARTICLE
       });
     }
     function mapBookHistory(record, detail) {
@@ -436,7 +428,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       if (item.resourceType == TAB_BOOK) {
         common_vendor.index.setStorageSync("knowledge_detail_id", String(item.resourceId));
-        common_vendor.index.navigateTo({ url: "/pages/knowledge/book-detail?id=" + String(item.resourceId) });
+        common_vendor.index.navigateTo({ url: "/pages/book/detail?id=" + String(item.resourceId) });
         return null;
       }
       if (item.resourceType == TAB_COURSE) {
@@ -459,11 +451,6 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (item.resourceType == TAB_ARTICLE) {
         common_vendor.index.setStorageSync("article_detail_id", String(item.resourceId));
         common_vendor.index.navigateTo({ url: "/pages/news/detail?id=" + String(item.resourceId) });
-        return null;
-      }
-      if (item.resourceType == TAB_PAPER) {
-        common_vendor.index.setStorageSync("exam_paper_id", String(item.resourceId));
-        common_vendor.index.navigateTo({ url: "/pages/exam/paper?id=" + String(item.resourceId) });
         return null;
       }
       common_vendor.index.showToast({

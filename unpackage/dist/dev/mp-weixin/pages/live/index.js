@@ -47,6 +47,7 @@ const PAGE_SIZE = 10;
 const appTitleText = "江苏中医在线";
 const homeTabText = "首页";
 const topicsTabText = "专题";
+const bookTabText = "图书";
 const audioTabText = "音频";
 const pageTitleText = "直播";
 const courseTabText = "课程";
@@ -58,7 +59,6 @@ const knowledgeTabText = "知识库";
 const mineTabText = "我的";
 const searchPlaceholder = "搜索标题、讲师、主播";
 const searchText = "搜索";
-const loadingText = "加载中...";
 const retryText = "重新加载";
 const emptyText = "暂无直播";
 const loadingMoreText = "加载更多中...";
@@ -86,6 +86,8 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const isListLoading = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
     const hasLoadedOnce = common_vendor.ref(false);
+    const isNavigating = common_vendor.ref(false);
+    const skeletonItems = [1, 2, 3];
     function safeText(value = null) {
       return value == null || value.length == 0 ? "" : value;
     }
@@ -187,41 +189,60 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     function loadMore() {
       loadLiveItems(true);
     }
+    function redirectToPage(url) {
+      if (isNavigating.value) {
+        return null;
+      }
+      isNavigating.value = true;
+      common_vendor.index.redirectTo({
+        url,
+        complete: () => {
+          isNavigating.value = false;
+        }
+      });
+    }
     function goLearningPage() {
-      common_vendor.index.redirectTo({ url: "/pages/index/index" });
+      redirectToPage("/pages/index/index");
     }
     function goTopicsPage() {
-      common_vendor.index.redirectTo({ url: "/pages/topics/list" });
+      redirectToPage("/pages/topics/list");
+    }
+    function goBookPage() {
+      redirectToPage("/pages/book/index");
     }
     function goAudioPage() {
-      common_vendor.index.redirectTo({ url: "/pages/audio/index" });
+      redirectToPage("/pages/audio/index");
     }
     function goCoursePage() {
-      common_vendor.index.redirectTo({ url: "/pages/course/index" });
+      redirectToPage("/pages/course/index");
     }
     function goNewsPage() {
-      common_vendor.index.redirectTo({ url: "/pages/news/index" });
+      redirectToPage("/pages/news/index");
     }
     function goMinePage() {
-      common_vendor.index.redirectTo({ url: "/pages/mine/index" });
+      redirectToPage("/pages/mine/index");
     }
     function goExamPage() {
-      common_vendor.index.redirectTo({ url: "/pages/exam/index" });
+      redirectToPage("/pages/exam/index");
     }
     function goConsultPage() {
-      common_vendor.index.redirectTo({ url: "/pages/consult/index" });
+      redirectToPage("/pages/consult/index");
     }
     function goKnowledgePage() {
-      common_vendor.index.redirectTo({ url: "/pages/knowledge/index" });
+      redirectToPage("/pages/knowledge/index");
     }
     function goLiveDetail(id) {
       common_vendor.index.navigateTo({ url: "/pages/live/detail?id=" + id });
     }
-    common_vendor.onShow(() => {
+    function ensureLoaded() {
       if (!hasLoadedOnce.value) {
         hasLoadedOnce.value = true;
         loadLiveItems(false);
       }
+    }
+    ensureLoaded();
+    common_vendor.onShow(() => {
+      ensureLoaded();
     });
     return (_ctx, _cache) => {
       "raw js";
@@ -230,34 +251,40 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         b: common_vendor.t(appTitleText),
         c: common_vendor.t(homeTabText),
         d: common_vendor.o(goLearningPage),
-        e: common_vendor.t(topicsTabText),
-        f: common_vendor.o(goTopicsPage),
-        g: common_vendor.t(audioTabText),
-        h: common_vendor.o(goAudioPage),
+        e: common_vendor.t(audioTabText),
+        f: common_vendor.o(goAudioPage),
+        g: common_vendor.t(courseTabText),
+        h: common_vendor.o(goCoursePage),
         i: common_vendor.t(pageTitleText),
-        j: common_vendor.t(courseTabText),
-        k: common_vendor.o(goCoursePage),
-        l: common_vendor.t(newsTabText),
-        m: common_vendor.o(goNewsPage),
-        n: searchPlaceholder,
-        o: common_vendor.o(reloadList),
-        p: keyword.value,
-        q: common_vendor.o(($event) => {
+        j: common_vendor.t(bookTabText),
+        k: common_vendor.o(goBookPage),
+        l: common_vendor.t(topicsTabText),
+        m: common_vendor.o(goTopicsPage),
+        n: common_vendor.t(newsTabText),
+        o: common_vendor.o(goNewsPage),
+        p: searchPlaceholder,
+        q: common_vendor.o(reloadList),
+        r: keyword.value,
+        s: common_vendor.o(($event) => {
           return keyword.value = $event.detail.value;
         }),
-        r: common_vendor.t(searchText),
-        s: common_vendor.o(reloadList),
-        t: isLoading.value
+        t: common_vendor.t(searchText),
+        v: common_vendor.o(reloadList),
+        w: isLoading.value
       }, isLoading.value ? {
-        v: common_vendor.t(loadingText)
+        x: common_vendor.f(skeletonItems, (item, k0, i0) => {
+          return {
+            a: item
+          };
+        })
       } : errorText.value.length > 0 ? {
-        x: common_vendor.t(errorText.value),
-        y: common_vendor.t(retryText),
-        z: common_vendor.o(reloadList)
+        z: common_vendor.t(errorText.value),
+        A: common_vendor.t(retryText),
+        B: common_vendor.o(reloadList)
       } : liveItems.value.length == 0 ? {
-        B: common_vendor.t(emptyText)
+        D: common_vendor.t(emptyText)
       } : common_vendor.e({
-        C: common_vendor.f(liveItems.value, (item, k0, i0) => {
+        E: common_vendor.f(liveItems.value, (item, k0, i0) => {
           return common_vendor.e({
             a: item.coverUrl.length > 0
           }, item.coverUrl.length > 0 ? {
@@ -288,34 +315,34 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, item.id)
           });
         }),
-        D: common_vendor.t(viewText),
-        E: common_vendor.t(favoriteText),
-        F: isListLoading.value
+        F: common_vendor.t(viewText),
+        G: common_vendor.t(favoriteText),
+        H: isListLoading.value
       }, isListLoading.value ? {
-        G: common_vendor.t(loadingMoreText)
+        I: common_vendor.t(loadingMoreText)
       } : !hasMore.value ? {
-        I: common_vendor.t(noMoreText)
+        K: common_vendor.t(noMoreText)
       } : {}, {
-        H: !hasMore.value
+        J: !hasMore.value
       }), {
-        w: errorText.value.length > 0,
-        A: liveItems.value.length == 0,
-        J: common_vendor.o(loadMore),
-        K: common_assets._imports_1$2,
-        L: common_vendor.t(learningTabText),
-        M: common_assets._imports_2$1,
-        N: common_vendor.t(examTabText),
-        O: common_vendor.o(goExamPage),
-        P: common_assets._imports_4,
-        Q: common_vendor.t(consultTabText),
-        R: common_vendor.o(goConsultPage),
-        S: common_assets._imports_5,
-        T: common_vendor.t(knowledgeTabText),
-        U: common_vendor.o(goKnowledgePage),
-        V: common_assets._imports_6$1,
-        W: common_vendor.t(mineTabText),
-        X: common_vendor.o(goMinePage),
-        Y: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        y: errorText.value.length > 0,
+        C: liveItems.value.length == 0,
+        L: common_vendor.o(loadMore),
+        M: common_assets._imports_1$2,
+        N: common_vendor.t(learningTabText),
+        O: common_assets._imports_2$1,
+        P: common_vendor.t(examTabText),
+        Q: common_vendor.o(goExamPage),
+        R: common_assets._imports_4,
+        S: common_vendor.t(consultTabText),
+        T: common_vendor.o(goConsultPage),
+        U: common_assets._imports_5,
+        V: common_vendor.t(knowledgeTabText),
+        W: common_vendor.o(goKnowledgePage),
+        X: common_assets._imports_6$1,
+        Y: common_vendor.t(mineTabText),
+        Z: common_vendor.o(goMinePage),
+        aa: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

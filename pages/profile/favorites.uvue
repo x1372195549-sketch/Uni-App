@@ -77,11 +77,13 @@ import { onShow } from '@dcloudio/uni-app'
 import {
 	fetchAudioDetail,
 	fetchArticleDetail,
+	fetchBookDetail,
 	fetchCourseDetail,
 	fetchLiveSessionDetail,
 	fetchProfileFavorites,
 	fetchTopicDetail,
 	type Article,
+	type AppBook,
 	type AppPodcast,
 	type AppResourceRecord,
 	type Course,
@@ -108,8 +110,9 @@ type FavoriteDisplayItem = {
 
 const TYPE_ALL = 'ALL'
 const TYPE_AUDIO = 'AUDIO'
-const TYPE_LIVE = 'LIVE'
 const TYPE_COURSE = 'COURSE'
+const TYPE_LIVE = 'LIVE'
+const TYPE_BOOK = 'BOOK'
 const TYPE_TOPIC = 'TOPIC'
 const TYPE_INFO = 'INFO'
 
@@ -125,8 +128,9 @@ const unknownText = '\u672a\u77e5'
 const tabs : FavoriteTab[] = [
 	{ key: TYPE_ALL, label: '\u5168\u90e8' },
 	{ key: TYPE_AUDIO, label: '\u97f3\u9891' },
-	{ key: TYPE_LIVE, label: '\u76f4\u64ad' },
 	{ key: TYPE_COURSE, label: '\u8bfe\u7a0b' },
+	{ key: TYPE_LIVE, label: '\u76f4\u64ad' },
+	{ key: TYPE_BOOK, label: '\u56fe\u4e66' },
 	{ key: TYPE_TOPIC, label: '\u4e13\u9898' },
 	{ key: TYPE_INFO, label: '\u8d44\u8baf' }
 ]
@@ -166,6 +170,9 @@ const normalizeFavoriteType = (resourceType : string) : string => {
 	if (normalizedType == 'course') {
 		return TYPE_COURSE
 	}
+	if (normalizedType == 'book' || normalizedType == 'books' || normalizedType == 'learning') {
+		return TYPE_BOOK
+	}
 	if (normalizedType == 'topic') {
 		return TYPE_TOPIC
 	}
@@ -186,6 +193,9 @@ const getTypeLabel = (resourceType : string) : string => {
 	if (normalizedType == TYPE_COURSE) {
 		return '\u8bfe\u7a0b'
 	}
+	if (normalizedType == TYPE_BOOK) {
+		return '\u56fe\u4e66'
+	}
 	if (normalizedType == TYPE_TOPIC) {
 		return '\u4e13\u9898'
 	}
@@ -205,6 +215,9 @@ const getCoverColor = (resourceType : string) : string => {
 	}
 	if (normalizedType == TYPE_COURSE) {
 		return '#F3E3D8'
+	}
+	if (normalizedType == TYPE_BOOK) {
+		return '#F2DFCA'
 	}
 	if (normalizedType == TYPE_TOPIC) {
 		return '#EDE3D4'
@@ -276,6 +289,20 @@ const mapCourseFavorite = (record : AppResourceRecord, detail : Course) : Favori
 		typeLabel: getTypeLabel(record.resourceType),
 		title: safeText(detail.courseName).length > 0 ? detail.courseName : '\u8bfe\u7a0b #' + String(record.resourceId),
 		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.lecturerName),
+		timeText: formatOccurredAt(safeText(record.occurredAt)),
+		coverUrl: sanitizeCoverUrl(detail.coverUrl),
+		coverColor: getCoverColor(record.resourceType)
+	}
+}
+
+const mapBookFavorite = (record : AppResourceRecord, detail : AppBook) : FavoriteDisplayItem => {
+	return {
+		id: String(record.id),
+		resourceType: normalizeFavoriteType(record.resourceType),
+		resourceId: record.resourceId,
+		typeLabel: getTypeLabel(record.resourceType),
+		title: safeText(detail.bookName).length > 0 ? detail.bookName : '\u56fe\u4e66 #' + String(record.resourceId),
+		source: safeText(record.source).length > 0 ? safeText(record.source) : safeText(detail.author),
 		timeText: formatOccurredAt(safeText(record.occurredAt)),
 		coverUrl: sanitizeCoverUrl(detail.coverUrl),
 		coverColor: getCoverColor(record.resourceType)
@@ -354,6 +381,19 @@ const enrichFavoriteItem = (
 		return
 	}
 
+	if (normalizedType == TYPE_BOOK) {
+		fetchBookDetail(
+			String(record.resourceId),
+			(detail) => {
+				success(mapBookFavorite(record, detail))
+			},
+			() => {
+				success(buildFallbackItem(record))
+			}
+		)
+		return
+	}
+
 	if (normalizedType == TYPE_TOPIC) {
 		fetchTopicDetail(
 			String(record.resourceId),
@@ -421,7 +461,8 @@ const loadFavorites = () => {
 			errorText.value = message.length > 0 ? message : loadFailedText
 			allItems.value = []
 			isLoading.value = false
-		}
+		},
+		'occurredAt,desc'
 	)
 }
 
@@ -456,6 +497,8 @@ const goToDetail = (item : FavoriteDisplayItem) => {
 		url = '/pages/live/detail?id=' + String(item.resourceId)
 	} else if (item.resourceType == TYPE_COURSE) {
 		url = '/pages/course/detail?id=' + String(item.resourceId)
+	} else if (item.resourceType == TYPE_BOOK) {
+		url = '/pages/book/detail?id=' + String(item.resourceId)
 	} else if (item.resourceType == TYPE_TOPIC) {
 		url = '/pages/topics/detail?id=' + String(item.resourceId)
 	} else if (item.resourceType == TYPE_INFO) {

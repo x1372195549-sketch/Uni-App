@@ -1169,6 +1169,31 @@ let AppBookChapter$1 = class AppBookChapter extends UTS.UTSType {
     delete this.__props__;
   }
 };
+let AppBookCategory$1 = class AppBookCategory extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          parentId: { type: Number, optional: false },
+          categoryName: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "AppBookCategory"
+    };
+  }
+  constructor(options, metadata = AppBookCategory.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.parentId = this.__props__.parentId;
+    this.categoryName = this.__props__.categoryName;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+};
 let AppBook$1 = class AppBook extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -2470,6 +2495,14 @@ function normalizeBookChapter(raw) {
     sortOrder: readNumberField(raw, "sortOrder")
   });
 }
+function normalizeBookCategory(raw) {
+  return new AppBookCategory$1({
+    id: readNumberField(raw, "id"),
+    parentId: readNumberField(raw, "parentId"),
+    categoryName: readStringField(raw, "categoryName"),
+    sortOrder: readNumberField(raw, "sortOrder")
+  });
+}
 function normalizeBook(raw) {
   const chaptersValue = raw["chapters"];
   const chapters = chaptersValue != null && UTS.isInstanceOf(chaptersValue, Array) ? chaptersValue : [];
@@ -2543,6 +2576,54 @@ function fetchBookDetail(id, success, fail) {
     fail(message);
   });
 }
+function fetchBookCategories(page, size, keyword, parentId, success, fail) {
+  let path = "/api/v1/app/learning/book-categories?page=" + String(page) + "&size=" + String(size);
+  if (keyword != null && keyword.length > 0) {
+    path += "&keyword=" + encodeURIComponent(keyword);
+  }
+  if (parentId > 0) {
+    path += "&parentId=" + String(parentId);
+  }
+  request(path, "GET", null, true, false, (pageData) => {
+    const recordsValue = pageData["records"];
+    const records = recordsValue != null && UTS.isInstanceOf(recordsValue, Array) ? recordsValue : [];
+    const normalizedRecords = records.map((item) => {
+      return normalizeBookCategory(item);
+    });
+    success(new PageResponse$1({
+      records: normalizedRecords,
+      total: readNumberField(pageData, "total") > 0 ? readNumberField(pageData, "total") : normalizedRecords.length,
+      page: readNumberField(pageData, "page") > 0 ? readNumberField(pageData, "page") : page,
+      size: readNumberField(pageData, "size") > 0 ? readNumberField(pageData, "size") : size
+    }));
+  }, (message) => {
+    fail(message);
+  });
+}
+function fetchBooks(page, size, keyword, categoryId, success, fail) {
+  let path = "/api/v1/app/learning/books?page=" + String(page) + "&size=" + String(size);
+  if (keyword != null && keyword.length > 0) {
+    path += "&keyword=" + encodeURIComponent(keyword);
+  }
+  if (categoryId > 0) {
+    path += "&categoryId=" + String(categoryId);
+  }
+  request(path, "GET", null, true, false, (pageData) => {
+    const recordsValue = pageData["records"];
+    const records = recordsValue != null && UTS.isInstanceOf(recordsValue, Array) ? recordsValue : [];
+    const normalizedRecords = records.map((item) => {
+      return normalizeBook(item);
+    });
+    success(new PageResponse$1({
+      records: normalizedRecords,
+      total: readNumberField(pageData, "total") > 0 ? readNumberField(pageData, "total") : normalizedRecords.length,
+      page: readNumberField(pageData, "page") > 0 ? readNumberField(pageData, "page") : page,
+      size: readNumberField(pageData, "size") > 0 ? readNumberField(pageData, "size") : size
+    }));
+  }, (message) => {
+    fail(message);
+  });
+}
 function fetchBookChapterDetail(bookId, chapterId, success, fail) {
   request("/api/v1/app/learning/books/" + bookId + "/chapters/" + chapterId, "GET", null, true, false, (detail) => {
     success(normalizeBookChapter(detail));
@@ -2564,8 +2645,12 @@ function fetchTopicDetail(id, success, fail) {
     fail(message);
   });
 }
-function fetchProfileFavorites(page, size, success, fail) {
-  request("/api/v1/app/profile/favorites?page=" + String(page) + "&size=" + String(size), "GET", null, true, false, (pageData) => {
+function fetchProfileFavorites(page, size, success, fail, sort = "") {
+  let path = "/api/v1/app/profile/favorites?page=" + String(page) + "&size=" + String(size);
+  if (sort != null && sort.length > 0) {
+    path += "&sort=" + encodeURIComponent(sort);
+  }
+  request(path, "GET", null, true, false, (pageData) => {
     success(pageData);
   }, (message) => {
     fail(message);
@@ -4191,6 +4276,31 @@ class AppBookChapter2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+class AppBookCategory2 extends UTS.UTSType {
+  static get$UTSMetadata$() {
+    return {
+      kind: 2,
+      get fields() {
+        return {
+          id: { type: Number, optional: false },
+          parentId: { type: Number, optional: false },
+          categoryName: { type: String, optional: false },
+          sortOrder: { type: Number, optional: false }
+        };
+      },
+      name: "AppBookCategory"
+    };
+  }
+  constructor(options, metadata = AppBookCategory2.get$UTSMetadata$(), isJSONParse = false) {
+    super();
+    this.__props__ = UTS.UTSType.initProps(options, metadata, isJSONParse);
+    this.id = this.__props__.id;
+    this.parentId = this.__props__.parentId;
+    this.categoryName = this.__props__.categoryName;
+    this.sortOrder = this.__props__.sortOrder;
+    delete this.__props__;
+  }
+}
 class AppBook2 extends UTS.UTSType {
   static get$UTSMetadata$() {
     return {
@@ -4801,6 +4911,7 @@ class AppQaQuestionRequest2 extends UTS.UTSType {
     delete this.__props__;
   }
 }
+exports.AppBook = AppBook$1;
 exports.AppFavoriteRequest = AppFavoriteRequest2;
 exports.AppFeedbackRequest = AppFeedbackRequest$1;
 exports.AppQaQuestionRequest = AppQaQuestionRequest2;
@@ -4818,8 +4929,10 @@ exports.fetchAppHome = fetchAppHome;
 exports.fetchArticleDetail = fetchArticleDetail;
 exports.fetchArticles = fetchArticles;
 exports.fetchAudioDetail = fetchAudioDetail;
+exports.fetchBookCategories = fetchBookCategories;
 exports.fetchBookChapterDetail = fetchBookChapterDetail;
 exports.fetchBookDetail = fetchBookDetail;
+exports.fetchBooks = fetchBooks;
 exports.fetchCertificationStatus = fetchCertificationStatus;
 exports.fetchCourseDetail = fetchCourseDetail;
 exports.fetchCourses = fetchCourses;

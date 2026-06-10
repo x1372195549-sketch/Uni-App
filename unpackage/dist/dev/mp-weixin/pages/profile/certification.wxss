@@ -83,6 +83,9 @@
 	line-height: 22px;
 	color: #8b8b8b;
 }
+.picker-row {
+	width: 100%;
+}
 .form-row {
 	min-height: 98rpx;
 	padding-left: 24rpx;
@@ -107,6 +110,7 @@
 .row-right {
 	flex-direction: row;
 	align-items: center;
+	justify-content: flex-end;
 	max-width: 430rpx;
 }
 .row-input-wrap {
@@ -117,11 +121,23 @@
 	flex: 1;
 	height: 52rpx;
 	font-size: 16px;
-	color: #8f8f8f;
+	color: #7d7d7d;
 	text-align: right;
 	padding-left: 0;
 	padding-right: 8rpx;
 	background-color: transparent;
+}
+.row-value,
+.row-placeholder {
+	font-size: 16px;
+	line-height: 24px;
+	text-align: right;
+}
+.row-value {
+	color: #7d7d7d;
+}
+.row-placeholder {
+	color: #b6b6b6;
 }
 .material-textarea {
 	margin-top: 18rpx;
@@ -129,7 +145,7 @@
 	min-height: 180rpx;
 	font-size: 15px;
 	line-height: 24px;
-	color: #8f8f8f;
+	color: #7d7d7d;
 	background-color: #f7f7fb;
 	border-radius: 12rpx;
 	padding: 18rpx;

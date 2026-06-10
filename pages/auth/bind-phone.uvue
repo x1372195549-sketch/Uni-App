@@ -68,7 +68,12 @@ const startCountdown = () => {
 }
 
 const handleBack = () => {
-	uni.navigateBack()
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack()
+		return
+	}
+	uni.redirectTo({ url: '/pages/login/index' })
 }
 
 const handleSendCode = () => {

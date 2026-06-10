@@ -49,7 +49,27 @@
 					<view class="section-head">
 						<text class="section-title">相关视频</text>
 					</view>
-					<view class="video-card" v-for="item in videoItems" :key="item.id" @tap="openPlayer(item.videoUrl, item.title, 'video')">
+					<view v-if="selectedVideoUrl.length > 0" class="inline-video-wrap">
+						<video
+							class="inline-video"
+							:src="selectedVideoUrl"
+							:title="selectedVideoTitle"
+							:poster="coverUrl"
+							:controls="true"
+							:show-center-play-btn="true"
+							:enable-progress-gesture="true"
+							:show-fullscreen-btn="true"
+							object-fit="contain"
+							@loadedmetadata="syncSelectedVideoDuration"
+							@timeupdate="syncSelectedVideoDuration"
+						></video>
+					</view>
+					<view
+						v-for="item in videoItems"
+						:key="item.id"
+						:class="item.id == selectedVideoId ? 'video-card video-card-active' : 'video-card'"
+						@tap="selectRelatedVideo(item)"
+					>
 						<text class="video-title">{{ item.title }}</text>
 						<text class="video-meta">{{ item.durationText }}</text>
 					</view>
@@ -101,6 +121,9 @@ const playbackUrl = ref('')
 const isFavorited = ref(false)
 const isFavoriteLoading = ref(false)
 const videoItems = ref<DetailVideoItem[]>([])
+const selectedVideoId = ref('')
+const selectedVideoTitle = ref('')
+const selectedVideoUrl = ref('')
 
 const actionButtonText = computed(() : string => {
 	if (statusLabel.value == '直播中') {
@@ -132,13 +155,45 @@ function formatDateTime(value : string) : string {
 
 function formatDuration(seconds : number) : string {
 	if (seconds <= 0) {
-		return '时长待定'
+		return '--:--'
 	}
 	const minute = Math.floor(seconds / 60)
-	if (minute <= 0) {
-		return seconds + '秒'
+	const second = seconds % 60
+	const minuteText = minute < 10 ? '0' + String(minute) : String(minute)
+	const secondText = second < 10 ? '0' + String(second) : String(second)
+	return minuteText + ':' + secondText
+}
+
+function readDurationFromEvent(event : any) : number {
+	if (event == null || event.detail == null) {
+		return 0
 	}
-	return minute + '分钟'
+	const durationValue = event.detail.duration
+	if (typeof durationValue == 'number') {
+		return Math.floor(durationValue)
+	}
+	return 0
+}
+
+function updateRelatedVideoDuration(id : string, durationText : string) : void {
+	videoItems.value = videoItems.value.map((item : DetailVideoItem) : DetailVideoItem => {
+		if (item.id == id) {
+			return {
+				id: item.id,
+				title: item.title,
+				videoUrl: item.videoUrl,
+				durationText
+			}
+		}
+		return item
+	})
+}
+
+function syncSelectedVideoDuration(event : any) : void {
+	const duration = readDurationFromEvent(event)
+	if (duration > 0 && selectedVideoId.value.length > 0) {
+		updateRelatedVideoDuration(selectedVideoId.value, formatDuration(duration))
+	}
 }
 
 function mapLiveStatus(status : string) : string {
@@ -161,7 +216,7 @@ function mapVideoItem(item : LiveSessionVideo, index : number) : DetailVideoItem
 		id: String(item.id > 0 ? item.id : index + 1),
 		title: titleText.length > 0 ? titleText : '视频 ' + String(index + 1),
 		videoUrl: normalizeAppUrl(safeText(item.videoUrl)),
-		durationText: formatDuration(item.durationSeconds)
+		durationText: '--:--'
 	}
 }
 
@@ -256,6 +311,9 @@ function applyLiveDetail(detail : LiveSession) : void {
 				return mapVideoItem(item, index)
 			})
 		: []
+	selectedVideoId.value = ''
+	selectedVideoTitle.value = ''
+	selectedVideoUrl.value = ''
 
 	const introParts = new Array<string>()
 	introParts.push('主播：' + anchorText.value)
@@ -310,6 +368,20 @@ function openPlayer(url : string, title : string, playMode : string) : void {
 	})
 }
 
+function selectRelatedVideo(item : DetailVideoItem) : void {
+	const targetUrl = normalizeAppUrl(item.videoUrl)
+	if (targetUrl.length == 0) {
+		uni.showToast({
+			title: '暂无可用地址',
+			icon: 'none'
+		})
+		return
+	}
+	selectedVideoId.value = item.id
+	selectedVideoTitle.value = item.title
+	selectedVideoUrl.value = targetUrl
+}
+
 function enterLive() : void {
 	if (statusLabel.value == '已取消') {
 		uni.showToast({
@@ -361,7 +433,8 @@ onShow(() => {
 }
 
 .header {
-	height: 88rpx;
+	height: calc(88rpx + var(--status-bar-height));
+	padding-top: var(--status-bar-height);
 	padding-left: 20rpx;
 	padding-right: 20rpx;
 	flex-direction: row;
@@ -377,7 +450,7 @@ onShow(() => {
 .back-btn {
 	position: absolute;
 	left: 16rpx;
-	top: 0;
+	top: var(--status-bar-height);
 	bottom: 0;
 	width: 56rpx;
 	align-items: center;
@@ -582,11 +655,31 @@ onShow(() => {
 	justify-content: space-between;
 }
 
+.inline-video-wrap {
+	margin-top: 16rpx;
+	border-radius: 18rpx;
+	overflow: hidden;
+	background-color: #000000;
+}
+
+.inline-video {
+	width: 100%;
+	height: 360rpx;
+	background-color: #000000;
+}
+
 .video-card {
 	margin-top: 16rpx;
 	padding: 22rpx 20rpx;
 	border-radius: 18rpx;
 	background-color: #faf7f2;
+}
+
+.video-card-active {
+	background-color: #fff0f3;
+	border-width: 1rpx;
+	border-style: solid;
+	border-color: #c26b7f;
 }
 
 .video-title {

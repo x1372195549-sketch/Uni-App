@@ -69,7 +69,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       return start.length > 0 ? start : end;
     };
     const goBack = () => {
-      common_vendor.index.navigateBack();
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        common_vendor.index.navigateBack();
+        return null;
+      }
+      common_vendor.index.redirectTo({ url: "/pages/consult/index" });
     };
     const handleAvatarError = () => {
       avatarFailed.value = true;

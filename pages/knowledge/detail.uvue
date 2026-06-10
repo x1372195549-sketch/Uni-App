@@ -1,0 +1,853 @@
+<template>
+	<view class="page">
+		<image class="page-bg" src="/static/knowledge-detail-bg.png" mode="scaleToFill"></image>
+		<view class="header">
+			<view class="header-back" @tap="goBack">
+				<image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+			</view>
+			<text class="header-title">{{ title.length > 0 ? title : '知识详情' }}</text>
+		</view>
+
+		<scroll-view class="detail-scroll" scroll-y="true">
+			<view v-if="isLoading" class="state-wrap">
+				<text class="state-text">加载中...</text>
+			</view>
+
+			<view v-else-if="errorText.length > 0" class="state-wrap">
+				<text class="state-text">{{ errorText }}</text>
+				<view class="retry-btn" @tap="loadDetail">
+					<text class="retry-btn-text">重新加载</text>
+				</view>
+			</view>
+
+			<view v-else class="reader-layout">
+				<view v-if="showCatalog" class="catalog-page">
+					<view class="catalog-hero">
+						<view class="cover-shell">
+							<image
+								v-if="coverUrl.length > 0"
+								class="cover-image"
+								:src="coverUrl"
+								mode="aspectFill"
+							></image>
+							<view v-else class="cover-fallback">
+								<text class="cover-fallback-text">{{ shortTitle }}</text>
+							</view>
+						</view>
+
+						<view class="catalog-info">
+							<view class="catalog-tag-row">
+								<text class="catalog-tag">{{ categoryName.length > 0 ? categoryName : '知识库' }}</text>
+								<text class="catalog-count">{{ String(sections.length) }} 节</text>
+							</view>
+							<text class="catalog-book-title">{{ title.length > 0 ? title : '知识条目' }}</text>
+							<view class="catalog-data-row">
+								<text v-if="publishedAt.length > 0" class="catalog-data">{{ publishedAt }}</text>
+								<text class="catalog-data">浏览 {{ viewCount }}</text>
+							</view>
+						</view>
+					</view>
+
+					<view class="catalog-heading">
+						<view class="catalog-heading-main">
+							<text class="catalog-heading-text">目录</text>
+							<text class="catalog-heading-sub">按知识结构快速定位</text>
+						</view>
+						<view class="catalog-heading-line"></view>
+					</view>
+
+					<view class="catalog-list">
+						<view
+							v-for="item in sections"
+							:key="item.index"
+							:class="item.index == activeSectionIndex ? 'catalog-item catalog-item-active' : 'catalog-item'"
+							@tap="selectSection(item.index)"
+						>
+							<view class="catalog-icon">
+								<text class="catalog-icon-text">{{ String(item.index + 1) }}</text>
+							</view>
+							<view class="catalog-main">
+								<view class="catalog-item-title-row">
+									<text class="catalog-item-title">{{ item.title }}</text>
+									<text class="catalog-page-no">第 {{ item.pageText }} 页</text>
+								</view>
+								<text v-if="item.preview.length > 0" class="catalog-item-preview">{{ item.preview }}</text>
+							</view>
+						</view>
+					</view>
+				</view>
+
+				<view v-else class="reading-page">
+					<view class="reader-head">
+						<view class="reader-head-main">
+							<text class="reader-kicker">{{ categoryName.length > 0 ? categoryName : '知识库阅读' }}</text>
+							<text class="reader-section-title">{{ activeTitle }}</text>
+						</view>
+						<text class="reader-page-chip">{{ activePageText }} / {{ String(sections.length) }}</text>
+					</view>
+					<view class="reader-title-underline"></view>
+					<view class="reader-meta-row">
+						<text v-if="publishedAt.length > 0" class="reader-meta">{{ publishedAt }}</text>
+						<text class="reader-meta">浏览 {{ viewCount }}</text>
+					</view>
+
+					<rich-text v-if="activeIsHtml" class="rich-content" :nodes="activeContent"></rich-text>
+					<view v-else class="reader-text-block">
+						<text
+							v-for="paragraph in activeParagraphs"
+							:key="paragraph"
+							class="reader-paragraph"
+						>{{ paragraph }}</text>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
+
+		<view v-if="!isLoading && errorText.length == 0" class="reader-bottom">
+			<view
+				:class="activeSectionIndex > 0 ? 'bottom-action' : 'bottom-action bottom-action-disabled'"
+				@tap="goPreviousSection"
+			>
+				<text class="bottom-action-text">上一节</text>
+			</view>
+			<view class="bottom-action bottom-action-primary" @tap="toggleCatalog">
+				<text class="bottom-action-primary-text">{{ showCatalog ? '正文' : '目录' }}</text>
+			</view>
+			<view
+				:class="activeSectionIndex < sections.length - 1 ? 'bottom-action' : 'bottom-action bottom-action-disabled'"
+				@tap="goNextSection"
+			>
+				<text class="bottom-action-text">下一节</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import {
+	fetchKnowledgeEntryDetail,
+	reportBrowseHistory,
+	type KnowledgeEntry
+} from '../../utils/auth.uts'
+
+type KnowledgeSection = {
+	index : number
+	title : string
+	content : string
+	preview : string
+	pageText : string
+	isHtml : boolean
+}
+
+const KNOWLEDGE_DETAIL_ID_KEY = 'knowledge_detail_id'
+
+const detailId = ref('')
+const isLoading = ref(true)
+const errorText = ref('')
+
+const title = ref('')
+const shortTitle = ref('知识')
+const coverUrl = ref('')
+const summary = ref('')
+const content = ref('')
+const categoryName = ref('')
+const keywords = ref('')
+const source = ref('')
+const publishedAt = ref('')
+const viewCount = ref('0')
+
+const sections = ref<KnowledgeSection[]>([])
+const activeSectionIndex = ref(0)
+const activeTitle = ref('正文')
+const activeContent = ref('')
+const activeParagraphs = ref<string[]>([])
+const activeIsHtml = ref(false)
+const activePageText = ref('1')
+const showCatalog = ref(false)
+
+function safeText(value : string | null) : string {
+	return value == null || value.length == 0 ? '' : value
+}
+
+function buildShortTitle(value : string) : string {
+	const text = safeText(value)
+	if (text.length == 0) {
+		return '知识'
+	}
+	return text.length <= 4 ? text : text.substring(0, 4)
+}
+
+function detectHtml(value : string) : boolean {
+	const text = safeText(value).toLowerCase()
+	return text.indexOf('<p') >= 0
+		|| text.indexOf('<div') >= 0
+		|| text.indexOf('<br') >= 0
+		|| text.indexOf('<h1') >= 0
+		|| text.indexOf('<h2') >= 0
+		|| text.indexOf('<section') >= 0
+}
+
+function normalizePlainText(value : string) : string {
+	return safeText(value).split('\r').join('\n')
+}
+
+function buildParagraphs(value : string) : string[] {
+	const lines = normalizePlainText(value).split('\n')
+	const result : string[] = []
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i].trim()
+		if (line.length > 0) {
+			result.push(line)
+		}
+	}
+	if (result.length == 0) {
+		result.push('暂无内容')
+	}
+	return result
+}
+
+function buildPreview(value : string) : string {
+	const paragraphs = buildParagraphs(value)
+	const first = paragraphs.length > 0 ? paragraphs[0] : ''
+	if (first.length <= 22) {
+		return first
+	}
+	return first.substring(0, 22) + '...'
+}
+
+function addSection(items : KnowledgeSection[], sectionTitle : string, sectionContent : string, isHtml : boolean) : void {
+	const text = safeText(sectionContent)
+	if (text.length == 0) {
+		return
+	}
+	const index = items.length
+	items.push({
+		index: index,
+		title: sectionTitle,
+		content: text,
+		preview: isHtml ? '' : buildPreview(text),
+		pageText: String(index + 1),
+		isHtml: isHtml
+	} as KnowledgeSection)
+}
+
+function buildSupplementText() : string {
+	let text = ''
+	if (keywords.value.length > 0) {
+		text = text + '关键词：' + keywords.value
+	}
+	if (source.value.length > 0) {
+		if (text.length > 0) {
+			text = text + '\n'
+		}
+		text = text + '来源：' + source.value
+	}
+	return text
+}
+
+function rebuildSections() : void {
+	const nextSections : KnowledgeSection[] = []
+	addSection(nextSections, '前言', summary.value, false)
+	addSection(nextSections, '正文', content.value, detectHtml(content.value))
+	addSection(nextSections, '补充信息', buildSupplementText(), false)
+
+	if (nextSections.length == 0) {
+		addSection(nextSections, '正文', '暂无内容', false)
+	}
+
+	sections.value = nextSections
+	selectSection(0)
+}
+
+function selectSection(index : number) : void {
+	if (index < 0 || index >= sections.value.length) {
+		return
+	}
+	const item = sections.value[index]
+	activeSectionIndex.value = index
+	activeTitle.value = item.title
+	activeContent.value = item.content
+	activeIsHtml.value = item.isHtml
+	activePageText.value = item.pageText
+	activeParagraphs.value = item.isHtml ? [] : buildParagraphs(item.content)
+	showCatalog.value = false
+}
+
+function toggleCatalog() : void {
+	showCatalog.value = !showCatalog.value
+}
+
+function goPreviousSection() : void {
+	if (activeSectionIndex.value <= 0) {
+		return
+	}
+	selectSection(activeSectionIndex.value - 1)
+}
+
+function goNextSection() : void {
+	if (activeSectionIndex.value >= sections.value.length - 1) {
+		return
+	}
+	selectSection(activeSectionIndex.value + 1)
+}
+
+function applyKnowledgeDetail(detail : KnowledgeEntry) : void {
+	title.value = safeText(detail.title)
+	shortTitle.value = buildShortTitle(detail.title)
+	coverUrl.value = safeText(detail.coverUrl)
+	summary.value = safeText(detail.summary)
+	content.value = safeText(detail.content)
+	categoryName.value = safeText(detail.categoryName)
+	keywords.value = safeText(detail.keywords)
+	source.value = safeText(detail.source)
+	publishedAt.value = safeText(detail.publishedAt).replace('T', ' ')
+	viewCount.value = String(detail.viewCount != null ? detail.viewCount : 0)
+	rebuildSections()
+}
+
+function loadParams(options : UTSJSONObject | null) : void {
+	if (options != null) {
+		const idValue = options['id']
+		const entryIdValue = options['entryId']
+		const knowledgeIdValue = options['knowledgeId']
+		const contentIdValue = options['contentId']
+		if (typeof idValue == 'string' && idValue.length > 0) {
+			detailId.value = idValue
+			uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+			return
+		}
+		if (typeof entryIdValue == 'string' && entryIdValue.length > 0) {
+			detailId.value = entryIdValue
+			uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+			return
+		}
+		if (typeof knowledgeIdValue == 'string' && knowledgeIdValue.length > 0) {
+			detailId.value = knowledgeIdValue
+			uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+			return
+		}
+		if (typeof contentIdValue == 'string' && contentIdValue.length > 0) {
+			detailId.value = contentIdValue
+			uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, detailId.value)
+			return
+		}
+	}
+
+	const cachedId = uni.getStorageSync(KNOWLEDGE_DETAIL_ID_KEY)
+	if (typeof cachedId == 'string' && cachedId.length > 0) {
+		detailId.value = cachedId
+	}
+}
+
+function reportBrowse() : void {
+	if (detailId.value.length == 0) {
+		return
+	}
+	reportBrowseHistory(
+		{
+			resourceType: 'knowledge',
+			resourceId: Number(detailId.value)
+		},
+		() => {
+		},
+		() => {
+		}
+	)
+}
+
+function loadDetail() : void {
+	if (detailId.value.length == 0) {
+		errorText.value = '缺少知识条目 ID'
+		isLoading.value = false
+		return
+	}
+
+	isLoading.value = true
+	errorText.value = ''
+
+	fetchKnowledgeEntryDetail(
+		detailId.value,
+		(detail) => {
+			applyKnowledgeDetail(detail)
+			isLoading.value = false
+			reportBrowse()
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : '详情加载失败'
+			isLoading.value = false
+		}
+	)
+}
+
+function goBack() : void {
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack()
+		return
+	}
+	uni.redirectTo({ url: '/pages/knowledge/index' })
+}
+
+onLoad((options) => {
+	loadParams(options as UTSJSONObject)
+	loadDetail()
+})
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f6f1e8;
+	position: relative;
+	overflow: hidden;
+}
+
+.page-bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.header {
+	position: relative;
+	z-index: 1;
+	height: calc(96rpx + var(--status-bar-height));
+	padding-top: var(--status-bar-height);
+	padding-left: 88rpx;
+	padding-right: 88rpx;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	background-color: rgba(255, 253, 248, 0.86);
+	border-bottom-width: 1rpx;
+	border-bottom-style: solid;
+	border-bottom-color: #eeeeee;
+}
+
+.header-back {
+	position: absolute;
+	left: 18rpx;
+	top: var(--status-bar-height);
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.header-back-icon {
+	width: 24rpx;
+	height: 24rpx;
+}
+
+.header-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #202020;
+	font-weight: 600;
+	lines: 1;
+	text-overflow: ellipsis;
+}
+
+.detail-scroll {
+	position: relative;
+	z-index: 1;
+	flex: 1;
+	padding-bottom: 128rpx;
+}
+
+.state-wrap {
+	padding: 180rpx 40rpx 0;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 28rpx;
+	color: #a9a9b6;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 220rpx;
+	height: 70rpx;
+	border-radius: 14rpx;
+	background-color: #08b864;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 28rpx;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.reader-layout {
+	padding: 18rpx 22rpx 136rpx;
+}
+
+.catalog-page {
+	min-height: 820rpx;
+}
+
+.catalog-hero {
+	flex-direction: row;
+	align-items: stretch;
+	padding: 22rpx;
+	border-radius: 22rpx;
+	background-color: #fffdf8;
+	border-left-width: 8rpx;
+	border-left-style: solid;
+	border-left-color: #0daa64;
+}
+
+.cover-shell {
+	width: 126rpx;
+	height: 172rpx;
+	margin-right: 24rpx;
+	border-radius: 10rpx;
+	overflow: hidden;
+	background-color: #e9dcc0;
+}
+
+.cover-image {
+	width: 126rpx;
+	height: 172rpx;
+}
+
+.cover-fallback {
+	width: 126rpx;
+	height: 172rpx;
+	align-items: center;
+	justify-content: center;
+	background-color: #f3e2bd;
+}
+
+.cover-fallback-text {
+	padding-left: 10rpx;
+	padding-right: 10rpx;
+	font-size: 17px;
+	line-height: 24px;
+	color: #675536;
+	font-weight: 700;
+	text-align: center;
+}
+
+.catalog-info {
+	flex: 1;
+	justify-content: space-between;
+}
+
+.catalog-tag-row {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.catalog-tag {
+	padding-left: 14rpx;
+	padding-right: 14rpx;
+	height: 36rpx;
+	border-radius: 18rpx;
+	background-color: #e8f6ee;
+	font-size: 11px;
+	line-height: 36rpx;
+	color: #087d49;
+	font-weight: 700;
+}
+
+.catalog-count {
+	font-size: 11px;
+	line-height: 18px;
+	color: #9a8d78;
+}
+
+.catalog-book-title {
+	margin-top: 14rpx;
+	font-size: 19px;
+	line-height: 29px;
+	color: #101010;
+	font-weight: 700;
+	lines: 2;
+	text-overflow: ellipsis;
+}
+
+.catalog-data-row {
+	margin-top: 12rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+.catalog-data {
+	margin-right: 18rpx;
+	margin-top: 6rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #776c5d;
+}
+
+.catalog-heading {
+	margin-top: 22rpx;
+	margin-bottom: 14rpx;
+	padding-left: 4rpx;
+	padding-right: 4rpx;
+	flex-direction: row;
+	align-items: flex-end;
+	justify-content: space-between;
+}
+
+.catalog-heading-main {
+	flex: 1;
+}
+
+.catalog-heading-text {
+	font-size: 18px;
+	line-height: 28px;
+	color: #121212;
+	font-weight: 700;
+}
+
+.catalog-heading-sub {
+	margin-top: 4rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8e806d;
+}
+
+.catalog-heading-line {
+	width: 92rpx;
+	height: 5rpx;
+	border-radius: 999rpx;
+	background-color: #7b4b2b;
+}
+
+.catalog-list {
+	padding-top: 2rpx;
+}
+
+.catalog-item {
+	min-height: 112rpx;
+	margin-bottom: 14rpx;
+	padding: 20rpx;
+	border-radius: 18rpx;
+	background-color: #fffdf8;
+	flex-direction: row;
+	align-items: center;
+}
+
+.catalog-item-active {
+	background-color: #edf8f1;
+}
+
+.catalog-item-active .catalog-item-title {
+	color: #08b864;
+}
+
+.catalog-icon {
+	width: 42rpx;
+	height: 42rpx;
+	margin-right: 20rpx;
+	border-radius: 21rpx;
+	background-color: #08b864;
+	align-items: center;
+	justify-content: center;
+}
+
+.catalog-icon-text {
+	font-size: 12px;
+	line-height: 16px;
+	color: #ffffff;
+	font-weight: 700;
+}
+
+.catalog-main {
+	flex: 1;
+}
+
+.catalog-item-title-row {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.catalog-item-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #161616;
+	font-weight: 500;
+}
+
+.catalog-item-preview {
+	margin-top: 10rpx;
+	font-size: 12px;
+	line-height: 19px;
+	color: #756b5e;
+	lines: 1;
+	text-overflow: ellipsis;
+}
+
+.catalog-page-no {
+	margin-left: 16rpx;
+	padding-left: 14rpx;
+	padding-right: 14rpx;
+	height: 36rpx;
+	border-radius: 18rpx;
+	background-color: #f3ede3;
+	font-size: 11px;
+	line-height: 36rpx;
+	color: #7b4b2b;
+	font-weight: 600;
+}
+
+.reading-page {
+	min-height: 760rpx;
+	padding: 26rpx 26rpx 40rpx;
+	border-radius: 22rpx;
+	background-color: #fffdf8;
+}
+
+.reader-head {
+	position: relative;
+	z-index: 1;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+.reader-head-main {
+	flex: 1;
+}
+
+.reader-kicker {
+	font-size: 12px;
+	line-height: 18px;
+	color: #087d49;
+	font-weight: 700;
+}
+
+.reader-section-title {
+	margin-top: 8rpx;
+	font-size: 22px;
+	line-height: 32px;
+	color: #241b14;
+	font-weight: 700;
+}
+
+.reader-page-chip {
+	margin-left: 18rpx;
+	padding-left: 16rpx;
+	padding-right: 16rpx;
+	height: 40rpx;
+	border-radius: 20rpx;
+	background-color: #f3ede3;
+	font-size: 11px;
+	line-height: 40rpx;
+	color: #7b4b2b;
+	font-weight: 600;
+}
+
+.reader-title-underline {
+	position: relative;
+	z-index: 1;
+	height: 5rpx;
+	margin-top: 18rpx;
+	width: 116rpx;
+	border-radius: 999rpx;
+	background-color: #6f3f25;
+}
+
+.reader-meta-row {
+	position: relative;
+	z-index: 1;
+	margin-top: 14rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+.reader-meta {
+	margin-right: 20rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #8e806d;
+}
+
+.rich-content {
+	position: relative;
+	z-index: 1;
+	margin-top: 28rpx;
+	font-size: 14px;
+	line-height: 30px;
+	color: #555555;
+}
+
+.reader-text-block {
+	position: relative;
+	z-index: 1;
+	margin-top: 26rpx;
+}
+
+.reader-paragraph {
+	margin-bottom: 18rpx;
+	font-size: 15px;
+	line-height: 29px;
+	color: #3f3931;
+	text-align: left;
+}
+
+.reader-bottom {
+	position: fixed;
+	z-index: 2;
+	left: 22rpx;
+	right: 22rpx;
+	bottom: 16rpx;
+	height: 96rpx;
+	padding-left: 14rpx;
+	padding-right: 14rpx;
+	border-radius: 24rpx;
+	background-color: #fffdf8;
+	border-width: 1rpx;
+	border-style: solid;
+	border-color: #eadfce;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.bottom-action {
+	flex: 1;
+	height: 68rpx;
+	margin-left: 6rpx;
+	margin-right: 6rpx;
+	border-radius: 18rpx;
+	background-color: #f3ede3;
+	align-items: center;
+	justify-content: center;
+}
+
+.bottom-action-primary {
+	flex: 1.15;
+	background-color: #08b864;
+}
+
+.bottom-action-disabled {
+	opacity: 0.42;
+}
+
+.bottom-action-text {
+	font-size: 13px;
+	line-height: 18px;
+	color: #6e6254;
+	font-weight: 600;
+}
+
+.bottom-action-primary-text {
+	font-size: 15px;
+	line-height: 20px;
+	color: #ffffff;
+	font-weight: 700;
+}
+</style>

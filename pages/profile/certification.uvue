@@ -30,37 +30,43 @@
 				<view class="form-row">
 					<text class="row-label">手机号</text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" type="number" maxlength="11" v-model="form.mobile" placeholder="请输入手机号" @input="handlePhoneInput" />
+						<input class="row-input" type="number" maxlength="11" v-model="form.mobile" placeholder="请输入11位手机号" @input="handlePhoneInput" />
 					</view>
 				</view>
 
 				<view class="form-row">
 					<text class="row-label">身份证号</text>
 					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.idCardNo" placeholder="请输入身份证号" />
+						<input class="row-input" maxlength="18" v-model="form.idCardNo" placeholder="请输入身份证号" @input="handleIdCardInput" />
 					</view>
 				</view>
 
-				<view class="form-row">
-					<text class="row-label">省份</text>
-					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.province" placeholder="请输入省份" />
+				<picker class="picker-row" mode="region" :value="regionValue" @change="handleRegionChange">
+					<view class="form-row">
+						<text class="row-label">省份</text>
+						<view class="row-right">
+							<text :class="form.province == '' ? 'row-placeholder' : 'row-value'">{{ form.province == '' ? '请选择省份' : form.province }}</text>
+						</view>
 					</view>
-				</view>
+				</picker>
 
-				<view class="form-row">
-					<text class="row-label">城市</text>
-					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.city" placeholder="请输入城市" />
+				<picker class="picker-row" mode="region" :value="regionValue" @change="handleRegionChange">
+					<view class="form-row">
+						<text class="row-label">城市</text>
+						<view class="row-right">
+							<text :class="form.city == '' ? 'row-placeholder' : 'row-value'">{{ form.city == '' ? '请选择城市' : form.city }}</text>
+						</view>
 					</view>
-				</view>
+				</picker>
 
-				<view class="form-row">
-					<text class="row-label">区县</text>
-					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.district" placeholder="请输入区县" />
+				<picker class="picker-row" mode="region" :value="regionValue" @change="handleRegionChange">
+					<view class="form-row">
+						<text class="row-label">区县</text>
+						<view class="row-right">
+							<text :class="form.district == '' ? 'row-placeholder' : 'row-value'">{{ form.district == '' ? '请选择区县' : form.district }}</text>
+						</view>
 					</view>
-				</view>
+				</picker>
 
 				<view class="form-row">
 					<text class="row-label">工作单位</text>
@@ -69,12 +75,14 @@
 					</view>
 				</view>
 
-				<view class="form-row">
-					<text class="row-label">职称/执业类别</text>
-					<view class="row-right row-input-wrap">
-						<input class="row-input" v-model="form.positionTitle" placeholder="请输入职称或执业类别" />
+				<picker class="picker-row" mode="selector" :range="positionOptions" :value="positionIndex" @change="handlePositionChange">
+					<view class="form-row">
+						<text class="row-label">职称/执业类别</text>
+						<view class="row-right">
+							<text :class="form.positionTitle == '' ? 'row-placeholder' : 'row-value'">{{ form.positionTitle == '' ? '请选择职称或执业类别' : form.positionTitle }}</text>
+						</view>
 					</view>
-				</view>
+				</picker>
 
 				<view class="material-row">
 					<text class="row-label">认证材料</text>
@@ -113,6 +121,7 @@ type CertificationForm = {
 const isSaving = ref(false)
 const rejectReason = ref('')
 const certificationStatus = ref('0')
+const positionOptions = ['医师', '护士', '药师', '技师', '中医师', '康复治疗师', '医学生', '其他']
 
 const form = ref<CertificationForm>({
 	realName: '',
@@ -152,16 +161,75 @@ const certificationStatusClass = computed(() : string => {
 	return 'status-off'
 })
 
+const regionValue = computed(() : string[] => {
+	return [form.value.province, form.value.city, form.value.district]
+})
+
+const positionIndex = computed(() : number => {
+	const index = positionOptions.indexOf(form.value.positionTitle)
+	return index >= 0 ? index : 0
+})
+
+const trimText = (value : string) : string => {
+	return value.trim()
+}
+
 const digitsOnly = (value : string) : string => {
 	return value.replace(/[^0-9]/g, '')
 }
 
 const isValidPhone = (value : string) : boolean => {
-	return value == '' || /^1\d{10}$/.test(value)
+	return /^1\d{10}$/.test(value)
+}
+
+const normalizeIdCard = (value : string) : string => {
+	return value.replace(/[^0-9Xx]/g, '').toUpperCase().slice(0, 18)
+}
+
+const isValidIdCard = (value : string) : boolean => {
+	return /(^\d{15}$)|(^\d{17}(\d|X)$)/.test(value)
+}
+
+const readPickerIndex = (event : any) : number => {
+	if (event == null || event.detail == null) {
+		return -1
+	}
+	const rawValue = event.detail.value
+	if (typeof rawValue == 'number') {
+		return rawValue
+	}
+	if (typeof rawValue == 'string') {
+		const parsed = parseInt(rawValue)
+		return isNaN(parsed) ? -1 : parsed
+	}
+	return -1
 }
 
 const handlePhoneInput = () => {
 	form.value.mobile = digitsOnly(form.value.mobile).slice(0, 11)
+}
+
+const handleIdCardInput = () => {
+	form.value.idCardNo = normalizeIdCard(form.value.idCardNo)
+}
+
+const handleRegionChange = (event : any) => {
+	if (event == null || event.detail == null || event.detail.value == null) {
+		return
+	}
+	const values = event.detail.value as string[]
+	if (values.length >= 3) {
+		form.value.province = values[0]
+		form.value.city = values[1]
+		form.value.district = values[2]
+	}
+}
+
+const handlePositionChange = (event : any) => {
+	const index = readPickerIndex(event)
+	if (index >= 0 && index < positionOptions.length) {
+		form.value.positionTitle = positionOptions[index]
+	}
 }
 
 const handleBack = () => {
@@ -186,6 +254,8 @@ const applyCertificationData = (data : UTSJSONObject) => {
 	form.value.certificationMaterials = (data['certificationMaterials'] as string) || form.value.certificationMaterials
 	certificationStatus.value = (data['certificationStatus'] as string) || certificationStatus.value
 	rejectReason.value = (data['rejectReason'] as string) || ''
+	handlePhoneInput()
+	handleIdCardInput()
 }
 
 const loadCertification = () => {
@@ -197,26 +267,46 @@ const loadCertification = () => {
 	)
 }
 
-const handleSubmit = () => {
-	if (isSaving.value) {
-		return
-	}
-
+const validateForm = () : boolean => {
+	form.value.realName = trimText(form.value.realName)
+	form.value.organization = trimText(form.value.organization)
+	form.value.certificationMaterials = trimText(form.value.certificationMaterials)
 	handlePhoneInput()
+	handleIdCardInput()
 
 	if (form.value.realName == '') {
-		uni.showToast({
-			title: '请输入真实姓名',
-			icon: 'none'
-		})
-		return
+		uni.showToast({ title: '请输入真实姓名', icon: 'none' })
+		return false
 	}
-
 	if (!isValidPhone(form.value.mobile)) {
-		uni.showToast({
-			title: '手机号格式不正确',
-			icon: 'none'
-		})
+		uni.showToast({ title: '手机号必须为11位', icon: 'none' })
+		return false
+	}
+	if (!isValidIdCard(form.value.idCardNo)) {
+		uni.showToast({ title: '请输入正确的身份证号', icon: 'none' })
+		return false
+	}
+	if (form.value.province == '' || form.value.city == '' || form.value.district == '') {
+		uni.showToast({ title: '请选择省市区', icon: 'none' })
+		return false
+	}
+	if (form.value.organization == '') {
+		uni.showToast({ title: '请输入工作单位', icon: 'none' })
+		return false
+	}
+	if (form.value.positionTitle == '') {
+		uni.showToast({ title: '请选择职称或执业类别', icon: 'none' })
+		return false
+	}
+	if (form.value.certificationMaterials == '') {
+		uni.showToast({ title: '请填写认证材料', icon: 'none' })
+		return false
+	}
+	return true
+}
+
+const handleSubmit = () => {
+	if (isSaving.value || !validateForm()) {
 		return
 	}
 
@@ -354,6 +444,10 @@ loadCertification()
 	color: #8b8b8b;
 }
 
+.picker-row {
+	width: 100%;
+}
+
 .form-row {
 	min-height: 98rpx;
 	padding-left: 24rpx;
@@ -381,6 +475,7 @@ loadCertification()
 .row-right {
 	flex-direction: row;
 	align-items: center;
+	justify-content: flex-end;
 	max-width: 430rpx;
 }
 
@@ -393,11 +488,26 @@ loadCertification()
 	flex: 1;
 	height: 52rpx;
 	font-size: 16px;
-	color: #8f8f8f;
+	color: #7d7d7d;
 	text-align: right;
 	padding-left: 0;
 	padding-right: 8rpx;
 	background-color: transparent;
+}
+
+.row-value,
+.row-placeholder {
+	font-size: 16px;
+	line-height: 24px;
+	text-align: right;
+}
+
+.row-value {
+	color: #7d7d7d;
+}
+
+.row-placeholder {
+	color: #b6b6b6;
 }
 
 .material-textarea {
@@ -406,7 +516,7 @@ loadCertification()
 	min-height: 180rpx;
 	font-size: 15px;
 	line-height: 24px;
-	color: #8f8f8f;
+	color: #7d7d7d;
 	background-color: #f7f7fb;
 	border-radius: 12rpx;
 	padding: 18rpx;

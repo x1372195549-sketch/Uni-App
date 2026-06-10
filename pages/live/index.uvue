@@ -10,18 +10,21 @@
         <view class="top-tab" @tap="goLearningPage">
           <text class="top-tab-text">{{ homeTabText }}</text>
         </view>
-        <view class="top-tab" @tap="goTopicsPage">
-          <text class="top-tab-text">{{ topicsTabText }}</text>
-        </view>
         <view class="top-tab" @tap="goAudioPage">
           <text class="top-tab-text">{{ audioTabText }}</text>
+        </view>
+        <view class="top-tab" @tap="goCoursePage">
+          <text class="top-tab-text">{{ courseTabText }}</text>
         </view>
         <view class="top-tab top-tab-active">
           <text class="top-tab-text top-tab-text-active">{{ pageTitleText }}</text>
           <view class="top-tab-line"></view>
         </view>
-        <view class="top-tab" @tap="goCoursePage">
-          <text class="top-tab-text">{{ courseTabText }}</text>
+        <view class="top-tab" @tap="goBookPage">
+          <text class="top-tab-text">{{ bookTabText }}</text>
+        </view>
+        <view class="top-tab" @tap="goTopicsPage">
+          <text class="top-tab-text">{{ topicsTabText }}</text>
         </view>
         <view class="top-tab" @tap="goNewsPage">
           <text class="top-tab-text">{{ newsTabText }}</text>
@@ -44,8 +47,15 @@
 
     <scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
       <view class="content-shell">
-        <view v-if="isLoading" class="state-wrap">
-          <text class="state-text">{{ loadingText }}</text>
+        <view v-if="isLoading" class="skeleton-list">
+          <view class="skeleton-card" v-for="item in skeletonItems" :key="item">
+            <view class="skeleton-cover"></view>
+            <view class="skeleton-main">
+              <view class="skeleton-line skeleton-line-title"></view>
+              <view class="skeleton-line skeleton-line-meta"></view>
+              <view class="skeleton-line skeleton-line-short"></view>
+            </view>
+          </view>
         </view>
 
         <view v-else-if="errorText.length > 0" class="state-wrap">
@@ -153,6 +163,7 @@ const PAGE_SIZE = 10
 const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
 const homeTabText = '\u9996\u9875'
 const topicsTabText = '\u4e13\u9898'
+const bookTabText = '\u56fe\u4e66'
 const audioTabText = '\u97f3\u9891'
 const pageTitleText = '\u76f4\u64ad'
 const courseTabText = '\u8bfe\u7a0b'
@@ -164,7 +175,6 @@ const knowledgeTabText = '\u77e5\u8bc6\u5e93'
 const mineTabText = '\u6211\u7684'
 const searchPlaceholder = '\u641c\u7d22\u6807\u9898\u3001\u8bb2\u5e08\u3001\u4e3b\u64ad'
 const searchText = '\u641c\u7d22'
-const loadingText = '\u52a0\u8f7d\u4e2d...'
 const retryText = '\u91cd\u65b0\u52a0\u8f7d'
 const emptyText = '\u6682\u65e0\u76f4\u64ad'
 const loadingMoreText = '\u52a0\u8f7d\u66f4\u591a\u4e2d...'
@@ -190,6 +200,8 @@ const isLoading = ref(true)
 const isListLoading = ref(false)
 const errorText = ref('')
 const hasLoadedOnce = ref(false)
+const isNavigating = ref(false)
+const skeletonItems : number[] = [1, 2, 3]
 
 function safeText(value : string | null) : string {
   return value == null || value.length == 0 ? '' : value
@@ -309,51 +321,74 @@ function loadMore() : void {
   loadLiveItems(true)
 }
 
+function redirectToPage(url : string) : void {
+  if (isNavigating.value) {
+    return
+  }
+  isNavigating.value = true
+  uni.redirectTo({
+    url: url,
+    complete: () => {
+      isNavigating.value = false
+    }
+  })
+}
+
 function goLearningPage() : void {
-  uni.redirectTo({ url: '/pages/index/index' })
+  redirectToPage('/pages/index/index')
 }
 
 function goTopicsPage() : void {
-  uni.redirectTo({ url: '/pages/topics/list' })
+  redirectToPage('/pages/topics/list')
+}
+
+function goBookPage() : void {
+  redirectToPage('/pages/book/index')
 }
 
 function goAudioPage() : void {
-  uni.redirectTo({ url: '/pages/audio/index' })
+  redirectToPage('/pages/audio/index')
 }
 
 function goCoursePage() : void {
-  uni.redirectTo({ url: '/pages/course/index' })
+  redirectToPage('/pages/course/index')
 }
 
 function goNewsPage() : void {
-  uni.redirectTo({ url: '/pages/news/index' })
+  redirectToPage('/pages/news/index')
 }
 
 function goMinePage() : void {
-  uni.redirectTo({ url: '/pages/mine/index' })
+  redirectToPage('/pages/mine/index')
 }
 
 function goExamPage() : void {
-  uni.redirectTo({ url: '/pages/exam/index' })
+  redirectToPage('/pages/exam/index')
 }
 
 function goConsultPage() : void {
-  uni.redirectTo({ url: '/pages/consult/index' })
+  redirectToPage('/pages/consult/index')
 }
 
 function goKnowledgePage() : void {
-  uni.redirectTo({ url: '/pages/knowledge/index' })
+  redirectToPage('/pages/knowledge/index')
 }
 
 function goLiveDetail(id : string) : void {
   uni.navigateTo({ url: '/pages/live/detail?id=' + id })
 }
 
-onShow(() => {
+function ensureLoaded() : void {
   if (!hasLoadedOnce.value) {
     hasLoadedOnce.value = true
     loadLiveItems(false)
   }
+}
+
+ensureLoaded()
+
+onShow(() => {
+  ensureLoaded()
 })
 </script>
 
@@ -361,6 +396,7 @@ onShow(() => {
 .page {
   flex: 1;
   background-color: #f7f7f2;
+  min-height: 100vh;
 }
 
 .hero-shell {
@@ -502,6 +538,46 @@ onShow(() => {
 
 .list-wrap {
   gap: 18rpx;
+}
+
+.skeleton-list {
+  gap: 18rpx;
+}
+
+.skeleton-card {
+  min-height: 360rpx;
+  border-radius: 22rpx;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.skeleton-cover {
+  height: 196rpx;
+  background-color: #efe6dc;
+}
+
+.skeleton-main {
+  padding: 20rpx 24rpx 24rpx;
+}
+
+.skeleton-line {
+  height: 24rpx;
+  border-radius: 999rpx;
+  background-color: #eee9e1;
+}
+
+.skeleton-line-title {
+  width: 72%;
+}
+
+.skeleton-line-meta {
+  width: 54%;
+  margin-top: 18rpx;
+}
+
+.skeleton-line-short {
+  width: 40%;
+  margin-top: 14rpx;
 }
 
 .live-card {

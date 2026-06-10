@@ -154,21 +154,6 @@
 	width: 132rpx;
 	height: 176rpx;
 }
-.book-cover-fallback {
-	width: 132rpx;
-	height: 176rpx;
-	padding: 20rpx 14rpx;
-	align-items: center;
-	justify-content: center;
-	background-color: #e8dcc5;
-}
-.book-cover-fallback-text {
-	font-size: 18px;
-	line-height: 26px;
-	color: #6e6049;
-	font-weight: 600;
-	text-align: center;
-}
 .book-main {
 	flex: 1;
 	min-height: 176rpx;

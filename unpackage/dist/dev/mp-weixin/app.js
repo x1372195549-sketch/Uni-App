@@ -24,7 +24,10 @@ if (!Math) {
   "./pages/topics/detail.js";
   "./pages/topics/section.js";
   "./pages/knowledge/index.js";
-  "./pages/knowledge/book-detail.js";
+  "./pages/knowledge/detail.js";
+  "./pages/book/index.js";
+  "./pages/book/detail.js";
+  "./pages/book/chapter.js";
   "./pages/consult/index.js";
   "./pages/consult/detail.js";
   "./pages/consult/create.js";

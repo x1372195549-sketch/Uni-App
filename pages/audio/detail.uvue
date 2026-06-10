@@ -1,18 +1,25 @@
-<template>
+﻿<template>
   <view class="page">
     <view class="detail-header">
       <view class="header-back" @tap="goBack">
         <image class="header-back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
       </view>
-      <text class="detail-title">详情</text>
+      <text class="detail-title">音频详情</text>
     </view>
 
     <scroll-view class="detail-scroll" scroll-y="true">
-      <view class="detail-cover">
+      <view class="detail-cover" @tap="toggleAudioPlayback">
         <image v-if="audioCoverUrl.length > 0" class="detail-cover-image" :src="audioCoverUrl" mode="aspectFill"></image>
-        <view v-else class="audio-disc audio-disc-large">
-          <view class="audio-disc-center audio-disc-center-large"></view>
+        <view v-else class="detail-cover-placeholder"></view>
+        <view class="audio-video-mask"></view>
+        <view v-if="currentAudioItemId.length > 0" class="audio-play-button">
+          <view v-if="!isAudioPlaying" class="audio-play-triangle"></view>
+          <view v-else class="audio-pause-bars">
+            <view class="audio-pause-bar"></view>
+            <view class="audio-pause-bar"></view>
+          </view>
         </view>
+        <text v-if="currentAudioItemId.length > 0" class="audio-video-duration">{{ currentAudioDuration }}</text>
       </view>
 
       <view class="detail-tabs">
@@ -58,10 +65,11 @@
 
 <script setup lang="uts">
 import { onMounted, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onHide, onShow, onUnload } from '@dcloudio/uni-app'
 import {
   checkFavoriteStatus,
   fetchAudioDetail,
+  normalizeAppUrl,
   reportBrowseHistory,
   updateFavoriteStatus,
   type AppPodcast,
@@ -72,6 +80,7 @@ type CatalogItem = {
   id : string
   title : string
   duration : string
+  audioUrl : string
 }
 
 const RESOURCE_TYPE = 'podcast'
@@ -84,9 +93,14 @@ const audioCoverUrl = ref('')
 const viewCount = ref('0')
 const favoriteCount = ref('0')
 const currentAudioItemId = ref('')
+const currentAudioUrl = ref('')
+const currentAudioTitle = ref('')
+const currentAudioDuration = ref('00:00')
+const isAudioPlaying = ref(false)
 const isFavorited = ref(false)
 const isFavoriteLoading = ref(false)
 const catalogItems = ref<CatalogItem[]>([])
+let audioContext : InnerAudioContext | null = null
 
 function safeText(value : string | null) : string {
   return value == null || value.length == 0 ? '' : value
@@ -96,12 +110,139 @@ function formatDuration(seconds : number) : string {
   const total = seconds > 0 ? seconds : 0
   const minute = Math.floor(total / 60)
   const second = total % 60
+  const minuteText = minute < 10 ? '0' + String(minute) : String(minute)
   const secondText = second < 10 ? '0' + String(second) : String(second)
-  return String(minute) + "'" + secondText + '"'
+  return minuteText + ':' + secondText
+}
+
+function updateCatalogDuration(id : string, durationText : string) : void {
+  catalogItems.value = catalogItems.value.map((item : CatalogItem) : CatalogItem => {
+    if (item.id == id) {
+      return {
+        id: item.id,
+        title: item.title,
+        duration: durationText,
+        audioUrl: item.audioUrl
+      }
+    }
+    return item
+  })
+}
+
+function syncRealAudioDuration(context : InnerAudioContext) : void {
+  const duration = Math.floor(context.duration)
+  if (duration > 0) {
+    const durationText = formatDuration(duration)
+    if (currentAudioDuration.value != durationText) {
+      currentAudioDuration.value = durationText
+      updateCatalogDuration(currentAudioItemId.value, durationText)
+    }
+  }
+}
+
+function normalizeAudioPlayUrl(url : string) : string {
+  return normalizeAppUrl(url)
+}
+
+function releaseAudioContext() : void {
+  if (audioContext != null) {
+    audioContext!.stop()
+    audioContext!.destroy()
+    audioContext = null
+  }
+  isAudioPlaying.value = false
+}
+
+function prepareAudioContext() : void {
+  releaseAudioContext()
+  if (currentAudioUrl.value.length == 0) {
+    return
+  }
+
+  uni.setInnerAudioOption({
+    obeyMuteSwitch: false
+  })
+
+  const context = uni.createInnerAudioContext()
+  context.src = currentAudioUrl.value
+  context.autoplay = false
+  context.onPlay(() => {
+    isAudioPlaying.value = true
+  })
+  context.onPause(() => {
+    isAudioPlaying.value = false
+  })
+  context.onStop(() => {
+    isAudioPlaying.value = false
+  })
+  context.onEnded(() => {
+    isAudioPlaying.value = false
+  })
+  context.onCanplay(() => {
+    syncRealAudioDuration(context)
+  })
+  context.onTimeUpdate(() => {
+    syncRealAudioDuration(context)
+  })
+  context.onError(() => {
+    isAudioPlaying.value = false
+    uni.showToast({
+      title: '音频播放失败，请检查音频地址',
+      icon: 'none'
+    })
+  })
+  audioContext = context
+}
+
+function toggleAudioPlayback() : void {
+  if (currentAudioUrl.value.length == 0 && currentAudioItemId.value.length > 0) {
+    selectCatalogItem(currentAudioItemId.value)
+  }
+  if (currentAudioUrl.value.length == 0) {
+    uni.showToast({
+      title: '暂无可播放音频',
+      icon: 'none'
+    })
+    return
+  }
+  uni.setInnerAudioOption({
+    obeyMuteSwitch: false
+  })
+  if (audioContext == null) {
+    prepareAudioContext()
+  }
+  if (audioContext == null) {
+    return
+  }
+  if (isAudioPlaying.value) {
+    audioContext!.pause()
+  } else {
+    audioContext!.play()
+  }
+}
+
+function applyCurrentAudio(item : CatalogItem) : void {
+  releaseAudioContext()
+  currentAudioItemId.value = item.id
+  currentAudioTitle.value = item.title
+  currentAudioUrl.value = item.audioUrl
+  currentAudioDuration.value = item.duration
 }
 
 function selectCatalogItem(id : string) : void {
-  currentAudioItemId.value = id
+  for (let i = 0; i < catalogItems.value.length; i++) {
+    const item = catalogItems.value[i]
+    if (item.id == id) {
+      applyCurrentAudio(item)
+      if (item.audioUrl.length == 0) {
+        uni.showToast({
+          title: '暂无可播放音频',
+          icon: 'none'
+        })
+      }
+      return
+    }
+  }
 }
 
 function loadFavoriteStatus() : void {
@@ -187,13 +328,21 @@ function applyAudioDetail(detail : AppPodcast) : void {
       return {
         id: String(item.id),
         title: safeText(item.title).length > 0 ? item.title : '音频 ' + String(index + 1),
-        duration: formatDuration(item.durationSeconds)
+        duration: '--:--',
+        audioUrl: normalizeAudioPlayUrl(safeText(item.audioUrl))
       }
     })
     currentAudioItemId.value = catalogItems.value[0].id
+    currentAudioTitle.value = catalogItems.value[0].title
+    currentAudioDuration.value = catalogItems.value[0].duration
+    currentAudioUrl.value = ''
   } else {
     catalogItems.value = []
     currentAudioItemId.value = ''
+    currentAudioTitle.value = ''
+    currentAudioUrl.value = ''
+    currentAudioDuration.value = '00:00'
+    releaseAudioContext()
   }
 }
 
@@ -236,7 +385,12 @@ function loadAudioDetail() : void {
 }
 
 function goBack() : void {
-  uni.navigateBack()
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    uni.navigateBack()
+    return
+  }
+  uni.redirectTo({ url: '/pages/audio/index' })
 }
 
 onMounted(() => {
@@ -248,6 +402,14 @@ onMounted(() => {
 onShow(() => {
   loadFavoriteStatus()
 })
+
+onHide(() => {
+  releaseAudioContext()
+})
+
+onUnload(() => {
+  releaseAudioContext()
+})
 </script>
 
 <style>
@@ -257,7 +419,8 @@ onShow(() => {
 }
 
 .detail-header {
-  height: 96rpx;
+  height: calc(96rpx + var(--status-bar-height));
+  padding-top: var(--status-bar-height);
   padding-left: 24rpx;
   padding-right: 24rpx;
   flex-direction: row;
@@ -273,6 +436,7 @@ onShow(() => {
 .header-back {
   position: absolute;
   left: 20rpx;
+  top: var(--status-bar-height);
   width: 68rpx;
   height: 68rpx;
   align-items: center;
@@ -298,16 +462,88 @@ onShow(() => {
 
 .detail-cover {
   position: relative;
-  height: 232px;
+  height: 420rpx;
   align-items: center;
   justify-content: center;
-  background-color: #cabca7;
+  background-color: #000000;
   overflow: hidden;
 }
 
 .detail-cover-image {
-  width: 100%;
-  height: 232px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 750rpx;
+  height: 420rpx;
+}
+
+.detail-cover-placeholder {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 750rpx;
+  height: 420rpx;
+  background-color: #e7d7c6;
+}
+
+.audio-video-mask {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+.audio-play-button {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 55rpx;
+  background-color: rgba(255, 255, 255, 0.46);
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.audio-play-triangle {
+  width: 0;
+  height: 0;
+  margin-left: 8rpx;
+  border-top-width: 24rpx;
+  border-top-style: solid;
+  border-top-color: transparent;
+  border-bottom-width: 24rpx;
+  border-bottom-style: solid;
+  border-bottom-color: transparent;
+  border-left-width: 34rpx;
+  border-left-style: solid;
+  border-left-color: rgba(255, 255, 255, 0.94);
+}
+
+.audio-pause-bars {
+  width: 38rpx;
+  height: 44rpx;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.audio-pause-bar {
+  width: 12rpx;
+  height: 44rpx;
+  border-radius: 6rpx;
+  background-color: rgba(255, 255, 255, 0.94);
+}
+
+.audio-video-duration {
+  position: absolute;
+  right: 24rpx;
+  bottom: 24rpx;
+  font-size: 15px;
+  line-height: 22px;
+  color: #ffffff;
+  text-align: right;
+  z-index: 2;
 }
 
 .audio-disc {

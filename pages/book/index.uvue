@@ -1,0 +1,756 @@
+<template>
+	<view class="page">
+		<view class="hero-shell">
+			<image class="hero-bg" src="/static/home/icon_expert.png" mode="scaleToFill"></image>
+			<view class="header">
+				<text class="header-title">{{ appTitleText }}</text>
+			</view>
+
+			<view class="top-tabs">
+				<view class="top-tab" @tap="goLearningPage">
+					<text class="top-tab-text">{{ homeTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goAudioPage">
+					<text class="top-tab-text">{{ audioTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goCoursePage">
+					<text class="top-tab-text">{{ courseTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goLivePage">
+					<text class="top-tab-text">{{ liveTabText }}</text>
+				</view>
+				<view class="top-tab top-tab-active">
+					<text class="top-tab-text top-tab-text-active">{{ pageTitleText }}</text>
+					<view class="top-tab-line"></view>
+				</view>
+				<view class="top-tab" @tap="goTopicsPage">
+					<text class="top-tab-text">{{ topicsTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goNewsPage">
+					<text class="top-tab-text">{{ newsTabText }}</text>
+				</view>
+			</view>
+		</view>
+
+		<view class="search-bar">
+			<input
+				v-model="keyword"
+				class="search-input"
+				placeholder="搜索书名、作者、出版社"
+				confirm-type="search"
+				@confirm="handleSearch"
+			/>
+			<view class="search-btn" @tap="handleSearch">
+				<text class="search-btn-text">搜索</text>
+			</view>
+		</view>
+
+		<scroll-view class="category-scroll" scroll-x="true" show-scrollbar="false">
+			<view class="category-row">
+				<view
+					class="category-item"
+					:class="selectedCategoryId == 0 ? 'category-item-active' : ''"
+					@tap="selectCategory(0)"
+				>
+					<text class="category-text" :class="selectedCategoryId == 0 ? 'category-text-active' : ''">全部</text>
+				</view>
+				<view
+					v-for="item in categories"
+					:key="item.id"
+					class="category-item"
+					:class="selectedCategoryId == item.id ? 'category-item-active' : ''"
+					@tap="selectCategory(item.id)"
+				>
+					<text class="category-text" :class="selectedCategoryId == item.id ? 'category-text-active' : ''">{{ item.categoryName }}</text>
+				</view>
+			</view>
+		</scroll-view>
+
+		<scroll-view
+			class="book-scroll"
+			scroll-y="true"
+			:refresher-enabled="true"
+			:refresher-triggered="isRefreshing"
+			@refresherrefresh="handleRefresh"
+			@scrolltolower="loadMore"
+		>
+			<view v-if="isInitialLoading" class="state-wrap">
+				<text class="state-text">加载中...</text>
+			</view>
+
+			<view v-else-if="errorText.length > 0" class="state-wrap">
+				<text class="state-text">{{ errorText }}</text>
+				<view class="retry-btn" @tap="loadInitialData">
+					<text class="retry-btn-text">重新加载</text>
+				</view>
+			</view>
+
+			<view v-else-if="books.length == 0" class="state-wrap">
+				<text class="state-text">暂无图书</text>
+			</view>
+
+			<view v-else class="book-list">
+				<view v-for="item in books" :key="item.id" class="book-card" @tap="goDetail(item.id)">
+					<view class="cover-shell">
+						<image v-if="item.coverUrl.length > 0" class="cover-image" :src="item.coverUrl" mode="aspectFill"></image>
+						<view v-else class="cover-fallback">
+							<text class="cover-fallback-text">{{ buildShortTitle(item.bookName) }}</text>
+						</view>
+					</view>
+					<view class="book-main">
+						<text class="book-title">{{ item.bookName }}</text>
+						<text class="book-meta">{{ item.author.length > 0 ? item.author : '作者未填写' }}</text>
+						<text class="book-summary">{{ item.introduction.length > 0 ? item.introduction : '暂无简介' }}</text>
+						<view class="progress-wrap">
+							<view class="progress-bg">
+								<view class="progress-fill" :style="'width:' + String(item.progressPercent) + '%'"></view>
+							</view>
+							<text class="progress-text">{{ String(item.progressPercent) }}%</text>
+						</view>
+						<view class="book-bottom">
+							<text class="book-stat">阅读 {{ String(item.browseCount) }}</text>
+							<text class="book-stat">学习 {{ formatMinutes(item.studySeconds) }}</text>
+						</view>
+					</view>
+				</view>
+
+				<view v-if="isListLoading" class="bottom-state">
+					<text class="bottom-state-text">加载更多中...</text>
+				</view>
+				<view v-else-if="!hasMore" class="bottom-state">
+					<text class="bottom-state-text">没有更多内容了</text>
+				</view>
+			</view>
+		</scroll-view>
+
+		<view class="tabbar">
+			<view class="tab-item tab-item-active" @tap="goLearningPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_xuexidianji.png" mode="aspectFit"></image>
+				<text class="tab-label tab-label-active">学习</text>
+			</view>
+			<view class="tab-item" @tap="goExamPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_kaoheweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">考核</text>
+			</view>
+			<view class="tab-item" @tap="goConsultPage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhuanjia.png" mode="aspectFit"></image>
+				<text class="tab-label">咨询</text>
+			</view>
+			<view class="tab-item" @tap="goKnowledgePage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_zhishikuweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">知识库</text>
+			</view>
+			<view class="tab-item" @tap="goMinePage">
+				<image class="tab-icon-image" src="/static/tabbar/icon_wodeweidianji.png" mode="aspectFit"></image>
+				<text class="tab-label">我的</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import {
+	fetchBookCategories,
+	fetchBooks,
+	type AppBook,
+	type AppBookCategory
+} from '../../utils/auth.uts'
+
+const PAGE_SIZE = 10
+const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
+const homeTabText = '\u9996\u9875'
+const topicsTabText = '\u4e13\u9898'
+const pageTitleText = '\u56fe\u4e66'
+const audioTabText = '\u97f3\u9891'
+const liveTabText = '\u76f4\u64ad'
+const courseTabText = '\u8bfe\u7a0b'
+const newsTabText = '\u8d44\u8baf'
+
+const keyword = ref('')
+const selectedCategoryId = ref(0)
+const categories = ref<AppBookCategory[]>([])
+const books = ref<AppBook[]>([])
+const page = ref(1)
+const hasMore = ref(true)
+const isInitialLoading = ref(true)
+const isListLoading = ref(false)
+const isRefreshing = ref(false)
+const errorText = ref('')
+
+function safeText(value : string | null) : string {
+	return value == null || value.length == 0 ? '' : value
+}
+
+function buildShortTitle(value : string) : string {
+	const text = safeText(value)
+	if (text.length == 0) {
+		return '图书'
+	}
+	return text.length <= 4 ? text : text.substring(0, 4)
+}
+
+function formatMinutes(seconds : number) : string {
+	const minutes = Math.floor(seconds / 60)
+	return String(minutes) + '分钟'
+}
+
+function buildProgressStorageKey(id : string) : string {
+	return 'book_chapter_progress_' + id
+}
+
+function buildChapterStudySecondsKey(id : string) : string {
+	return 'book_chapter_seconds_' + id
+}
+
+function buildBookStudySummaryKey(id : string) : string {
+	return 'book_study_summary_' + id
+}
+
+function readNumberStorage(key : string) : number {
+	const value = uni.getStorageSync(key)
+	if (typeof value == 'number') {
+		return value
+	}
+	if (typeof value == 'string' && value.length > 0) {
+		const parsed = Number(value)
+		return isNaN(parsed) ? 0 : parsed
+	}
+	return 0
+}
+
+function readViewedChapterIds(bookId : string) : string[] {
+	const stored = uni.getStorageSync(buildProgressStorageKey(bookId))
+	if (stored instanceof Array) {
+		return stored as string[]
+	}
+	return []
+}
+
+function readBookStudySummary(bookId : string) : UTSJSONObject | null {
+	const stored = uni.getStorageSync(buildBookStudySummaryKey(bookId))
+	if (stored != null && typeof stored == 'object') {
+		return stored as UTSJSONObject
+	}
+	return null
+}
+
+function applyLocalBookProgress(item : AppBook) : AppBook {
+	const bookIdText = String(item.id)
+	const chapters = item.chapters != null ? item.chapters : []
+	const viewedIds = readViewedChapterIds(bookIdText)
+	const summary = readBookStudySummary(bookIdText)
+	let progressPercent = item.progressPercent
+	let studySeconds = item.studySeconds
+
+	if (summary != null) {
+		const cachedProgress = summary['progressPercent']
+		const cachedSeconds = summary['studySeconds']
+		if (typeof cachedProgress == 'number') {
+			progressPercent = cachedProgress
+		}
+		if (typeof cachedSeconds == 'number') {
+			studySeconds = cachedSeconds
+		}
+	} else if (chapters.length > 0 && viewedIds.length > 0) {
+		let viewedCount = 0
+		let totalSeconds = 0
+		chapters.forEach((chapter) => {
+			const chapterIdText = String(chapter.id)
+			if (viewedIds.indexOf(chapterIdText) >= 0) {
+				viewedCount += 1
+			}
+			totalSeconds += readNumberStorage(buildChapterStudySecondsKey(bookIdText + '_' + chapterIdText))
+		})
+		progressPercent = Math.floor(viewedCount * 100 / chapters.length)
+		studySeconds = totalSeconds
+	}
+
+	return {
+		id: item.id,
+		categoryId: item.categoryId,
+		bookName: item.bookName,
+		author: item.author,
+		publisher: item.publisher,
+		coverUrl: item.coverUrl,
+		introduction: item.introduction,
+		totalPages: item.totalPages,
+		paperId: item.paperId,
+		publishedAt: item.publishedAt,
+		browseCount: item.browseCount,
+		favoriteCount: item.favoriteCount,
+		favorited: item.favorited,
+		progressPercent,
+		studySeconds,
+		chapters: item.chapters
+	} as AppBook
+}
+
+function loadCategories() : void {
+	fetchBookCategories(
+		1,
+		100,
+		'',
+		0,
+		(pageData) => {
+			categories.value = pageData.records != null ? pageData.records : []
+		},
+		() => {
+			categories.value = []
+		}
+	)
+}
+
+function loadBooks(loadMoreFlag : boolean) : void {
+	if (!loadMoreFlag) {
+		page.value = 1
+		hasMore.value = true
+		errorText.value = ''
+		if (!isRefreshing.value) {
+			isInitialLoading.value = true
+		}
+	} else {
+		if (!hasMore.value || isListLoading.value) {
+			return
+		}
+		isListLoading.value = true
+	}
+
+	fetchBooks(
+		page.value,
+		PAGE_SIZE,
+		keyword.value,
+		selectedCategoryId.value,
+		(pageData) => {
+			const records = pageData.records != null ? pageData.records.map((item : AppBook) : AppBook => applyLocalBookProgress(item)) : []
+			if (loadMoreFlag) {
+				books.value = books.value.concat(records)
+			} else {
+				books.value = records
+			}
+			hasMore.value = books.value.length < pageData.total && records.length > 0
+			if (hasMore.value) {
+				page.value += 1
+			}
+			isInitialLoading.value = false
+			isListLoading.value = false
+			isRefreshing.value = false
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : '图书加载失败'
+			isInitialLoading.value = false
+			isListLoading.value = false
+			isRefreshing.value = false
+		}
+	)
+}
+
+function loadInitialData() : void {
+	loadCategories()
+	loadBooks(false)
+}
+
+function selectCategory(id : number) : void {
+	if (selectedCategoryId.value == id) {
+		return
+	}
+	selectedCategoryId.value = id
+	loadBooks(false)
+}
+
+function handleSearch() : void {
+	loadBooks(false)
+}
+
+function handleRefresh() : void {
+	isRefreshing.value = true
+	loadBooks(false)
+}
+
+function loadMore() : void {
+	loadBooks(true)
+}
+
+function refreshLocalBookProgress() : void {
+	books.value = books.value.map((item : AppBook) : AppBook => applyLocalBookProgress(item))
+}
+
+function goDetail(id : number) : void {
+	uni.navigateTo({ url: '/pages/book/detail?id=' + String(id) })
+}
+
+onShow(() => {
+	refreshLocalBookProgress()
+})
+
+function goLearningPage() : void {
+	uni.redirectTo({ url: '/pages/index/index' })
+}
+
+function goTopicsPage() : void {
+	uni.redirectTo({ url: '/pages/topics/list' })
+}
+
+function goAudioPage() : void {
+	uni.redirectTo({ url: '/pages/audio/index' })
+}
+
+function goLivePage() : void {
+	uni.redirectTo({ url: '/pages/live/index' })
+}
+
+function goCoursePage() : void {
+	uni.redirectTo({ url: '/pages/course/index' })
+}
+
+function goNewsPage() : void {
+	uni.redirectTo({ url: '/pages/news/index' })
+}
+
+function goExamPage() : void {
+	uni.redirectTo({ url: '/pages/exam/index' })
+}
+
+function goConsultPage() : void {
+	uni.redirectTo({ url: '/pages/consult/index' })
+}
+
+function goKnowledgePage() : void {
+	uni.redirectTo({ url: '/pages/knowledge/index' })
+}
+
+function goMinePage() : void {
+	uni.redirectTo({ url: '/pages/mine/index' })
+}
+
+loadInitialData()
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f7f7f2;
+}
+
+.hero-shell {
+	position: relative;
+	height: 254rpx;
+	overflow: hidden;
+}
+
+.hero-bg {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 750rpx;
+	height: 254rpx;
+}
+
+.header {
+	position: relative;
+	z-index: 1;
+	height: 146rpx;
+	padding-top: 62rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.top-tabs {
+	position: relative;
+	z-index: 1;
+	height: 108rpx;
+	padding-left: 18rpx;
+	padding-right: 18rpx;
+	background-color: rgba(251, 250, 246, 0.78);
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.top-tab {
+	min-width: 78rpx;
+	height: 96rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.top-tab-text {
+	font-size: 15px;
+	line-height: 22px;
+	color: #333333;
+}
+
+.top-tab-text-active {
+	color: #b85d69;
+	font-weight: 600;
+}
+
+.top-tab-line {
+	margin-top: 12rpx;
+	width: 40rpx;
+	height: 6rpx;
+	border-radius: 4rpx;
+	background-color: #b85d69;
+}
+
+.header-title {
+	font-size: 20px;
+	line-height: 30px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+
+.search-bar {
+	margin: 16rpx 20rpx 12rpx;
+	height: 78rpx;
+	padding: 0 12rpx 0 24rpx;
+	background-color: #ffffff;
+	border-radius: 18rpx;
+	flex-direction: row;
+	align-items: center;
+}
+
+.search-input {
+	flex: 1;
+	height: 78rpx;
+	font-size: 15px;
+	color: #303030;
+}
+
+.search-btn {
+	width: 108rpx;
+	height: 56rpx;
+	border-radius: 28rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.search-btn-text {
+	font-size: 13px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.category-scroll {
+	height: 76rpx;
+	background-color: #ffffff;
+	white-space: nowrap;
+}
+
+.category-row {
+	flex-direction: row;
+	padding: 0 20rpx;
+}
+
+.category-item {
+	height: 76rpx;
+	margin-right: 18rpx;
+	padding: 0 24rpx;
+	align-items: center;
+	justify-content: center;
+	border-bottom-width: 4rpx;
+	border-bottom-style: solid;
+	border-bottom-color: transparent;
+}
+
+.category-item-active {
+	border-bottom-color: #d56d79;
+}
+
+.category-text {
+	font-size: 14px;
+	color: #4b4b4b;
+}
+
+.category-text-active {
+	color: #d56d79;
+	font-weight: 600;
+}
+
+.book-scroll {
+	flex: 1;
+	padding-bottom: 112rpx;
+}
+
+.book-list {
+	padding: 18rpx 20rpx 128rpx;
+}
+
+.book-card {
+	margin-bottom: 18rpx;
+	padding: 18rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	flex-direction: row;
+	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.06);
+}
+
+.cover-shell {
+	width: 150rpx;
+	height: 200rpx;
+	margin-right: 18rpx;
+	border-radius: 14rpx;
+	overflow: hidden;
+	background-color: #eadcc4;
+}
+
+.cover-image {
+	width: 150rpx;
+	height: 200rpx;
+}
+
+.cover-fallback {
+	width: 150rpx;
+	height: 200rpx;
+	align-items: center;
+	justify-content: center;
+	background-color: #eadcc4;
+}
+
+.cover-fallback-text {
+	font-size: 18px;
+	line-height: 26px;
+	color: #806b4d;
+	font-weight: 700;
+	text-align: center;
+}
+
+.book-main {
+	flex: 1;
+	min-height: 200rpx;
+}
+
+.book-title {
+	font-size: 17px;
+	line-height: 25px;
+	color: #252525;
+	font-weight: 700;
+}
+
+.book-meta {
+	margin-top: 8rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #8e8e8e;
+}
+
+.book-summary {
+	margin-top: 8rpx;
+	font-size: 13px;
+	line-height: 20px;
+	color: #777777;
+	height: 40rpx;
+	overflow: hidden;
+}
+
+.progress-wrap {
+	margin-top: 14rpx;
+	flex-direction: row;
+	align-items: center;
+}
+
+.progress-bg {
+	flex: 1;
+	height: 10rpx;
+	border-radius: 999rpx;
+	background-color: #eeeeee;
+	overflow: hidden;
+}
+
+.progress-fill {
+	height: 10rpx;
+	border-radius: 999rpx;
+	background-color: #18b775;
+}
+
+.progress-text {
+	margin-left: 12rpx;
+	font-size: 12px;
+	color: #9b9b9b;
+}
+
+.book-bottom {
+	margin-top: 14rpx;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+.book-stat {
+	font-size: 12px;
+	color: #ababab;
+}
+
+.state-wrap {
+	padding: 160rpx 40rpx 0;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	color: #9c9c9c;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 200rpx;
+	height: 68rpx;
+	border-radius: 12rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.bottom-state {
+	padding: 14rpx 0 18rpx;
+	align-items: center;
+}
+
+.bottom-state-text {
+	font-size: 12px;
+	color: #b1b1b1;
+}
+
+.tabbar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 104rpx;
+	background-color: rgba(255, 255, 255, 0.98);
+	border-top-width: 1rpx;
+	border-top-style: solid;
+	border-top-color: #eceaf1;
+	flex-direction: row;
+}
+
+.tab-item {
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+
+.tab-icon-image {
+	width: 42rpx;
+	height: 42rpx;
+}
+
+.tab-label {
+	margin-top: 6rpx;
+	font-size: 20rpx;
+	color: #a8a8b2;
+}
+
+.tab-label-active {
+	color: #18b775;
+	font-weight: 600;
+}
+</style>

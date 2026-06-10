@@ -19,6 +19,9 @@
 						<text class="meta-text">{{ source }}</text>
 						<text class="meta-text">{{ publishedAt }}</text>
 						<text class="meta-text">{{ viewText }} {{ viewCount }}</text>
+						<view class="favorite-btn favorite-btn-meta" @tap="toggleFavorite">
+							<text class="favorite-btn-text">{{ isFavorited ? favoritedText : favoriteBtnText }}</text>
+						</view>
 					</view>
 					<view class="tag-row">
 						<text v-for="tag in tags" :key="tag" class="tag-item">{{ tag }}</text>
@@ -31,12 +34,7 @@
 				</view>
 
 				<view class="section-card">
-					<view class="section-head">
-						<text class="section-title">{{ contentTitle }}</text>
-						<view class="favorite-btn" @tap="toggleFavorite">
-							<text class="favorite-btn-text">{{ isFavorited ? favoritedText : favoriteBtnText }}</text>
-						</view>
-					</view>
+					<text class="section-title">{{ contentTitle }}</text>
 					<rich-text v-if="isHtmlContent" class="rich-content" :nodes="content"></rich-text>
 					<text v-else class="section-text">{{ content }}</text>
 				</view>
@@ -228,7 +226,12 @@ const toggleFavorite = () => {
 }
 
 const goBack = () => {
-	uni.navigateBack()
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack()
+		return
+	}
+	uni.redirectTo({ url: '/pages/news/index' })
 }
 
 onLoad((options) => {
@@ -254,7 +257,8 @@ onShow(() => {
 }
 
 .header {
-	height: 96rpx;
+	height: calc(96rpx + var(--status-bar-height));
+	padding-top: var(--status-bar-height);
 	padding-left: 24rpx;
 	padding-right: 24rpx;
 	flex-direction: row;
@@ -270,6 +274,7 @@ onShow(() => {
 .back-btn {
 	position: absolute;
 	left: 20rpx;
+	top: var(--status-bar-height);
 	width: 68rpx;
 	height: 68rpx;
 	align-items: center;
@@ -382,6 +387,11 @@ onShow(() => {
 	background-color: #f4efe7;
 	align-items: center;
 	justify-content: center;
+}
+
+.favorite-btn-meta {
+	margin-top: 12rpx;
+	align-self: flex-start;
 }
 
 .favorite-btn-text {

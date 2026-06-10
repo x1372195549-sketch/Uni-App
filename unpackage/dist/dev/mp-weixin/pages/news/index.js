@@ -39,6 +39,7 @@ const PAGE_SIZE = 10;
 const appTitleText = "江苏中医在线";
 const homeTabText = "首页";
 const topicTabText = "专题";
+const bookTabText = "图书";
 const audioTabText = "音频";
 const liveTabText = "直播";
 const courseTabText = "课程";
@@ -136,6 +137,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goTopicsPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/topics/list" });
     };
+    const goBookPage = () => {
+      common_vendor.index.redirectTo({ url: "/pages/book/index" });
+    };
     const goAudioPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/audio/index" });
     };
@@ -169,34 +173,36 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         b: common_vendor.t(appTitleText),
         c: common_vendor.t(homeTabText),
         d: common_vendor.o(goLearningPage),
-        e: common_vendor.t(topicTabText),
-        f: common_vendor.o(goTopicsPage),
-        g: common_vendor.t(audioTabText),
-        h: common_vendor.o(goAudioPage),
+        e: common_vendor.t(audioTabText),
+        f: common_vendor.o(goAudioPage),
+        g: common_vendor.t(courseTabText),
+        h: common_vendor.o(goCoursePage),
         i: common_vendor.t(liveTabText),
         j: common_vendor.o(goLivePage),
-        k: common_vendor.t(courseTabText),
-        l: common_vendor.o(goCoursePage),
-        m: common_vendor.t(newsTabText),
-        n: searchPlaceholder,
-        o: common_vendor.o(reloadList),
-        p: keyword.value,
-        q: common_vendor.o(($event) => {
+        k: common_vendor.t(bookTabText),
+        l: common_vendor.o(goBookPage),
+        m: common_vendor.t(topicTabText),
+        n: common_vendor.o(goTopicsPage),
+        o: common_vendor.t(newsTabText),
+        p: searchPlaceholder,
+        q: common_vendor.o(reloadList),
+        r: keyword.value,
+        s: common_vendor.o(($event) => {
           return keyword.value = $event.detail.value;
         }),
-        r: common_vendor.t(searchText),
-        s: common_vendor.o(reloadList),
-        t: isLoading.value
+        t: common_vendor.t(searchText),
+        v: common_vendor.o(reloadList),
+        w: isLoading.value
       }, isLoading.value ? {
-        v: common_vendor.t(loadingText)
+        x: common_vendor.t(loadingText)
       } : errorText.value.length > 0 ? {
-        x: common_vendor.t(errorText.value),
-        y: common_vendor.t(retryText),
-        z: common_vendor.o(reloadList)
+        z: common_vendor.t(errorText.value),
+        A: common_vendor.t(retryText),
+        B: common_vendor.o(reloadList)
       } : articleItems.value.length == 0 ? {
-        B: common_vendor.t(emptyText)
+        D: common_vendor.t(emptyText)
       } : common_vendor.e({
-        C: common_vendor.f(articleItems.value, (item, k0, i0) => {
+        E: common_vendor.f(articleItems.value, (item, k0, i0) => {
           return common_vendor.e({
             a: item.coverUrl.length > 0
           }, item.coverUrl.length > 0 ? {
@@ -219,33 +225,33 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, item.id)
           });
         }),
-        D: common_vendor.t(viewText),
-        E: isListLoading.value
+        F: common_vendor.t(viewText),
+        G: isListLoading.value
       }, isListLoading.value ? {
-        F: common_vendor.t(loadingMoreText)
+        H: common_vendor.t(loadingMoreText)
       } : !hasMore.value ? {
-        H: common_vendor.t(noMoreText)
+        J: common_vendor.t(noMoreText)
       } : {}, {
-        G: !hasMore.value
+        I: !hasMore.value
       }), {
-        w: errorText.value.length > 0,
-        A: articleItems.value.length == 0,
-        I: common_vendor.o(loadMore),
-        J: common_assets._imports_1$2,
-        K: common_vendor.t(learningTabText),
-        L: common_assets._imports_2$1,
-        M: common_vendor.t(examTabText),
-        N: common_vendor.o(goExamPage),
-        O: common_assets._imports_4,
-        P: common_vendor.t(consultTabText),
-        Q: common_vendor.o(goConsultPage),
-        R: common_assets._imports_5,
-        S: common_vendor.t(knowledgeTabText),
-        T: common_vendor.o(goKnowledgePage),
-        U: common_assets._imports_6$1,
-        V: common_vendor.t(mineTabText),
-        W: common_vendor.o(goMinePage),
-        X: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        y: errorText.value.length > 0,
+        C: articleItems.value.length == 0,
+        K: common_vendor.o(loadMore),
+        L: common_assets._imports_1$2,
+        M: common_vendor.t(learningTabText),
+        N: common_assets._imports_2$1,
+        O: common_vendor.t(examTabText),
+        P: common_vendor.o(goExamPage),
+        Q: common_assets._imports_4,
+        R: common_vendor.t(consultTabText),
+        S: common_vendor.o(goConsultPage),
+        T: common_assets._imports_5,
+        U: common_vendor.t(knowledgeTabText),
+        V: common_vendor.o(goKnowledgePage),
+        W: common_assets._imports_6$1,
+        X: common_vendor.t(mineTabText),
+        Y: common_vendor.o(goMinePage),
+        Z: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

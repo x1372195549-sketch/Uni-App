@@ -326,7 +326,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goBack = () => {
       stopTimer();
       saveDraft();
-      common_vendor.index.navigateBack();
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        common_vendor.index.navigateBack();
+        return null;
+      }
+      common_vendor.index.redirectTo({ url: "/pages/exam/index" });
     };
     common_vendor.onLoad((options = null) => {
       if (options == null) {

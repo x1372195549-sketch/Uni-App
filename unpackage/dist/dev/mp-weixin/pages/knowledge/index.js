@@ -66,13 +66,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const searchKeyword = common_vendor.ref("");
     const selectedCategoryId = common_vendor.ref(0);
     const flatCategories = common_vendor.ref([]);
-    const bookList = common_vendor.ref([]);
+    const knowledgeList = common_vendor.ref([]);
     const page = common_vendor.ref(1);
     const hasMore = common_vendor.ref(true);
     const isInitialLoading = common_vendor.ref(true);
     const isListLoading = common_vendor.ref(false);
     const isRefreshing = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
+    const coverLoadingIds = common_vendor.ref([]);
     function safeText(value = null) {
       return value == null || value.length == 0 ? "" : value;
     }
@@ -111,6 +112,50 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         shortTitle: toShortTitle(item.title)
       });
     }
+    function hasCoverLoading(id) {
+      return coverLoadingIds.value.indexOf(id) >= 0;
+    }
+    function updateKnowledgeCover(id, coverUrl) {
+      const normalizedCover = safeText(coverUrl);
+      if (normalizedCover.length == 0) {
+        return null;
+      }
+      knowledgeList.value = knowledgeList.value.map((item) => {
+        if (item.id == id) {
+          return new KnowledgeDisplayItem({
+            id: item.id,
+            title: item.title,
+            summary: item.summary,
+            author: item.author,
+            categoryName: item.categoryName,
+            coverUrl: normalizedCover,
+            viewCount: item.viewCount,
+            publishedAt: item.publishedAt,
+            shortTitle: item.shortTitle
+          });
+        }
+        return item;
+      });
+    }
+    function markCoverLoaded(id) {
+      coverLoadingIds.value = coverLoadingIds.value.filter((itemId) => {
+        return itemId != id;
+      });
+    }
+    function hydrateMissingCovers(items) {
+      items.forEach((item) => {
+        if (item.coverUrl.length > 0 || hasCoverLoading(item.id)) {
+          return null;
+        }
+        coverLoadingIds.value = coverLoadingIds.value.concat([item.id]);
+        utils_auth.fetchKnowledgeEntryDetail(String(item.id), (detail) => {
+          updateKnowledgeCover(item.id, detail.coverUrl);
+          markCoverLoaded(item.id);
+        }, () => {
+          markCoverLoaded(item.id);
+        });
+      });
+    }
     function loadCategories() {
       utils_auth.fetchKnowledgeCategoryTree((categories) => {
         const nextItems = new Array();
@@ -142,10 +187,11 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           return mapKnowledgeItem(item);
         }) : [];
         if (loadMore2) {
-          bookList.value = bookList.value.concat(mapped);
+          knowledgeList.value = knowledgeList.value.concat(mapped);
         } else {
-          bookList.value = mapped;
+          knowledgeList.value = mapped;
         }
+        hydrateMissingCovers(mapped);
         hasMore.value = mapped.length >= PAGE_SIZE;
         if (hasMore.value) {
           page.value += 1;
@@ -180,10 +226,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     function loadMore() {
       loadKnowledgeList(true);
     }
-    function goBookDetail(item) {
+    function goKnowledgeDetail(item) {
       common_vendor.index.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, String(item.id));
       common_vendor.index.navigateTo({
-        url: "/pages/knowledge/book-detail?id=" + String(item.id)
+        url: "/pages/knowledge/detail?id=" + String(item.id)
       });
     }
     function goLearningPage() {
@@ -233,35 +279,33 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }, isInitialLoading.value ? {} : errorText.value.length > 0 ? {
         m: common_vendor.t(errorText.value),
         n: common_vendor.o(loadInitialData)
-      } : bookList.value.length == 0 ? {} : common_vendor.e({
-        p: common_vendor.f(bookList.value, (item, k0, i0) => {
+      } : knowledgeList.value.length == 0 ? {} : common_vendor.e({
+        p: common_vendor.f(knowledgeList.value, (item, k0, i0) => {
           return common_vendor.e({
             a: item.coverUrl.length > 0
           }, item.coverUrl.length > 0 ? {
             b: item.coverUrl
-          } : {
-            c: common_vendor.t(item.shortTitle)
-          }, {
-            d: common_vendor.t(item.title),
-            e: item.summary.length > 0
+          } : {}, {
+            c: common_vendor.t(item.title),
+            d: item.summary.length > 0
           }, item.summary.length > 0 ? {
-            f: common_vendor.t(item.summary)
+            e: common_vendor.t(item.summary)
           } : {}, {
-            g: item.author.length > 0
+            f: item.author.length > 0
           }, item.author.length > 0 ? {
-            h: common_vendor.t(item.author)
+            g: common_vendor.t(item.author)
           } : item.categoryName.length > 0 ? {
-            j: common_vendor.t(item.categoryName)
+            i: common_vendor.t(item.categoryName)
           } : {}, {
-            i: item.categoryName.length > 0,
-            k: common_vendor.t(item.viewCount),
-            l: item.publishedAt.length > 0
+            h: item.categoryName.length > 0,
+            j: common_vendor.t(item.viewCount),
+            k: item.publishedAt.length > 0
           }, item.publishedAt.length > 0 ? {
-            m: common_vendor.t(item.publishedAt)
+            l: common_vendor.t(item.publishedAt)
           } : {}, {
-            n: item.id,
-            o: common_vendor.o(($event) => {
-              return goBookDetail(item);
+            m: item.id,
+            n: common_vendor.o(($event) => {
+              return goKnowledgeDetail(item);
             }, item.id)
           });
         }),
@@ -270,7 +314,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         r: !hasMore.value
       }), {
         l: errorText.value.length > 0,
-        o: bookList.value.length == 0,
+        o: knowledgeList.value.length == 0,
         s: isRefreshing.value,
         t: common_vendor.o(handleRefresh),
         v: common_vendor.o(loadMore),

@@ -11,18 +11,21 @@
 				<view class="top-tab" @tap="goHomePage">
 					<text class="top-tab-text">{{ homeTabText }}</text>
 				</view>
-				<view class="top-tab top-tab-active">
-					<text class="top-tab-text top-tab-text-active">{{ pageTitleText }}</text>
-					<view class="top-tab-line"></view>
-				</view>
 				<view class="top-tab" @tap="goAudioPage">
 					<text class="top-tab-text">{{ audioTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goCoursePage">
+					<text class="top-tab-text">{{ courseTabText }}</text>
 				</view>
 				<view class="top-tab" @tap="goLivePage">
 					<text class="top-tab-text">{{ liveTabText }}</text>
 				</view>
-				<view class="top-tab" @tap="goCoursePage">
-					<text class="top-tab-text">{{ courseTabText }}</text>
+				<view class="top-tab" @tap="goBookPage">
+					<text class="top-tab-text">{{ bookTabText }}</text>
+				</view>
+				<view class="top-tab top-tab-active">
+					<text class="top-tab-text top-tab-text-active">{{ pageTitleText }}</text>
+					<view class="top-tab-line"></view>
 				</view>
 				<view class="top-tab" @tap="goNewsPage">
 					<text class="top-tab-text">{{ newsTabText }}</text>
@@ -140,6 +143,7 @@ const PAGE_SIZE = 10
 const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
 const homeTabText = '\u9996\u9875'
 const pageTitleText = '\u4e13\u9898'
+const bookTabText = '\u56fe\u4e66'
 const audioTabText = '\u97f3\u9891'
 const liveTabText = '\u76f4\u64ad'
 const courseTabText = '\u8bfe\u7a0b'
@@ -248,6 +252,10 @@ const goDetail = (id : number) => {
 
 const goHomePage = () => {
 	uni.redirectTo({ url: '/pages/index/index' })
+}
+
+const goBookPage = () => {
+	uni.redirectTo({ url: '/pages/book/index' })
 }
 
 const goAudioPage = () => {

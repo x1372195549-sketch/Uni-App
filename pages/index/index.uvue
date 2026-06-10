@@ -12,17 +12,20 @@
 					<text class="top-tab-text top-tab-text-active">{{ homeTabText }}</text>
 					<view class="top-tab-line"></view>
 				</view>
-				<view class="top-tab" @tap="goTopicsPage">
-					<text class="top-tab-text">{{ topicTabText }}</text>
-				</view>
 				<view class="top-tab" @tap="goAudioPage">
 					<text class="top-tab-text">{{ audioTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goCoursePage">
+					<text class="top-tab-text">{{ courseTabText }}</text>
 				</view>
 				<view class="top-tab" @tap="goLivePage">
 					<text class="top-tab-text">{{ liveTabText }}</text>
 				</view>
-				<view class="top-tab" @tap="goCoursePage">
-					<text class="top-tab-text">{{ courseTabText }}</text>
+				<view class="top-tab" @tap="goBookPage">
+					<text class="top-tab-text">{{ bookTabText }}</text>
+				</view>
+				<view class="top-tab" @tap="goTopicsPage">
+					<text class="top-tab-text">{{ topicTabText }}</text>
 				</view>
 				<view class="top-tab" @tap="goNewsPage">
 					<text class="top-tab-text">{{ newsTabText }}</text>
@@ -201,6 +204,7 @@ type HomeHeroSlide = {
 const appTitleText = '\u6c5f\u82cf\u4e2d\u533b\u5728\u7ebf'
 const homeTabText = '\u9996\u9875'
 const topicTabText = '\u4e13\u9898'
+const bookTabText = '\u56fe\u4e66'
 const audioTabText = '\u97f3\u9891'
 const liveTabText = '\u76f4\u64ad'
 const courseTabText = '\u8bfe\u7a0b'
@@ -235,6 +239,7 @@ const TOPIC_DETAIL_ID_KEY = 'topic_detail_id'
 const topicItems = ref<HomeTopicCard[]>([])
 const recommendItems = ref<HomeRecommendItem[]>([])
 const heroSlides = ref<HomeHeroSlide[]>([])
+const isNavigating = ref(false)
 
 const safeText = (value : string | null) : string => {
 	return value == null || value.length == 0 ? '' : value
@@ -254,6 +259,9 @@ const normalizeResourceType = (value : string) : string => {
 	}
 	if (text == 'TOPIC' || text == 'TOPICS' || text == 'SPECIAL' || text == 'SPECIAL_TOPIC' || text == 'SUBJECT' || text == '\u4e13\u9898') {
 		return 'TOPIC'
+	}
+	if (text == 'BOOK' || text == 'BOOKS' || text == '\u56fe\u4e66') {
+		return 'BOOK'
 	}
 	if (text == 'LIVE' || text == 'LIVES' || text == 'LIVESESSION' || text == 'LIVE_SESSION' || text == 'LIVE_STREAM' || text == '\u76f4\u64ad') {
 		return 'LIVE'
@@ -283,6 +291,9 @@ const labelByResourceType = (type : string, fallback : string) : string => {
 	if (type == 'TOPIC') {
 		return topicTabText
 	}
+	if (type == 'BOOK') {
+		return bookTabText
+	}
 	return fallback
 }
 
@@ -299,6 +310,9 @@ const fallbackSummaryByResourceType = (type : string) : string => {
 	if (type == 'ARTICLE') {
 		return fallbackNewsSlideSummary
 	}
+	if (type == 'BOOK') {
+		return '\u8fdb\u5165\u56fe\u4e66\u9605\u8bfb\u3002'
+	}
 	return fallbackTopicSummary
 }
 
@@ -314,6 +328,9 @@ const actionTextByResourceType = (type : string) : string => {
 	}
 	if (type == 'ARTICLE') {
 		return heroActionNewsText
+	}
+	if (type == 'BOOK') {
+		return '\u67e5\u770b\u56fe\u4e66'
 	}
 	return heroActionText
 }
@@ -467,6 +484,10 @@ const goHeroDetail = (item : HomeHeroSlide) => {
 		goArticleDetail(item.resourceId)
 		return
 	}
+	if (item.resourceType == 'BOOK') {
+		goBookDetail(item.resourceId)
+		return
+	}
 	if (item.resourceType == 'TOPIC') {
 		goTopicDetail(item.resourceId)
 	}
@@ -489,13 +510,30 @@ const goRecommendDetail = (item : HomeRecommendItem) => {
 		goArticleDetail(item.resourceId)
 		return
 	}
+	if (item.resourceType == 'BOOK') {
+		goBookDetail(item.resourceId)
+		return
+	}
 	if (item.resourceType == 'TOPIC') {
 		goTopicDetail(item.resourceId)
 	}
 }
 
+const redirectToPage = (url : string) => {
+	if (isNavigating.value) {
+		return
+	}
+	isNavigating.value = true
+	uni.redirectTo({
+		url: url,
+		complete: () => {
+			isNavigating.value = false
+		}
+	})
+}
+
 const goTopicsPage = () => {
-	uni.redirectTo({ url: '/pages/topics/list' })
+	redirectToPage('/pages/topics/list')
 }
 
 const goTopicDetail = (id : number) => {
@@ -512,36 +550,44 @@ const goArticleDetail = (id : number) => {
 	uni.navigateTo({ url: '/pages/news/detail?id=' + String(id) })
 }
 
+const goBookDetail = (id : number) => {
+	uni.navigateTo({ url: '/pages/book/detail?id=' + String(id) })
+}
+
+const goBookPage = () => {
+	redirectToPage('/pages/book/index')
+}
+
 const goAudioPage = () => {
-	uni.redirectTo({ url: '/pages/audio/index' })
+	redirectToPage('/pages/audio/index')
 }
 
 const goLivePage = () => {
-	uni.redirectTo({ url: '/pages/live/index' })
+	redirectToPage('/pages/live/index')
 }
 
 const goCoursePage = () => {
-	uni.redirectTo({ url: '/pages/course/index' })
+	redirectToPage('/pages/course/index')
 }
 
 const goNewsPage = () => {
-	uni.redirectTo({ url: '/pages/news/index' })
+	redirectToPage('/pages/news/index')
 }
 
 const goMinePage = () => {
-	uni.redirectTo({ url: '/pages/mine/index' })
+	redirectToPage('/pages/mine/index')
 }
 
 const goExamPage = () => {
-	uni.redirectTo({ url: '/pages/exam/index' })
+	redirectToPage('/pages/exam/index')
 }
 
 const goKnowledgePage = () => {
-	uni.redirectTo({ url: '/pages/knowledge/index' })
+	redirectToPage('/pages/knowledge/index')
 }
 
 const goConsultPage = () => {
-	uni.redirectTo({ url: '/pages/consult/index' })
+	redirectToPage('/pages/consult/index')
 }
 
 loadHomeData()

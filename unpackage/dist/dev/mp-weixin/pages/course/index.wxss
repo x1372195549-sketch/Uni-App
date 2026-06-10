@@ -4,6 +4,7 @@
 .page {
   flex: 1;
   background-color: #f7f7f2;
+  min-height: 100vh;
 }
 .hero-shell {
   position: relative;
@@ -125,6 +126,38 @@
 }
 .list-wrap {
   gap: 18rpx;
+}
+.skeleton-list {
+  gap: 18rpx;
+}
+.skeleton-card {
+  min-height: 300rpx;
+  border-radius: 22rpx;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+.skeleton-cover {
+  height: 196rpx;
+  background-color: #efe6dc;
+}
+.skeleton-main {
+  padding: 20rpx 24rpx 24rpx;
+}
+.skeleton-line {
+  height: 24rpx;
+  border-radius: 999rpx;
+  background-color: #eee9e1;
+}
+.skeleton-line-title {
+  width: 70%;
+}
+.skeleton-line-meta {
+  width: 48%;
+  margin-top: 18rpx;
+}
+.skeleton-line-short {
+  width: 34%;
+  margin-top: 14rpx;
 }
 .course-card {
   overflow: hidden;

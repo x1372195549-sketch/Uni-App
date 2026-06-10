@@ -104,6 +104,7 @@ class HomeHeroSlide extends UTS.UTSType {
 const appTitleText = "江苏中医在线";
 const homeTabText = "首页";
 const topicTabText = "专题";
+const bookTabText = "图书";
 const audioTabText = "音频";
 const liveTabText = "直播";
 const courseTabText = "课程";
@@ -140,6 +141,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const topicItems = common_vendor.ref([]);
     const recommendItems = common_vendor.ref([]);
     const heroSlides = common_vendor.ref([]);
+    const isNavigating = common_vendor.ref(false);
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
     };
@@ -156,6 +158,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       if (text == "TOPIC" || text == "TOPICS" || text == "SPECIAL" || text == "SPECIAL_TOPIC" || text == "SUBJECT" || text == "专题") {
         return "TOPIC";
+      }
+      if (text == "BOOK" || text == "BOOKS" || text == "图书") {
+        return "BOOK";
       }
       if (text == "LIVE" || text == "LIVES" || text == "LIVESESSION" || text == "LIVE_SESSION" || text == "LIVE_STREAM" || text == "直播") {
         return "LIVE";
@@ -184,6 +189,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (type == "TOPIC") {
         return topicTabText;
       }
+      if (type == "BOOK") {
+        return bookTabText;
+      }
       return fallback;
     };
     const fallbackSummaryByResourceType = (type) => {
@@ -199,6 +207,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       if (type == "ARTICLE") {
         return fallbackNewsSlideSummary;
       }
+      if (type == "BOOK") {
+        return "进入图书阅读。";
+      }
       return fallbackTopicSummary;
     };
     const actionTextByResourceType = (type) => {
@@ -213,6 +224,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
       if (type == "ARTICLE") {
         return heroActionNewsText;
+      }
+      if (type == "BOOK") {
+        return "查看图书";
       }
       return heroActionText;
     };
@@ -353,6 +367,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         goArticleDetail(item.resourceId);
         return null;
       }
+      if (item.resourceType == "BOOK") {
+        goBookDetail(item.resourceId);
+        return null;
+      }
       if (item.resourceType == "TOPIC") {
         goTopicDetail(item.resourceId);
       }
@@ -374,12 +392,28 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         goArticleDetail(item.resourceId);
         return null;
       }
+      if (item.resourceType == "BOOK") {
+        goBookDetail(item.resourceId);
+        return null;
+      }
       if (item.resourceType == "TOPIC") {
         goTopicDetail(item.resourceId);
       }
     };
+    const redirectToPage = (url) => {
+      if (isNavigating.value) {
+        return null;
+      }
+      isNavigating.value = true;
+      common_vendor.index.redirectTo({
+        url,
+        complete: () => {
+          isNavigating.value = false;
+        }
+      });
+    };
     const goTopicsPage = () => {
-      common_vendor.index.redirectTo({ url: "/pages/topics/list" });
+      redirectToPage("/pages/topics/list");
     };
     const goTopicDetail = (id) => {
       common_vendor.index.setStorageSync(TOPIC_DETAIL_ID_KEY, String(id));
@@ -392,29 +426,35 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goArticleDetail = (id) => {
       common_vendor.index.navigateTo({ url: "/pages/news/detail?id=" + String(id) });
     };
+    const goBookDetail = (id) => {
+      common_vendor.index.navigateTo({ url: "/pages/book/detail?id=" + String(id) });
+    };
+    const goBookPage = () => {
+      redirectToPage("/pages/book/index");
+    };
     const goAudioPage = () => {
-      common_vendor.index.redirectTo({ url: "/pages/audio/index" });
+      redirectToPage("/pages/audio/index");
     };
     const goLivePage = () => {
-      common_vendor.index.redirectTo({ url: "/pages/live/index" });
+      redirectToPage("/pages/live/index");
     };
     const goCoursePage = () => {
-      common_vendor.index.redirectTo({ url: "/pages/course/index" });
+      redirectToPage("/pages/course/index");
     };
     const goNewsPage = () => {
-      common_vendor.index.redirectTo({ url: "/pages/news/index" });
+      redirectToPage("/pages/news/index");
     };
     const goMinePage = () => {
-      common_vendor.index.redirectTo({ url: "/pages/mine/index" });
+      redirectToPage("/pages/mine/index");
     };
     const goExamPage = () => {
-      common_vendor.index.redirectTo({ url: "/pages/exam/index" });
+      redirectToPage("/pages/exam/index");
     };
     const goKnowledgePage = () => {
-      common_vendor.index.redirectTo({ url: "/pages/knowledge/index" });
+      redirectToPage("/pages/knowledge/index");
     };
     const goConsultPage = () => {
-      common_vendor.index.redirectTo({ url: "/pages/consult/index" });
+      redirectToPage("/pages/consult/index");
     };
     loadHomeData();
     return (_ctx, _cache) => {
@@ -423,19 +463,21 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         a: common_assets._imports_0$3,
         b: common_vendor.t(appTitleText),
         c: common_vendor.t(homeTabText),
-        d: common_vendor.t(topicTabText),
-        e: common_vendor.o(goTopicsPage),
-        f: common_vendor.t(audioTabText),
-        g: common_vendor.o(goAudioPage),
+        d: common_vendor.t(audioTabText),
+        e: common_vendor.o(goAudioPage),
+        f: common_vendor.t(courseTabText),
+        g: common_vendor.o(goCoursePage),
         h: common_vendor.t(liveTabText),
         i: common_vendor.o(goLivePage),
-        j: common_vendor.t(courseTabText),
-        k: common_vendor.o(goCoursePage),
-        l: common_vendor.t(newsTabText),
-        m: common_vendor.o(goNewsPage),
-        n: heroSlides.value.length > 0
+        j: common_vendor.t(bookTabText),
+        k: common_vendor.o(goBookPage),
+        l: common_vendor.t(topicTabText),
+        m: common_vendor.o(goTopicsPage),
+        n: common_vendor.t(newsTabText),
+        o: common_vendor.o(goNewsPage),
+        p: heroSlides.value.length > 0
       }, heroSlides.value.length > 0 ? {
-        o: common_vendor.f(heroSlides.value, (item, k0, i0) => {
+        q: common_vendor.f(heroSlides.value, (item, k0, i0) => {
           return common_vendor.e({
             a: common_vendor.t(item.kicker),
             b: common_vendor.t(item.title),
@@ -454,17 +496,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           });
         })
       } : {
-        p: common_vendor.t(heroKickerText),
-        q: common_vendor.t(heroTitleText),
-        r: common_vendor.t(heroSubtitleText),
-        s: common_vendor.t(heroActionText),
-        t: common_vendor.t(topicTabText),
-        v: common_vendor.o(goTopicsPage)
+        r: common_vendor.t(heroKickerText),
+        s: common_vendor.t(heroTitleText),
+        t: common_vendor.t(heroSubtitleText),
+        v: common_vendor.t(heroActionText),
+        w: common_vendor.t(topicTabText),
+        x: common_vendor.o(goTopicsPage)
       }, {
-        w: common_vendor.t(homeRecommendTitle),
-        x: recommendItems.value.length > 0
+        y: common_vendor.t(homeRecommendTitle),
+        z: recommendItems.value.length > 0
       }, recommendItems.value.length > 0 ? {
-        y: common_vendor.f(recommendItems.value, (item, k0, i0) => {
+        A: common_vendor.f(recommendItems.value, (item, k0, i0) => {
           return common_vendor.e({
             a: item.coverUrl.length > 0
           }, item.coverUrl.length > 0 ? {
@@ -482,14 +524,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           });
         })
       } : {
-        z: common_vendor.t(emptyRecommendText)
+        B: common_vendor.t(emptyRecommendText)
       }, {
-        A: common_vendor.t(recommendTopicTitle),
-        B: common_vendor.t(moreText),
-        C: common_vendor.o(goTopicsPage),
-        D: topicItems.value.length > 0
+        C: common_vendor.t(recommendTopicTitle),
+        D: common_vendor.t(moreText),
+        E: common_vendor.o(goTopicsPage),
+        F: topicItems.value.length > 0
       }, topicItems.value.length > 0 ? {
-        E: common_vendor.f(topicItems.value, (item, k0, i0) => {
+        G: common_vendor.f(topicItems.value, (item, k0, i0) => {
           return common_vendor.e({
             a: item.coverUrl.length > 0
           }, item.coverUrl.length > 0 ? {
@@ -513,26 +555,26 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, item.id)
           });
         }),
-        F: common_vendor.t(viewText),
-        G: common_vendor.t(favoriteText)
+        H: common_vendor.t(viewText),
+        I: common_vendor.t(favoriteText)
       } : {
-        H: common_vendor.t(emptyTopicText)
+        J: common_vendor.t(emptyTopicText)
       }, {
-        I: common_assets._imports_1$2,
-        J: common_vendor.t(learningTabText),
-        K: common_assets._imports_2$1,
-        L: common_vendor.t(examTabText),
-        M: common_vendor.o(goExamPage),
-        N: common_assets._imports_4,
-        O: common_vendor.t(consultTabText),
-        P: common_vendor.o(goConsultPage),
-        Q: common_assets._imports_5,
-        R: common_vendor.t(knowledgeTabText),
-        S: common_vendor.o(goKnowledgePage),
-        T: common_assets._imports_6$1,
-        U: common_vendor.t(mineTabText),
-        V: common_vendor.o(goMinePage),
-        W: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        K: common_assets._imports_1$2,
+        L: common_vendor.t(learningTabText),
+        M: common_assets._imports_2$1,
+        N: common_vendor.t(examTabText),
+        O: common_vendor.o(goExamPage),
+        P: common_assets._imports_4,
+        Q: common_vendor.t(consultTabText),
+        R: common_vendor.o(goConsultPage),
+        S: common_assets._imports_5,
+        T: common_vendor.t(knowledgeTabText),
+        U: common_vendor.o(goKnowledgePage),
+        V: common_assets._imports_6$1,
+        W: common_vendor.t(mineTabText),
+        X: common_vendor.o(goMinePage),
+        Y: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

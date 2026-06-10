@@ -380,7 +380,7 @@ const goResourceDetail = (item : TopicSectionResource) => {
 			return
 		}
 		uni.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, String(item.resourceId))
-		uni.navigateTo({ url: '/pages/knowledge/book-detail?id=' + String(item.resourceId) })
+		uni.navigateTo({ url: '/pages/book/detail?id=' + String(item.resourceId) })
 		return
 	}
 	if (type == 'course') {
@@ -420,7 +420,8 @@ onShow(() => {
 }
 
 .header {
-	height: 96rpx;
+	height: calc(96rpx + var(--status-bar-height));
+	padding-top: var(--status-bar-height);
 	padding-left: 24rpx;
 	padding-right: 24rpx;
 	flex-direction: row;
@@ -436,6 +437,7 @@ onShow(() => {
 .back-btn {
 	position: absolute;
 	left: 20rpx;
+	top: var(--status-bar-height);
 	width: 68rpx;
 	height: 68rpx;
 	align-items: center;

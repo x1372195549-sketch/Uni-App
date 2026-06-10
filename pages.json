@@ -155,7 +155,28 @@
 			}
 		},
 		{
-			"path": "pages/knowledge/book-detail",
+			"path": "pages/knowledge/detail",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/book/index",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/book/detail",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F7F4EE"
+			}
+		},
+		{
+			"path": "pages/book/chapter",
 			"style": {
 				"navigationStyle": "custom",
 				"backgroundColor": "#F7F4EE"

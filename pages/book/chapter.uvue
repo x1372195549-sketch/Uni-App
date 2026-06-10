@@ -1,0 +1,305 @@
+<template>
+	<view class="page">
+		<view class="header">
+			<view class="back-btn" @tap="goBack">
+				<image class="back-icon" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
+			</view>
+			<text class="header-title">章节内容</text>
+		</view>
+
+		<scroll-view class="content" scroll-y="true">
+			<view v-if="isLoading" class="state-wrap">
+				<text class="state-text">加载中...</text>
+			</view>
+
+			<view v-else-if="errorText.length > 0" class="state-wrap">
+				<text class="state-text">{{ errorText }}</text>
+				<view class="retry-btn" @tap="loadChapter">
+					<text class="retry-btn-text">重新加载</text>
+				</view>
+			</view>
+
+			<view v-else class="chapter-card">
+				<text class="chapter-title">{{ chapterTitle }}</text>
+				<view class="chapter-meta-row">
+					<text v-if="startPageText.length > 0" class="chapter-meta">{{ startPageText }}</text>
+					<text v-if="pageCountText.length > 0" class="chapter-meta">{{ pageCountText }}</text>
+				</view>
+				<rich-text v-if="isHtmlContent" class="rich-content" :nodes="content"></rich-text>
+				<text v-else class="chapter-text">{{ content.length > 0 ? content : '暂无章节内容' }}</text>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script setup lang="uts">
+import { ref } from 'vue'
+import { onHide, onLoad, onUnload } from '@dcloudio/uni-app'
+import {
+	fetchBookChapterDetail,
+	reportBrowseHistory,
+	type AppBookChapter
+} from '../../utils/auth.uts'
+
+const bookId = ref('')
+const chapterId = ref('')
+const isLoading = ref(true)
+const errorText = ref('')
+
+const chapterTitle = ref('')
+const content = ref('')
+const isHtmlContent = ref(false)
+const startPageText = ref('')
+const pageCountText = ref('')
+const enterTimestamp = ref(0)
+const hasSavedStudyTime = ref(false)
+
+function buildProgressStorageKey(id : string) : string {
+	return 'book_chapter_progress_' + id
+}
+
+function buildChapterStudySecondsKey(id : string) : string {
+	return 'book_chapter_seconds_' + id
+}
+
+function readNumberStorage(key : string) : number {
+	const value = uni.getStorageSync(key)
+	if (typeof value == 'number') {
+		return value
+	}
+	if (typeof value == 'string' && value.length > 0) {
+		const parsed = Number(value)
+		return isNaN(parsed) ? 0 : parsed
+	}
+	return 0
+}
+
+function safeText(value : string | null) : string {
+	return value == null || value.length == 0 ? '' : value
+}
+
+function detectHtml(value : string) : boolean {
+	return value.indexOf('<p') >= 0 || value.indexOf('<div') >= 0 || value.indexOf('<br') >= 0
+}
+
+function applyChapter(detail : AppBookChapter) : void {
+	chapterTitle.value = safeText(detail.chapterTitle).length > 0 ? safeText(detail.chapterTitle) : '章节内容'
+	content.value = safeText(detail.content)
+	isHtmlContent.value = detectHtml(content.value)
+	startPageText.value = detail.startPage > 0 ? '起始页 ' + String(detail.startPage) : ''
+	pageCountText.value = detail.pageCount > 0 ? '页数 ' + String(detail.pageCount) : ''
+}
+
+function markChapterViewed() : void {
+	if (bookId.value.length == 0 || chapterId.value.length == 0) {
+		return
+	}
+	const key = buildProgressStorageKey(bookId.value)
+	const stored = uni.getStorageSync(key)
+	let viewedIds : string[] = []
+	if (stored instanceof Array) {
+		viewedIds = (stored as string[])
+	}
+	if (viewedIds.indexOf(chapterId.value) < 0) {
+		viewedIds.push(chapterId.value)
+		uni.setStorageSync(key, viewedIds)
+	}
+}
+
+function saveStudyDuration() : void {
+	if (hasSavedStudyTime.value || bookId.value.length == 0 || chapterId.value.length == 0 || enterTimestamp.value <= 0) {
+		return
+	}
+	const durationSeconds = Math.floor((Date.now() - enterTimestamp.value) / 1000)
+	if (durationSeconds <= 0) {
+		return
+	}
+	hasSavedStudyTime.value = true
+	const key = buildChapterStudySecondsKey(bookId.value + '_' + chapterId.value)
+	const currentSeconds = readNumberStorage(key)
+	uni.setStorageSync(key, currentSeconds + durationSeconds)
+	markChapterViewed()
+}
+
+function reportBrowse() : void {
+	if (bookId.value.length == 0) {
+		return
+	}
+	reportBrowseHistory(
+		{
+			resourceType: 'book',
+			resourceId: Number(bookId.value)
+		},
+		() => {},
+		() => {}
+	)
+}
+
+function loadChapter() : void {
+	if (bookId.value.length == 0 || chapterId.value.length == 0) {
+		errorText.value = '缺少图书或章节 ID'
+		isLoading.value = false
+		return
+	}
+	isLoading.value = true
+	errorText.value = ''
+	fetchBookChapterDetail(
+		bookId.value,
+		chapterId.value,
+		(detail) => {
+			applyChapter(detail)
+			isLoading.value = false
+			reportBrowse()
+		},
+		(message) => {
+			errorText.value = message.length > 0 ? message : '章节加载失败'
+			isLoading.value = false
+		}
+	)
+}
+
+function goBack() : void {
+	saveStudyDuration()
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack()
+		return
+	}
+	if (bookId.value.length > 0) {
+		uni.redirectTo({ url: '/pages/book/detail?id=' + bookId.value })
+		return
+	}
+	uni.redirectTo({ url: '/pages/book/index' })
+}
+
+onLoad((options) => {
+	const bookIdValue = options['bookId']
+	const chapterIdValue = options['chapterId']
+	if (typeof bookIdValue == 'string') {
+		bookId.value = bookIdValue
+	}
+	if (typeof chapterIdValue == 'string') {
+		chapterId.value = chapterIdValue
+	}
+	enterTimestamp.value = Date.now()
+	loadChapter()
+})
+
+onHide(() => {
+	saveStudyDuration()
+})
+
+onUnload(() => {
+	saveStudyDuration()
+})
+</script>
+
+<style>
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+}
+
+.header {
+	height: calc(96rpx + var(--status-bar-height));
+	padding-top: var(--status-bar-height);
+	background-color: #ffffff;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	border-bottom-width: 1rpx;
+	border-bottom-style: solid;
+	border-bottom-color: #eceaf1;
+}
+
+.back-btn {
+	position: absolute;
+	left: 18rpx;
+	bottom: 14rpx;
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.back-icon {
+	width: 26rpx;
+	height: 26rpx;
+}
+
+.header-title {
+	font-size: 18px;
+	line-height: 28px;
+	color: #2a2a2a;
+	font-weight: 700;
+}
+
+.content {
+	flex: 1;
+}
+
+.chapter-card {
+	margin: 20rpx 18rpx 40rpx;
+	padding: 28rpx 24rpx;
+	border-radius: 20rpx;
+	background-color: #ffffff;
+}
+
+.chapter-title {
+	font-size: 20px;
+	line-height: 30px;
+	color: #252525;
+	font-weight: 700;
+}
+
+.chapter-meta-row {
+	margin-top: 16rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+.chapter-meta {
+	margin-right: 18rpx;
+	font-size: 12px;
+	line-height: 18px;
+	color: #999999;
+}
+
+.rich-content {
+	margin-top: 24rpx;
+}
+
+.chapter-text {
+	margin-top: 24rpx;
+	font-size: 15px;
+	line-height: 28px;
+	color: #4f4f4f;
+}
+
+.state-wrap {
+	padding: 180rpx 40rpx 0;
+	align-items: center;
+}
+
+.state-text {
+	font-size: 14px;
+	color: #a8a8b2;
+	text-align: center;
+}
+
+.retry-btn {
+	margin-top: 24rpx;
+	width: 200rpx;
+	height: 68rpx;
+	border-radius: 12rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+</style>

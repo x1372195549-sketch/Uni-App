@@ -245,7 +245,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           return null;
         }
         common_vendor.index.setStorageSync(KNOWLEDGE_DETAIL_ID_KEY, String(item.resourceId));
-        common_vendor.index.navigateTo({ url: "/pages/knowledge/book-detail?id=" + String(item.resourceId) });
+        common_vendor.index.navigateTo({ url: "/pages/book/detail?id=" + String(item.resourceId) });
         return null;
       }
       if (type == "course") {

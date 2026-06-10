@@ -12,7 +12,16 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const autoPlay = common_vendor.ref(true);
     const useVideoPlayer = common_vendor.computed(() => {
       const url = playUrl.value.toLowerCase();
-      return url.startsWith("http://") || url.startsWith("https://") ? url.indexOf(".m3u8") > -1 || url.indexOf(".mp4") > -1 : false;
+      if (url.startsWith("rtmp://")) {
+        return true;
+      }
+      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        return false;
+      }
+      if (mode.value == "web") {
+        return false;
+      }
+      return true;
     });
     const useWebView = common_vendor.computed(() => {
       if (useVideoPlayer.value) {

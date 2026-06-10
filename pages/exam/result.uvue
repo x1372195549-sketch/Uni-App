@@ -242,7 +242,12 @@ const retryExam = () => {
 }
 
 const goBack = () => {
-	uni.navigateBack()
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack()
+		return
+	}
+	goExamHome()
 }
 
 onLoad((options) => {

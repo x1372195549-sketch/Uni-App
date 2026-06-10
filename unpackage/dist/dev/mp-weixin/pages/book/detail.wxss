@@ -1,0 +1,213 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.page {
+	flex: 1;
+	background-color: #f5f5fb;
+}
+.header {
+	height: calc(96rpx + var(--status-bar-height));
+	padding-top: var(--status-bar-height);
+	background-color: #ffffff;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	border-bottom-width: 1rpx;
+	border-bottom-style: solid;
+	border-bottom-color: #eceaf1;
+}
+.back-btn {
+	position: absolute;
+	left: 18rpx;
+	bottom: 14rpx;
+	width: 68rpx;
+	height: 68rpx;
+	align-items: center;
+	justify-content: center;
+}
+.back-icon {
+	width: 26rpx;
+	height: 26rpx;
+}
+.header-title {
+	font-size: 18px;
+	line-height: 28px;
+	color: #2a2a2a;
+	font-weight: 700;
+}
+.content {
+	flex: 1;
+}
+.detail-body {
+	padding: 20rpx 18rpx 40rpx;
+}
+.book-hero,
+.section-card {
+	border-radius: 20rpx;
+	background-color: #ffffff;
+	padding: 22rpx;
+}
+.book-hero {
+	flex-direction: row;
+}
+.cover-shell {
+	width: 180rpx;
+	height: 240rpx;
+	margin-right: 22rpx;
+	border-radius: 14rpx;
+	overflow: hidden;
+	background-color: #eadcc4;
+}
+.cover-image,
+.cover-fallback {
+	width: 180rpx;
+	height: 240rpx;
+}
+.cover-fallback {
+	align-items: center;
+	justify-content: center;
+	background-color: #eadcc4;
+}
+.cover-fallback-text {
+	font-size: 22px;
+	line-height: 30px;
+	color: #806b4d;
+	font-weight: 700;
+	text-align: center;
+}
+.hero-main {
+	flex: 1;
+}
+.book-title {
+	font-size: 19px;
+	line-height: 28px;
+	color: #242424;
+	font-weight: 700;
+}
+.book-meta,
+.stat-text,
+.section-more,
+.chapter-meta {
+	font-size: 13px;
+	line-height: 20px;
+	color: #8f8f8f;
+}
+.book-meta {
+	margin-top: 10rpx;
+}
+.stat-row {
+	margin-top: 14rpx;
+	flex-direction: row;
+	justify-content: space-between;
+}
+.favorite-btn {
+	margin-top: 18rpx;
+	width: 150rpx;
+	height: 58rpx;
+	border-radius: 29rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+.favorite-btn-text {
+	font-size: 13px;
+	color: #ffffff;
+	font-weight: 600;
+}
+.section-card {
+	margin-top: 18rpx;
+}
+.section-head {
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+.section-title {
+	font-size: 16px;
+	line-height: 24px;
+	color: #242424;
+	font-weight: 700;
+}
+.section-text {
+	margin-top: 16rpx;
+	font-size: 14px;
+	line-height: 25px;
+	color: #686868;
+}
+.progress-row {
+	margin-top: 18rpx;
+	flex-direction: row;
+	align-items: center;
+}
+.progress-bg {
+	flex: 1;
+	height: 12rpx;
+	border-radius: 999rpx;
+	background-color: #eeeeee;
+	overflow: hidden;
+}
+.progress-fill {
+	height: 12rpx;
+	border-radius: 999rpx;
+	background-color: #18b775;
+}
+.progress-text {
+	margin-left: 14rpx;
+	font-size: 13px;
+	color: #18b775;
+	font-weight: 600;
+}
+.chapter-item {
+	margin-top: 18rpx;
+	padding: 18rpx;
+	border-radius: 16rpx;
+	background-color: #fbfaf7;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+.chapter-main {
+	flex: 1;
+}
+.chapter-title {
+	font-size: 15px;
+	line-height: 22px;
+	color: #2f2f2f;
+	font-weight: 600;
+}
+.chapter-meta {
+	margin-top: 8rpx;
+}
+.chapter-arrow {
+	margin-left: 18rpx;
+	font-size: 13px;
+	color: #18b775;
+	font-weight: 600;
+}
+.chapter-empty {
+	padding: 40rpx 0;
+	align-items: center;
+}
+.chapter-empty-text,
+.state-text {
+	font-size: 14px;
+	color: #a8a8b2;
+}
+.state-wrap {
+	padding: 180rpx 40rpx 0;
+	align-items: center;
+}
+.retry-btn {
+	margin-top: 24rpx;
+	width: 200rpx;
+	height: 68rpx;
+	border-radius: 12rpx;
+	background-color: #18b775;
+	align-items: center;
+	justify-content: center;
+}
+.retry-btn-text {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}

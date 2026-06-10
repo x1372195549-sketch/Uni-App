@@ -6,7 +6,8 @@
 	background-color: #f7f7f2;
 }
 .header {
-	height: 96rpx;
+	height: calc(96rpx + var(--status-bar-height));
+	padding-top: var(--status-bar-height);
 	padding-left: 24rpx;
 	padding-right: 24rpx;
 	flex-direction: row;
@@ -21,6 +22,7 @@
 .back-btn {
 	position: absolute;
 	left: 20rpx;
+	top: var(--status-bar-height);
 	width: 68rpx;
 	height: 68rpx;
 	align-items: center;
@@ -117,6 +119,10 @@
 	background-color: #f4efe7;
 	align-items: center;
 	justify-content: center;
+}
+.favorite-btn-meta {
+	margin-top: 12rpx;
+	align-self: flex-start;
 }
 .favorite-btn-text {
 	font-size: 12px;

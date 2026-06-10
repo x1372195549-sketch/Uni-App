@@ -6,7 +6,8 @@
   background-color: #f7f7f2;
 }
 .header {
-  height: 88rpx;
+  height: calc(88rpx + var(--status-bar-height));
+  padding-top: var(--status-bar-height);
   padding-left: 20rpx;
   padding-right: 20rpx;
   flex-direction: row;
@@ -21,7 +22,7 @@
 .back-btn {
   position: absolute;
   left: 16rpx;
-  top: 0;
+  top: var(--status-bar-height);
   bottom: 0;
   width: 56rpx;
   align-items: center;
@@ -48,6 +49,11 @@
   justify-content: center;
   overflow: hidden;
 }
+.course-video-player {
+  width: 750rpx;
+  height: 420rpx;
+  background-color: #000000;
+}
 .hero-cover-image {
   position: absolute;
   top: 0;
@@ -62,6 +68,29 @@
   right: 0;
   bottom: 0;
   background-color: rgba(60, 54, 44, 0.2);
+}
+.hero-play-button {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 55rpx;
+  background-color: rgba(255, 255, 255, 0.48);
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.hero-play-triangle {
+  width: 0;
+  height: 0;
+  margin-left: 8rpx;
+  border-top-width: 24rpx;
+  border-top-style: solid;
+  border-top-color: transparent;
+  border-bottom-width: 24rpx;
+  border-bottom-style: solid;
+  border-bottom-color: transparent;
+  border-left-width: 34rpx;
+  border-left-style: solid;
+  border-left-color: rgba(255, 255, 255, 0.96);
 }
 .board-outer {
   width: 220rpx;
@@ -193,4 +222,11 @@
   font-size: 12px;
   line-height: 18px;
   color: #a9a9a9;
+}
+.catalog-title-active {
+  color: #b85d69;
+  font-weight: 600;
+}
+.catalog-duration-active {
+  color: #b85d69;
 }

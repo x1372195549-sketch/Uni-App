@@ -4,15 +4,32 @@
       <view class="back-btn" @click="goBack">
         <image class="back-icon-image" src="/static/reader/icon_fanhui.png" mode="aspectFit"></image>
       </view>
-      <text class="header-title">详情</text>
+      <text class="header-title">课程详情</text>
     </view>
 
     <scroll-view class="content" scroll-y="true">
-      <view class="hero">
-        <image v-if="courseCoverUrl.length > 0" class="hero-cover-image" :src="courseCoverUrl" mode="aspectFill"></image>
-        <view class="hero-mask"></view>
-        <view v-if="courseCoverUrl.length == 0" class="board-outer">
+      <view class="hero" @tap="playSelectedVideo">
+        <video
+          v-if="currentVideoUrl.length > 0"
+          class="course-video-player"
+          :src="currentVideoUrl"
+          :title="currentVideoTitle"
+          :poster="courseCoverUrl"
+          :controls="true"
+          :show-center-play-btn="true"
+          :enable-progress-gesture="true"
+          :show-fullscreen-btn="true"
+          object-fit="contain"
+          @loadedmetadata="syncCurrentVideoDuration"
+          @timeupdate="syncCurrentVideoDuration"
+        ></video>
+        <image v-if="currentVideoUrl.length == 0 && courseCoverUrl.length > 0" class="hero-cover-image" :src="courseCoverUrl" mode="aspectFill"></image>
+        <view v-if="currentVideoUrl.length == 0" class="hero-mask"></view>
+        <view v-if="currentVideoUrl.length == 0 && courseCoverUrl.length == 0" class="board-outer">
           <text class="board-label">课程</text>
+        </view>
+        <view v-if="currentVideoUrl.length == 0 && currentVideoId.length > 0" class="hero-play-button">
+          <view class="hero-play-triangle"></view>
         </view>
       </view>
 
@@ -43,9 +60,14 @@
       </view>
 
       <view v-else class="catalog-panel">
-        <view v-for="item in catalogItems" :key="item.id" class="catalog-row catalog-row-active">
-          <text class="catalog-title">{{ item.title }}</text>
-          <text class="catalog-duration">{{ item.duration }}</text>
+        <view
+          v-for="item in catalogItems"
+          :key="item.id"
+          :class="item.id == currentVideoId ? 'catalog-row catalog-row-active' : 'catalog-row'"
+          @tap="selectCatalogItem(item.id)"
+        >
+          <text class="catalog-title" :class="item.id == currentVideoId ? 'catalog-title-active' : ''">{{ item.title }}</text>
+          <text class="catalog-duration" :class="item.id == currentVideoId ? 'catalog-duration-active' : ''">{{ item.duration }}</text>
         </view>
       </view>
     </scroll-view>
@@ -58,6 +80,7 @@ import { onShow } from '@dcloudio/uni-app'
 import {
   checkFavoriteStatus,
   fetchCourseDetail,
+  normalizeAppUrl,
   reportBrowseHistory,
   updateFavoriteStatus,
   type Course,
@@ -68,6 +91,7 @@ type CatalogItem = {
   id : string
   title : string
   duration : string
+  videoUrl : string
 }
 
 const RESOURCE_TYPE = 'course'
@@ -82,6 +106,9 @@ const courseCoverUrl = ref('')
 const isFavorited = ref(false)
 const isFavoriteLoading = ref(false)
 const catalogItems = ref<CatalogItem[]>([])
+const currentVideoId = ref('')
+const currentVideoUrl = ref('')
+const currentVideoTitle = ref('')
 
 function safeText(value : string | null) : string {
   return value == null || value.length == 0 ? '' : value
@@ -91,8 +118,72 @@ function formatDuration(seconds : number) : string {
   const total = seconds > 0 ? seconds : 0
   const minute = Math.floor(total / 60)
   const second = total % 60
+  const minuteText = minute < 10 ? '0' + String(minute) : String(minute)
   const secondText = second < 10 ? '0' + String(second) : String(second)
-  return String(minute) + "'" + secondText + '"'
+  return minuteText + ':' + secondText
+}
+
+function readDurationFromEvent(event : any) : number {
+  if (event == null || event.detail == null) {
+    return 0
+  }
+  const durationValue = event.detail.duration
+  if (typeof durationValue == 'number') {
+    return Math.floor(durationValue)
+  }
+  return 0
+}
+
+function updateCatalogDuration(id : string, durationText : string) : void {
+  catalogItems.value = catalogItems.value.map((item : CatalogItem) : CatalogItem => {
+    if (item.id == id) {
+      return {
+        id: item.id,
+        title: item.title,
+        duration: durationText,
+        videoUrl: item.videoUrl
+      }
+    }
+    return item
+  })
+}
+
+function syncCurrentVideoDuration(event : any) : void {
+  const duration = readDurationFromEvent(event)
+  if (duration > 0 && currentVideoId.value.length > 0) {
+    updateCatalogDuration(currentVideoId.value, formatDuration(duration))
+  }
+}
+
+function selectCatalogItem(id : string) : void {
+  for (let i = 0; i < catalogItems.value.length; i++) {
+    const item = catalogItems.value[i]
+    if (item.id == id) {
+      currentVideoId.value = item.id
+      currentVideoTitle.value = item.title
+      currentVideoUrl.value = item.videoUrl
+      if (item.videoUrl.length == 0) {
+        uni.showToast({
+          title: '暂无可播放视频',
+          icon: 'none'
+        })
+      }
+      return
+    }
+  }
+}
+
+function playSelectedVideo() : void {
+  if (currentVideoUrl.value.length > 0) {
+    return
+  }
+  if (currentVideoId.value.length == 0 && catalogItems.value.length > 0) {
+    selectCatalogItem(catalogItems.value[0].id)
+    return
+  }
+  if (currentVideoId.value.length > 0) {
+    selectCatalogItem(currentVideoId.value)
+  }
 }
 
 function loadFavoriteStatus() : void {
@@ -195,16 +286,28 @@ function applyCourseDetail(detail : Course) : void {
       return {
         id: String(item.id),
         title: safeText(item.title).length > 0 ? item.title : '课程 ' + String(index + 1),
-        duration: formatDuration(item.durationSeconds)
+        duration: '--:--',
+        videoUrl: normalizeAppUrl(safeText(item.videoUrl))
       }
     })
+    currentVideoId.value = catalogItems.value[0].id
+    currentVideoTitle.value = catalogItems.value[0].title
+    currentVideoUrl.value = ''
   } else {
     catalogItems.value = []
+    currentVideoId.value = ''
+    currentVideoTitle.value = ''
+    currentVideoUrl.value = ''
   }
 }
 
 function goBack() : void {
-  uni.navigateBack()
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    uni.navigateBack()
+    return
+  }
+  uni.redirectTo({ url: '/pages/course/index' })
 }
 
 function loadParams() : void {
@@ -267,7 +370,8 @@ onShow(() => {
 }
 
 .header {
-  height: 88rpx;
+  height: calc(88rpx + var(--status-bar-height));
+  padding-top: var(--status-bar-height);
   padding-left: 20rpx;
   padding-right: 20rpx;
   flex-direction: row;
@@ -283,7 +387,7 @@ onShow(() => {
 .back-btn {
   position: absolute;
   left: 16rpx;
-  top: 0;
+  top: var(--status-bar-height);
   bottom: 0;
   width: 56rpx;
   align-items: center;
@@ -315,6 +419,12 @@ onShow(() => {
   overflow: hidden;
 }
 
+.course-video-player {
+  width: 750rpx;
+  height: 420rpx;
+  background-color: #000000;
+}
+
 .hero-cover-image {
   position: absolute;
   top: 0;
@@ -330,6 +440,31 @@ onShow(() => {
   right: 0;
   bottom: 0;
   background-color: rgba(60, 54, 44, 0.2);
+}
+
+.hero-play-button {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 55rpx;
+  background-color: rgba(255, 255, 255, 0.48);
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.hero-play-triangle {
+  width: 0;
+  height: 0;
+  margin-left: 8rpx;
+  border-top-width: 24rpx;
+  border-top-style: solid;
+  border-top-color: transparent;
+  border-bottom-width: 24rpx;
+  border-bottom-style: solid;
+  border-bottom-color: transparent;
+  border-left-width: 34rpx;
+  border-left-style: solid;
+  border-left-color: rgba(255, 255, 255, 0.96);
 }
 
 .board-outer {
@@ -482,5 +617,14 @@ onShow(() => {
   font-size: 12px;
   line-height: 18px;
   color: #a9a9a9;
+}
+
+.catalog-title-active {
+  color: #b85d69;
+  font-weight: 600;
+}
+
+.catalog-duration-active {
+  color: #b85d69;
 }
 </style>

@@ -131,7 +131,12 @@ const formatDateRange = (startDate : string, endDate : string) : string => {
 }
 
 const goBack = () => {
-	uni.navigateBack()
+	const pages = getCurrentPages()
+	if (pages.length > 1) {
+		uni.navigateBack()
+		return
+	}
+	uni.redirectTo({ url: '/pages/consult/index' })
 }
 
 const handleAvatarError = () => {

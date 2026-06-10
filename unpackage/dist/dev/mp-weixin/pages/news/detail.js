@@ -142,7 +142,12 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       });
     };
     const goBack = () => {
-      common_vendor.index.navigateBack();
+      const pages = getCurrentPages();
+      if (pages.length > 1) {
+        common_vendor.index.navigateBack();
+        return null;
+      }
+      common_vendor.index.redirectTo({ url: "/pages/news/index" });
     };
     common_vendor.onLoad((options = null) => {
       resolveArticleId(options);
@@ -172,20 +177,20 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         h: common_vendor.t(publishedAt.value),
         i: common_vendor.t(viewText),
         j: common_vendor.t(viewCount.value),
-        k: common_vendor.f(tags.value, (tag, k0, i0) => {
+        k: common_vendor.t(isFavorited.value ? favoritedText : favoriteBtnText),
+        l: common_vendor.o(toggleFavorite),
+        m: common_vendor.f(tags.value, (tag, k0, i0) => {
           return {
             a: common_vendor.t(tag),
             b: tag
           };
         }),
-        l: summary.value.length > 0
+        n: summary.value.length > 0
       }, summary.value.length > 0 ? {
-        m: common_vendor.t(summaryTitle),
-        n: common_vendor.t(summary.value)
+        o: common_vendor.t(summaryTitle),
+        p: common_vendor.t(summary.value)
       } : {}, {
-        o: common_vendor.t(contentTitle),
-        p: common_vendor.t(isFavorited.value ? favoritedText : favoriteBtnText),
-        q: common_vendor.o(toggleFavorite),
+        q: common_vendor.t(contentTitle),
         r: isHtmlContent.value
       }, isHtmlContent.value ? {
         s: content.value

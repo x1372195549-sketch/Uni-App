@@ -49,9 +49,16 @@ const autoPlay = ref(true)
 
 const useVideoPlayer = computed(() : boolean => {
 	const url = playUrl.value.toLowerCase()
-	return url.startsWith('http://') || url.startsWith('https://')
-		? (url.indexOf('.m3u8') > -1 || url.indexOf('.mp4') > -1)
-		: false
+	if (url.startsWith('rtmp://')) {
+		return true
+	}
+	if (!url.startsWith('http://') && !url.startsWith('https://')) {
+		return false
+	}
+	if (mode.value == 'web') {
+		return false
+	}
+	return true
 })
 
 const useWebView = computed(() : boolean => {

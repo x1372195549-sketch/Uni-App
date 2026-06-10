@@ -39,6 +39,7 @@ const PAGE_SIZE = 10;
 const appTitleText = "江苏中医在线";
 const homeTabText = "首页";
 const pageTitleText = "专题";
+const bookTabText = "图书";
 const audioTabText = "音频";
 const liveTabText = "直播";
 const courseTabText = "课程";
@@ -133,6 +134,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const goHomePage = () => {
       common_vendor.index.redirectTo({ url: "/pages/index/index" });
     };
+    const goBookPage = () => {
+      common_vendor.index.redirectTo({ url: "/pages/book/index" });
+    };
     const goAudioPage = () => {
       common_vendor.index.redirectTo({ url: "/pages/audio/index" });
     };
@@ -165,34 +169,36 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         b: common_vendor.t(appTitleText),
         c: common_vendor.t(homeTabText),
         d: common_vendor.o(goHomePage),
-        e: common_vendor.t(pageTitleText),
-        f: common_vendor.t(audioTabText),
-        g: common_vendor.o(goAudioPage),
-        h: common_vendor.t(liveTabText),
-        i: common_vendor.o(goLivePage),
-        j: common_vendor.t(courseTabText),
-        k: common_vendor.o(goCoursePage),
-        l: common_vendor.t(newsTabText),
-        m: common_vendor.o(goNewsPage),
-        n: searchPlaceholder,
-        o: common_vendor.o(reloadList),
-        p: keyword.value,
-        q: common_vendor.o(($event) => {
+        e: common_vendor.t(audioTabText),
+        f: common_vendor.o(goAudioPage),
+        g: common_vendor.t(courseTabText),
+        h: common_vendor.o(goCoursePage),
+        i: common_vendor.t(liveTabText),
+        j: common_vendor.o(goLivePage),
+        k: common_vendor.t(bookTabText),
+        l: common_vendor.o(goBookPage),
+        m: common_vendor.t(pageTitleText),
+        n: common_vendor.t(newsTabText),
+        o: common_vendor.o(goNewsPage),
+        p: searchPlaceholder,
+        q: common_vendor.o(reloadList),
+        r: keyword.value,
+        s: common_vendor.o(($event) => {
           return keyword.value = $event.detail.value;
         }),
-        r: common_vendor.t(searchText),
-        s: common_vendor.o(reloadList),
-        t: isLoading.value
+        t: common_vendor.t(searchText),
+        v: common_vendor.o(reloadList),
+        w: isLoading.value
       }, isLoading.value ? {
-        v: common_vendor.t(loadingText)
+        x: common_vendor.t(loadingText)
       } : errorText.value.length > 0 ? {
-        x: common_vendor.t(errorText.value),
-        y: common_vendor.t(retryText),
-        z: common_vendor.o(reloadList)
+        z: common_vendor.t(errorText.value),
+        A: common_vendor.t(retryText),
+        B: common_vendor.o(reloadList)
       } : topicItems.value.length == 0 ? {
-        B: common_vendor.t(emptyText)
+        D: common_vendor.t(emptyText)
       } : common_vendor.e({
-        C: common_vendor.f(topicItems.value, (item, k0, i0) => {
+        E: common_vendor.f(topicItems.value, (item, k0, i0) => {
           return common_vendor.e({
             a: item.coverUrl.length > 0
           }, item.coverUrl.length > 0 ? {
@@ -217,34 +223,34 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }, item.id)
           });
         }),
-        D: common_vendor.t(viewText),
-        E: common_vendor.t(favoriteText),
-        F: isListLoading.value
+        F: common_vendor.t(viewText),
+        G: common_vendor.t(favoriteText),
+        H: isListLoading.value
       }, isListLoading.value ? {
-        G: common_vendor.t(loadingMoreText)
+        I: common_vendor.t(loadingMoreText)
       } : !hasMore.value ? {
-        I: common_vendor.t(noMoreText)
+        K: common_vendor.t(noMoreText)
       } : {}, {
-        H: !hasMore.value
+        J: !hasMore.value
       }), {
-        w: errorText.value.length > 0,
-        A: topicItems.value.length == 0,
-        J: common_vendor.o(loadMore),
-        K: common_assets._imports_1$2,
-        L: common_vendor.t(learningTabText),
-        M: common_assets._imports_2$1,
-        N: common_vendor.t(examTabText),
-        O: common_vendor.o(goExamPage),
-        P: common_assets._imports_4,
-        Q: common_vendor.t(consultTabText),
-        R: common_vendor.o(goConsultPage),
-        S: common_assets._imports_5,
-        T: common_vendor.t(knowledgeTabText),
-        U: common_vendor.o(goKnowledgePage),
-        V: common_assets._imports_6$1,
-        W: common_vendor.t(mineTabText),
-        X: common_vendor.o(goMinePage),
-        Y: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        y: errorText.value.length > 0,
+        C: topicItems.value.length == 0,
+        L: common_vendor.o(loadMore),
+        M: common_assets._imports_1$2,
+        N: common_vendor.t(learningTabText),
+        O: common_assets._imports_2$1,
+        P: common_vendor.t(examTabText),
+        Q: common_vendor.o(goExamPage),
+        R: common_assets._imports_4,
+        S: common_vendor.t(consultTabText),
+        T: common_vendor.o(goConsultPage),
+        U: common_assets._imports_5,
+        V: common_vendor.t(knowledgeTabText),
+        W: common_vendor.o(goKnowledgePage),
+        X: common_assets._imports_6$1,
+        Y: common_vendor.t(mineTabText),
+        Z: common_vendor.o(goMinePage),
+        aa: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

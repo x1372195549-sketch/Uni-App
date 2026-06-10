@@ -386,6 +386,13 @@ export type AppBookChapter = {
 	sortOrder : number
 }
 
+export type AppBookCategory = {
+	id : number
+	parentId : number
+	categoryName : string
+	sortOrder : number
+}
+
 export type AppBook = {
 	id : number
 	categoryId : number
@@ -1701,6 +1708,15 @@ function normalizeBookChapter(raw : UTSJSONObject) : AppBookChapter {
 	} as AppBookChapter
 }
 
+function normalizeBookCategory(raw : UTSJSONObject) : AppBookCategory {
+	return {
+		id: readNumberField(raw, 'id'),
+		parentId: readNumberField(raw, 'parentId'),
+		categoryName: readStringField(raw, 'categoryName'),
+		sortOrder: readNumberField(raw, 'sortOrder')
+	} as AppBookCategory
+}
+
 function normalizeBook(raw : UTSJSONObject) : AppBook {
 	const chaptersValue = raw['chapters']
 	const chapters = chaptersValue != null && chaptersValue instanceof Array ? (chaptersValue as UTSJSONObject[]) : []
@@ -1830,6 +1846,88 @@ export function fetchBookDetail(
 	)
 }
 
+export function fetchBookCategories(
+	page : number,
+	size : number,
+	keyword : string,
+	parentId : number,
+	success : (pageData : PageResponse<AppBookCategory>) => void,
+	fail : (message : string) => void
+) {
+	let path = '/api/v1/app/learning/book-categories?page=' + String(page) + '&size=' + String(size)
+	if (keyword != null && keyword.length > 0) {
+		path += '&keyword=' + encodeURIComponent(keyword)
+	}
+	if (parentId > 0) {
+		path += '&parentId=' + String(parentId)
+	}
+
+	request<UTSJSONObject>(
+		path,
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			const recordsValue = pageData['records']
+			const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+			const normalizedRecords = records.map((item : UTSJSONObject) : AppBookCategory => {
+				return normalizeBookCategory(item)
+			})
+			success({
+				records: normalizedRecords,
+				total: readNumberField(pageData, 'total') > 0 ? readNumberField(pageData, 'total') : normalizedRecords.length,
+				page: readNumberField(pageData, 'page') > 0 ? readNumberField(pageData, 'page') : page,
+				size: readNumberField(pageData, 'size') > 0 ? readNumberField(pageData, 'size') : size
+			} as PageResponse<AppBookCategory>)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
+export function fetchBooks(
+	page : number,
+	size : number,
+	keyword : string,
+	categoryId : number,
+	success : (pageData : PageResponse<AppBook>) => void,
+	fail : (message : string) => void
+) {
+	let path = '/api/v1/app/learning/books?page=' + String(page) + '&size=' + String(size)
+	if (keyword != null && keyword.length > 0) {
+		path += '&keyword=' + encodeURIComponent(keyword)
+	}
+	if (categoryId > 0) {
+		path += '&categoryId=' + String(categoryId)
+	}
+
+	request<UTSJSONObject>(
+		path,
+		'GET',
+		null,
+		true,
+		false,
+		(pageData) => {
+			const recordsValue = pageData['records']
+			const records = recordsValue != null && recordsValue instanceof Array ? (recordsValue as UTSJSONObject[]) : []
+			const normalizedRecords = records.map((item : UTSJSONObject) : AppBook => {
+				return normalizeBook(item)
+			})
+			success({
+				records: normalizedRecords,
+				total: readNumberField(pageData, 'total') > 0 ? readNumberField(pageData, 'total') : normalizedRecords.length,
+				page: readNumberField(pageData, 'page') > 0 ? readNumberField(pageData, 'page') : page,
+				size: readNumberField(pageData, 'size') > 0 ? readNumberField(pageData, 'size') : size
+			} as PageResponse<AppBook>)
+		},
+		(message) => {
+			fail(message)
+		}
+	)
+}
+
 export function fetchBookChapterDetail(
 	bookId : string,
 	chapterId : string,
@@ -1932,10 +2030,16 @@ export function fetchProfileFavorites(
 	page : number,
 	size : number,
 	success : (pageData : PageResponse<AppResourceRecord>) => void,
-	fail : (message : string) => void
+	fail : (message : string) => void,
+	sort : string = ''
 ) {
+	let path = '/api/v1/app/profile/favorites?page=' + String(page) + '&size=' + String(size)
+	if (sort != null && sort.length > 0) {
+		path += '&sort=' + encodeURIComponent(sort)
+	}
+
 	request<PageResponse<AppResourceRecord>>(
-		'/api/v1/app/profile/favorites?page=' + String(page) + '&size=' + String(size),
+		path,
 		'GET',
 		null,
 		true,
