@@ -167,12 +167,17 @@ const reloadQuestions = () => {
 }
 
 const goBack = () => {
-	const pages = getCurrentPages()
-	if (pages.length > 1) {
-		uni.navigateBack({ delta: 1 })
-		return
-	}
-	uni.switchTab({ url: '/pages/mine/index' })
+	uni.redirectTo({
+		url: '/pages/consult/index',
+		fail: () => {
+			uni.navigateTo({
+				url: '/pages/consult/index',
+				fail: () => {
+					uni.reLaunch({ url: '/pages/consult/index' })
+				}
+			})
+		}
+	})
 }
 
 const goConsultHome = () => {
@@ -219,10 +224,10 @@ loadQuestions(false)
 	position: absolute;
 	left: 20rpx;
 	top: 94rpx;
-	width: 68rpx;
-	height: 68rpx;
-	border-radius: 34rpx;
-	z-index: 3;
+	width: 88rpx;
+	height: 88rpx;
+	border-radius: 44rpx;
+	z-index: 30;
 	align-items: center;
 	justify-content: center;
 }

@@ -124,12 +124,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       loadQuestions(false);
     };
     const goBack = () => {
-      const pages = getCurrentPages();
-      if (pages.length > 1) {
-        common_vendor.index.navigateBack(new UTSJSONObject({ delta: 1 }));
-        return null;
-      }
-      common_vendor.index.switchTab({ url: "/pages/mine/index" });
+      common_vendor.index.redirectTo({
+        url: "/pages/consult/index",
+        fail: () => {
+          common_vendor.index.navigateTo({
+            url: "/pages/consult/index",
+            fail: () => {
+              common_vendor.index.reLaunch({ url: "/pages/consult/index" });
+            }
+          });
+        }
+      });
     };
     const goConsultHome = () => {
       common_vendor.index.redirectTo({ url: "/pages/consult/index" });

@@ -17,10 +17,10 @@
 	position: absolute;
 	left: 20rpx;
 	top: 94rpx;
-	width: 68rpx;
-	height: 68rpx;
-	border-radius: 34rpx;
-	z-index: 3;
+	width: 88rpx;
+	height: 88rpx;
+	border-radius: 44rpx;
+	z-index: 30;
 	align-items: center;
 	justify-content: center;
 }
