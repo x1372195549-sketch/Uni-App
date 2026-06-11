@@ -52,6 +52,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   setup(__props) {
     const isLoading = common_vendor.ref(true);
     const isListLoading = common_vendor.ref(false);
+    const isRefreshing = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
     const hasMore = common_vendor.ref(true);
     const page = common_vendor.ref(1);
@@ -91,7 +92,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         page.value = 1;
         hasMore.value = true;
         errorText.value = "";
-        isLoading.value = true;
+        isLoading.value = !isRefreshing.value;
       } else {
         if (!hasMore.value || isListLoading.value) {
           return null;
@@ -114,13 +115,22 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       }, (message) => {
         errorText.value = message.length > 0 ? message : failedText;
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       });
     };
     const reloadQuestions = () => {
+      loadQuestions(false);
+    };
+    const refreshQuestions = () => {
+      if (isRefreshing.value) {
+        return null;
+      }
+      isRefreshing.value = true;
       loadQuestions(false);
     };
     const goBack = () => {
@@ -204,8 +214,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }), {
         g: errorText.value.length > 0,
         k: questionItems.value.length == 0,
-        v: common_vendor.o(loadMore),
-        w: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        v: isRefreshing.value,
+        w: common_vendor.o(refreshQuestions),
+        x: common_vendor.o(loadMore),
+        y: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

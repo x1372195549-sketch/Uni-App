@@ -45,7 +45,7 @@
       </view>
     </view>
 
-    <scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
+    <scroll-view class="content" scroll-y="true" refresher-enabled="true" :refresher-triggered="isRefreshing" @refresherrefresh="refreshList" @scrolltolower="loadMore">
       <view class="content-shell">
         <view v-if="isLoading" class="skeleton-list">
           <view class="skeleton-card" v-for="item in skeletonItems" :key="item">
@@ -133,7 +133,7 @@
 <script setup lang="uts">
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { fetchCourses, type Course } from '../../utils/auth.uts'
+import { fetchCourses, normalizeAppUrl, type Course } from '../../utils/auth.uts'
 
 type CourseItem = {
   id : string
@@ -180,6 +180,7 @@ const page = ref(1)
 const hasMore = ref(true)
 const isLoading = ref(true)
 const isListLoading = ref(false)
+const isRefreshing = ref(false)
 const errorText = ref('')
 const hasLoadedOnce = ref(false)
 const isNavigating = ref(false)
@@ -199,7 +200,7 @@ const mapCourseToCard = (item : Course, index : number) : CourseItem => {
   const lecturer = safeText(item.lecturerName)
   return {
     id: String(item.id),
-    coverUrl: safeText(item.coverUrl),
+    coverUrl: normalizeAppUrl(safeText(item.coverUrl)),
     coverTitle: title.length > 0 ? title : fallbackCoverTitle,
     coverSubtitle: subtitle.length > 0 ? subtitle : '\u7b2c' + String(index + 1) + '\u95e8\u8bfe\u7a0b',
     title: title.length > 0 ? title : fallbackTitle,
@@ -214,7 +215,7 @@ const loadCourseItems = (loadMoreValue : boolean) => {
     page.value = 1
     hasMore.value = true
     errorText.value = ''
-    isLoading.value = true
+    isLoading.value = !isRefreshing.value
   } else {
     if (!hasMore.value || isListLoading.value) {
       return
@@ -242,16 +243,26 @@ const loadCourseItems = (loadMoreValue : boolean) => {
       }
       isLoading.value = false
       isListLoading.value = false
+      isRefreshing.value = false
     },
     (message) => {
       errorText.value = message.length > 0 ? message : loadFailedText
       isLoading.value = false
       isListLoading.value = false
+      isRefreshing.value = false
     }
   )
 }
 
 const reloadList = () => {
+  loadCourseItems(false)
+}
+
+const refreshList = () => {
+  if (isRefreshing.value) {
+    return
+  }
+  isRefreshing.value = true
   loadCourseItems(false)
 }
 

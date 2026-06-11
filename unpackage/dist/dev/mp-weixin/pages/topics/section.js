@@ -23,6 +23,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const hasMore = common_vendor.ref(true);
     const isLoading = common_vendor.ref(true);
     const isListLoading = common_vendor.ref(false);
+    const isRefreshing = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
@@ -71,7 +72,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         page.value = 1;
         hasMore.value = true;
         errorText.value = "";
-        isLoading.value = true;
+        isLoading.value = !isRefreshing.value;
       } else {
         if (!hasMore.value || isListLoading.value) {
           return null;
@@ -91,13 +92,22 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       }, (message) => {
         errorText.value = message.length > 0 ? message : loadFailedText;
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       });
     };
     const reloadList = () => {
+      loadResources(false);
+    };
+    const refreshList = () => {
+      if (isRefreshing.value) {
+        return null;
+      }
+      isRefreshing.value = true;
       loadResources(false);
     };
     const loadMore = () => {
@@ -189,8 +199,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }), {
         f: errorText.value.length > 0,
         j: resourceItems.value.length == 0,
-        s: common_vendor.o(loadMore),
-        t: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        s: isRefreshing.value,
+        t: common_vendor.o(refreshList),
+        v: common_vendor.o(loadMore),
+        w: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

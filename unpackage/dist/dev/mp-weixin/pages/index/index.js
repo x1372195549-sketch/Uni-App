@@ -142,6 +142,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const recommendItems = common_vendor.ref([]);
     const heroSlides = common_vendor.ref([]);
     const isNavigating = common_vendor.ref(false);
+    const isRefreshing = common_vendor.ref(false);
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
     };
@@ -241,7 +242,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         typeLabel: label,
         title: safeText(item.title),
         summary: summary.length > 0 ? summary : fallbackSummaryByResourceType(type),
-        coverUrl: safeText(item.coverUrl)
+        coverUrl: utils_auth.normalizeAppUrl(safeText(item.coverUrl))
       });
     };
     const mapTopicItem = (item) => {
@@ -252,7 +253,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         resourceId: safeNumber(item.targetId),
         title: safeText(item.title),
         summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackTopicSummary,
-        coverUrl: safeText(item.coverUrl),
+        coverUrl: utils_auth.normalizeAppUrl(safeText(item.coverUrl)),
         tags: [],
         viewCount: 0,
         favoriteCount: 0
@@ -267,7 +268,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         kicker: labelByResourceType(type, safeText(item.contentTypeLabel)),
         title: safeText(item.title),
         subtitle: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryByResourceType(type),
-        coverUrl: safeText(item.coverUrl),
+        coverUrl: utils_auth.normalizeAppUrl(safeText(item.coverUrl)),
         actionText: actionTextByResourceType(type)
       });
     };
@@ -340,11 +341,20 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         heroSlides.value = heroSource.slice(0, 5).map((item) => {
           return mapHeroSlide(item);
         });
+        isRefreshing.value = false;
       }, () => {
         recommendItems.value = [];
         topicItems.value = [];
         heroSlides.value = [];
+        isRefreshing.value = false;
       });
+    };
+    const refreshList = () => {
+      if (isRefreshing.value) {
+        return null;
+      }
+      isRefreshing.value = true;
+      loadHomeData();
     };
     const goHeroDetail = (item) => {
       if (item.resourceType == "TOPIC") {
@@ -560,21 +570,23 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       } : {
         J: common_vendor.t(emptyTopicText)
       }, {
-        K: common_assets._imports_1$2,
-        L: common_vendor.t(learningTabText),
-        M: common_assets._imports_2$1,
-        N: common_vendor.t(examTabText),
-        O: common_vendor.o(goExamPage),
-        P: common_assets._imports_4,
-        Q: common_vendor.t(consultTabText),
-        R: common_vendor.o(goConsultPage),
-        S: common_assets._imports_5,
-        T: common_vendor.t(knowledgeTabText),
-        U: common_vendor.o(goKnowledgePage),
-        V: common_assets._imports_6$1,
-        W: common_vendor.t(mineTabText),
-        X: common_vendor.o(goMinePage),
-        Y: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        K: isRefreshing.value,
+        L: common_vendor.o(refreshList),
+        M: common_assets._imports_1$2,
+        N: common_vendor.t(learningTabText),
+        O: common_assets._imports_2$1,
+        P: common_vendor.t(examTabText),
+        Q: common_vendor.o(goExamPage),
+        R: common_assets._imports_4,
+        S: common_vendor.t(consultTabText),
+        T: common_vendor.o(goConsultPage),
+        U: common_assets._imports_5,
+        V: common_vendor.t(knowledgeTabText),
+        W: common_vendor.o(goKnowledgePage),
+        X: common_assets._imports_6$1,
+        Y: common_vendor.t(mineTabText),
+        Z: common_vendor.o(goMinePage),
+        aa: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

@@ -877,14 +877,14 @@ export function fetchCourseDetail(
 	success : (detail : Course) => void,
 	fail : (message : string) => void
 ) {
-	request<Course>(
+	request<UTSJSONObject>(
 		'/api/v1/app/learning/courses/' + id,
 		'GET',
 		null,
 		true,
 		false,
-		(detail) => {
-			success(detail)
+		(raw) => {
+			success(normalizeCourseDetail(raw))
 		},
 		(message) => {
 			fail(message)
@@ -897,15 +897,14 @@ export function fetchAudioDetail(
 	success : (detail : AppPodcast) => void,
 	fail : (message : string) => void
 ) {
-	request<AppPodcast>(
+	request<UTSJSONObject>(
 		'/api/v1/app/learning/podcasts/' + id,
 		'GET',
 		null,
 		true,
 		false,
-		(detail) => {
-			detail.coverUrl = normalizeAppUrl(detail.coverUrl)
-			success(detail)
+		(raw) => {
+			success(normalizePodcastDetail(raw))
 		},
 		(message) => {
 			fail(message)
@@ -1253,10 +1252,58 @@ function readLooseNumberField(raw : UTSJSONObject, key : string) : number {
 	if (typeof value == 'string') {
 		const text = value as string
 		if (text.length > 0) {
-			return Number(text)
+			const directNumber = Number(text)
+			if (!Number.isNaN(directNumber)) {
+				return directNumber
+			}
 		}
 	}
 	return 0
+}
+
+function parseDurationText(value : string) : number {
+	const text = value.trim()
+	if (text.length == 0) {
+		return 0
+	}
+	if (text.indexOf(':') >= 0) {
+		const parts = text.split(':')
+		if (parts.length == 2) {
+			const minute = Number(parts[0])
+			const second = Number(parts[1])
+			if (!Number.isNaN(minute) && !Number.isNaN(second)) {
+				return Math.floor(minute * 60 + second)
+			}
+		}
+		if (parts.length == 3) {
+			const hour = Number(parts[0])
+			const minute = Number(parts[1])
+			const second = Number(parts[2])
+			if (!Number.isNaN(hour) && !Number.isNaN(minute) && !Number.isNaN(second)) {
+				return Math.floor(hour * 3600 + minute * 60 + second)
+			}
+		}
+	}
+	if (text.indexOf('\u5206\u949f') >= 0) {
+		const minuteText = text.replace('\u5206\u949f', '')
+		const minute = Number(minuteText)
+		if (!Number.isNaN(minute)) {
+			return Math.floor(minute * 60)
+		}
+	}
+	if (text.indexOf('\u79d2') >= 0) {
+		const secondText = text.replace('\u79d2', '')
+		const second = Number(secondText)
+		if (!Number.isNaN(second)) {
+			return Math.floor(second)
+		}
+	}
+	return 0
+}
+
+function readDurationTextField(raw : UTSJSONObject, key : string) : number {
+	const value = raw[key]
+	return typeof value == 'string' ? parseDurationText(value as string) : 0
 }
 
 function readBooleanField(raw : UTSJSONObject, key : string) : boolean {
@@ -1398,16 +1445,82 @@ function normalizeArticle(raw : UTSJSONObject) : Article {
 	}
 }
 
+function readMediaDurationSeconds(raw : UTSJSONObject) : number {
+	const primary = readLooseNumberField(raw, 'durationSeconds')
+	if (primary > 0) {
+		return primary
+	}
+	const durationSecond = readLooseNumberField(raw, 'durationSecond')
+	if (durationSecond > 0) {
+		return durationSecond
+	}
+	const audioDuration = readLooseNumberField(raw, 'audioDurationSeconds')
+	if (audioDuration > 0) {
+		return audioDuration
+	}
+	const videoDuration = readLooseNumberField(raw, 'videoDurationSeconds')
+	if (videoDuration > 0) {
+		return videoDuration
+	}
+	const durationNumber = readLooseNumberField(raw, 'duration')
+	if (durationNumber > 0) {
+		return durationNumber
+	}
+	const durationText = readDurationTextField(raw, 'duration')
+	if (durationText > 0) {
+		return durationText
+	}
+	const durationLabel = readDurationTextField(raw, 'durationText')
+	if (durationLabel > 0) {
+		return durationLabel
+	}
+	return readDurationTextField(raw, 'durationLabel')
+}
+
 function normalizeLiveSessionVideo(raw : UTSJSONObject) : LiveSessionVideo {
 	return {
 		id: typeof raw['id'] == 'number' ? (raw['id'] as number) : 0,
 		liveSessionId: typeof raw['liveSessionId'] == 'number' ? (raw['liveSessionId'] as number) : 0,
 		title: typeof raw['title'] == 'string' ? (raw['title'] as string) : '',
 		videoUrl: normalizeAppUrl(typeof raw['videoUrl'] == 'string' ? (raw['videoUrl'] as string) : ''),
-		durationSeconds: typeof raw['durationSeconds'] == 'number' ? (raw['durationSeconds'] as number) : 0,
+		durationSeconds: readMediaDurationSeconds(raw),
 		sortOrder: typeof raw['sortOrder'] == 'number' ? (raw['sortOrder'] as number) : 0,
 		status: typeof raw['status'] == 'string' ? (raw['status'] as string) : ''
 	} as LiveSessionVideo
+}
+
+function normalizeCourseVideo(raw : UTSJSONObject) : CourseVideo {
+	return {
+		id: readNumberField(raw, 'id'),
+		courseId: readNumberField(raw, 'courseId'),
+		title: readStringField(raw, 'title'),
+		videoUrl: normalizeAppUrl(readStringField(raw, 'videoUrl')),
+		durationSeconds: readMediaDurationSeconds(raw),
+		sortOrder: readNumberField(raw, 'sortOrder')
+	} as CourseVideo
+}
+
+function normalizeCourseDetail(raw : UTSJSONObject) : Course {
+	const videosRaw = raw['videos']
+	const videos = videosRaw != null && videosRaw instanceof Array
+		? (videosRaw as UTSJSONObject[]).map((item : UTSJSONObject) : CourseVideo => {
+			return normalizeCourseVideo(item)
+		})
+		: []
+
+	return {
+		id: readNumberField(raw, 'id'),
+		courseName: readStringField(raw, 'courseName'),
+		subtitle: readStringField(raw, 'subtitle'),
+		coverUrl: normalizeAppUrl(readStringField(raw, 'coverUrl')),
+		lecturerName: readStringField(raw, 'lecturerName'),
+		introduction: readStringField(raw, 'introduction'),
+		paperId: readNumberField(raw, 'paperId'),
+		publishedAt: readStringField(raw, 'publishedAt'),
+		progressPercent: readLooseNumberField(raw, 'progressPercent'),
+		studySeconds: readLooseNumberField(raw, 'studySeconds'),
+		videos
+	} as Course
 }
 
 function normalizeLiveSession(raw : UTSJSONObject) : LiveSession {
@@ -1443,6 +1556,37 @@ function normalizeLiveSession(raw : UTSJSONObject) : LiveSession {
 		favorited: typeof raw['favorited'] == 'boolean' ? (raw['favorited'] as boolean) : false,
 		videos
 	} as LiveSession
+}
+
+function normalizePodcastAudio(raw : UTSJSONObject) : AppPodcastAudio {
+	return {
+		id: readNumberField(raw, 'id'),
+		podcastId: readNumberField(raw, 'podcastId'),
+		title: readStringField(raw, 'title'),
+		audioUrl: normalizeAppUrl(readStringField(raw, 'audioUrl')),
+		durationSeconds: readMediaDurationSeconds(raw),
+		sortOrder: readNumberField(raw, 'sortOrder')
+	} as AppPodcastAudio
+}
+
+function normalizePodcastDetail(raw : UTSJSONObject) : AppPodcast {
+	const audiosRaw = raw['audios']
+	const audios = audiosRaw != null && audiosRaw instanceof Array
+		? (audiosRaw as UTSJSONObject[]).map((item : UTSJSONObject) : AppPodcastAudio => {
+			return normalizePodcastAudio(item)
+		})
+		: []
+
+	return {
+		id: readNumberField(raw, 'id'),
+		title: readStringField(raw, 'title'),
+		summary: readStringField(raw, 'summary'),
+		coverUrl: normalizeAppUrl(readStringField(raw, 'coverUrl')),
+		publishedAt: readStringField(raw, 'publishedAt'),
+		progressPercent: readLooseNumberField(raw, 'progressPercent'),
+		studySeconds: readLooseNumberField(raw, 'studySeconds'),
+		audios
+	} as AppPodcast
 }
 
 function normalizeLearningHistoryRecord(raw : UTSJSONObject) : LearningHistoryRecord {

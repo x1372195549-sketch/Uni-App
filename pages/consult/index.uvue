@@ -43,7 +43,7 @@
 				</view>
 			</scroll-view>
 
-			<scroll-view class="doctor-panel" scroll-y="true" @scrolltolower="loadMore">
+			<scroll-view class="doctor-panel" scroll-y="true" refresher-enabled="true" :refresher-triggered="isRefreshing" @refresherrefresh="refreshExperts" @scrolltolower="loadMore">
 				<view v-if="isLoading" class="state-wrap">
 					<text class="state-text">{{ loadingText }}</text>
 				</view>
@@ -179,6 +179,7 @@ const page = ref(1)
 const hasMore = ref(true)
 const isLoading = ref(true)
 const isListLoading = ref(false)
+const isRefreshing = ref(false)
 const errorText = ref('')
 
 const safeText = (value : string | null) : string => {
@@ -343,7 +344,7 @@ const loadExperts = (loadMoreValue : boolean) => {
 		page.value = 1
 		hasMore.value = true
 		errorText.value = ''
-		isLoading.value = true
+		isLoading.value = !isRefreshing.value
 	} else {
 		if (!hasMore.value || isListLoading.value) {
 			return
@@ -380,11 +381,13 @@ const loadExperts = (loadMoreValue : boolean) => {
 
 			isLoading.value = false
 			isListLoading.value = false
+			isRefreshing.value = false
 		},
 		(message) => {
 			errorText.value = message.length > 0 ? message : loadFailedText
 			isLoading.value = false
 			isListLoading.value = false
+			isRefreshing.value = false
 		}
 	)
 }
@@ -394,6 +397,15 @@ const handleSearch = () => {
 }
 
 const reloadExperts = () => {
+	loadExperts(false)
+}
+
+const refreshExperts = () => {
+	if (isRefreshing.value) {
+		return
+	}
+	isRefreshing.value = true
+	loadCategories()
 	loadExperts(false)
 }
 

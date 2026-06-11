@@ -359,8 +359,11 @@ function handleSearch() : void {
 }
 
 function handleRefresh() : void {
+	if (isRefreshing.value) {
+		return
+	}
 	isRefreshing.value = true
-	loadKnowledgeList(false)
+	loadCategories()
 }
 
 function loadMore() : void {

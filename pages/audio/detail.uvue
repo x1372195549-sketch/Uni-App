@@ -115,6 +115,10 @@ function formatDuration(seconds : number) : string {
   return minuteText + ':' + secondText
 }
 
+function formatBackendDuration(seconds : number) : string {
+  return seconds > 0 ? formatDuration(seconds) : '--:--'
+}
+
 function updateCatalogDuration(id : string, durationText : string) : void {
   catalogItems.value = catalogItems.value.map((item : CatalogItem) : CatalogItem => {
     if (item.id == id) {
@@ -328,7 +332,7 @@ function applyAudioDetail(detail : AppPodcast) : void {
       return {
         id: String(item.id),
         title: safeText(item.title).length > 0 ? item.title : '音频 ' + String(index + 1),
-        duration: '--:--',
+        duration: formatBackendDuration(item.durationSeconds),
         audioUrl: normalizeAudioPlayUrl(safeText(item.audioUrl))
       }
     })

@@ -1827,16 +1827,15 @@ function fetchCourses(page, size, keyword, success, fail) {
   });
 }
 function fetchCourseDetail(id, success, fail) {
-  request("/api/v1/app/learning/courses/" + id, "GET", null, true, false, (detail) => {
-    success(detail);
+  request("/api/v1/app/learning/courses/" + id, "GET", null, true, false, (raw) => {
+    success(normalizeCourseDetail(raw));
   }, (message) => {
     fail(message);
   });
 }
 function fetchAudioDetail(id, success, fail) {
-  request("/api/v1/app/learning/podcasts/" + id, "GET", null, true, false, (detail) => {
-    detail.coverUrl = normalizeAppUrl(detail.coverUrl);
-    success(detail);
+  request("/api/v1/app/learning/podcasts/" + id, "GET", null, true, false, (raw) => {
+    success(normalizePodcastDetail(raw));
   }, (message) => {
     fail(message);
   });
@@ -2159,10 +2158,56 @@ function readLooseNumberField(raw, key) {
   if (typeof value == "string") {
     const text = value;
     if (text.length > 0) {
-      return Number(text);
+      const directNumber = Number(text);
+      if (!Number.isNaN(directNumber)) {
+        return directNumber;
+      }
     }
   }
   return 0;
+}
+function parseDurationText(value) {
+  const text = value.trim();
+  if (text.length == 0) {
+    return 0;
+  }
+  if (text.indexOf(":") >= 0) {
+    const parts = text.split(":");
+    if (parts.length == 2) {
+      const minute = Number(parts[0]);
+      const second = Number(parts[1]);
+      if (!Number.isNaN(minute) && !Number.isNaN(second)) {
+        return Math.floor(minute * 60 + second);
+      }
+    }
+    if (parts.length == 3) {
+      const hour = Number(parts[0]);
+      const minute = Number(parts[1]);
+      const second = Number(parts[2]);
+      if (!Number.isNaN(hour) && !Number.isNaN(minute) && !Number.isNaN(second)) {
+        return Math.floor(hour * 3600 + minute * 60 + second);
+      }
+    }
+  }
+  if (text.indexOf("分钟") >= 0) {
+    const minuteText = text.replace("分钟", "");
+    const minute = Number(minuteText);
+    if (!Number.isNaN(minute)) {
+      return Math.floor(minute * 60);
+    }
+  }
+  if (text.indexOf("秒") >= 0) {
+    const secondText = text.replace("秒", "");
+    const second = Number(secondText);
+    if (!Number.isNaN(second)) {
+      return Math.floor(second);
+    }
+  }
+  return 0;
+}
+function readDurationTextField(raw, key) {
+  const value = raw[key];
+  return typeof value == "string" ? parseDurationText(value) : 0;
 }
 function readBooleanField(raw, key) {
   const value = raw[key];
@@ -2272,15 +2317,75 @@ function normalizeArticle(raw) {
     publishedAt: readStringField(raw, "publishedAt")
   });
 }
+function readMediaDurationSeconds(raw) {
+  const primary = readLooseNumberField(raw, "durationSeconds");
+  if (primary > 0) {
+    return primary;
+  }
+  const durationSecond = readLooseNumberField(raw, "durationSecond");
+  if (durationSecond > 0) {
+    return durationSecond;
+  }
+  const audioDuration = readLooseNumberField(raw, "audioDurationSeconds");
+  if (audioDuration > 0) {
+    return audioDuration;
+  }
+  const videoDuration = readLooseNumberField(raw, "videoDurationSeconds");
+  if (videoDuration > 0) {
+    return videoDuration;
+  }
+  const durationNumber = readLooseNumberField(raw, "duration");
+  if (durationNumber > 0) {
+    return durationNumber;
+  }
+  const durationText = readDurationTextField(raw, "duration");
+  if (durationText > 0) {
+    return durationText;
+  }
+  const durationLabel = readDurationTextField(raw, "durationText");
+  if (durationLabel > 0) {
+    return durationLabel;
+  }
+  return readDurationTextField(raw, "durationLabel");
+}
 function normalizeLiveSessionVideo(raw) {
   return new LiveSessionVideo$1({
     id: typeof raw["id"] == "number" ? raw["id"] : 0,
     liveSessionId: typeof raw["liveSessionId"] == "number" ? raw["liveSessionId"] : 0,
     title: typeof raw["title"] == "string" ? raw["title"] : "",
     videoUrl: normalizeAppUrl(typeof raw["videoUrl"] == "string" ? raw["videoUrl"] : ""),
-    durationSeconds: typeof raw["durationSeconds"] == "number" ? raw["durationSeconds"] : 0,
+    durationSeconds: readMediaDurationSeconds(raw),
     sortOrder: typeof raw["sortOrder"] == "number" ? raw["sortOrder"] : 0,
     status: typeof raw["status"] == "string" ? raw["status"] : ""
+  });
+}
+function normalizeCourseVideo(raw) {
+  return new CourseVideo$1({
+    id: readNumberField(raw, "id"),
+    courseId: readNumberField(raw, "courseId"),
+    title: readStringField(raw, "title"),
+    videoUrl: normalizeAppUrl(readStringField(raw, "videoUrl")),
+    durationSeconds: readMediaDurationSeconds(raw),
+    sortOrder: readNumberField(raw, "sortOrder")
+  });
+}
+function normalizeCourseDetail(raw) {
+  const videosRaw = raw["videos"];
+  const videos = videosRaw != null && UTS.isInstanceOf(videosRaw, Array) ? videosRaw.map((item) => {
+    return normalizeCourseVideo(item);
+  }) : [];
+  return new Course$1({
+    id: readNumberField(raw, "id"),
+    courseName: readStringField(raw, "courseName"),
+    subtitle: readStringField(raw, "subtitle"),
+    coverUrl: normalizeAppUrl(readStringField(raw, "coverUrl")),
+    lecturerName: readStringField(raw, "lecturerName"),
+    introduction: readStringField(raw, "introduction"),
+    paperId: readNumberField(raw, "paperId"),
+    publishedAt: readStringField(raw, "publishedAt"),
+    progressPercent: readLooseNumberField(raw, "progressPercent"),
+    studySeconds: readLooseNumberField(raw, "studySeconds"),
+    videos
   });
 }
 function normalizeLiveSession(raw) {
@@ -2309,6 +2414,32 @@ function normalizeLiveSession(raw) {
     favoriteCount: typeof raw["favoriteCount"] == "number" ? raw["favoriteCount"] : 0,
     favorited: typeof raw["favorited"] == "boolean" ? raw["favorited"] : false,
     videos
+  });
+}
+function normalizePodcastAudio(raw) {
+  return new AppPodcastAudio$1({
+    id: readNumberField(raw, "id"),
+    podcastId: readNumberField(raw, "podcastId"),
+    title: readStringField(raw, "title"),
+    audioUrl: normalizeAppUrl(readStringField(raw, "audioUrl")),
+    durationSeconds: readMediaDurationSeconds(raw),
+    sortOrder: readNumberField(raw, "sortOrder")
+  });
+}
+function normalizePodcastDetail(raw) {
+  const audiosRaw = raw["audios"];
+  const audios = audiosRaw != null && UTS.isInstanceOf(audiosRaw, Array) ? audiosRaw.map((item) => {
+    return normalizePodcastAudio(item);
+  }) : [];
+  return new AppPodcast$1({
+    id: readNumberField(raw, "id"),
+    title: readStringField(raw, "title"),
+    summary: readStringField(raw, "summary"),
+    coverUrl: normalizeAppUrl(readStringField(raw, "coverUrl")),
+    publishedAt: readStringField(raw, "publishedAt"),
+    progressPercent: readLooseNumberField(raw, "progressPercent"),
+    studySeconds: readLooseNumberField(raw, "studySeconds"),
+    audios
   });
 }
 function normalizeExamQuestionOption(raw) {

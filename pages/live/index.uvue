@@ -45,7 +45,7 @@
       </view>
     </view>
 
-    <scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
+    <scroll-view class="content" scroll-y="true" refresher-enabled="true" :refresher-triggered="isRefreshing" @refresherrefresh="refreshList" @scrolltolower="loadMore">
       <view class="content-shell">
         <view v-if="isLoading" class="skeleton-list">
           <view class="skeleton-card" v-for="item in skeletonItems" :key="item">
@@ -141,7 +141,7 @@
 <script setup lang="uts">
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { fetchLiveSessions, type LiveSession } from '../../utils/auth.uts'
+import { fetchLiveSessions, normalizeAppUrl, type LiveSession } from '../../utils/auth.uts'
 
 type LiveCardItem = {
   id : string
@@ -198,6 +198,7 @@ const page = ref(1)
 const hasMore = ref(true)
 const isLoading = ref(true)
 const isListLoading = ref(false)
+const isRefreshing = ref(false)
 const errorText = ref('')
 const hasLoadedOnce = ref(false)
 const isNavigating = ref(false)
@@ -264,7 +265,7 @@ function mapLiveToCard(item : LiveSession) : LiveCardItem {
     playbackText: safeText(item.playbackUrl).length > 0 ? playbackReadyText : playbackEmptyText,
     views: String(item.browseCount),
     favorites: String(item.favoriteCount),
-    coverUrl: safeText(item.coverUrl),
+    coverUrl: normalizeAppUrl(safeText(item.coverUrl)),
     coverTitle: titleText.length > 0 ? titleText : fallbackCoverTitle,
     coverSubtitle: formatCoverSubtitle(item),
     tags: item.tags != null ? item.tags : []
@@ -276,7 +277,7 @@ function loadLiveItems(loadMoreValue : boolean) : void {
     page.value = 1
     hasMore.value = true
     errorText.value = ''
-    isLoading.value = true
+    isLoading.value = !isRefreshing.value
   } else {
     if (!hasMore.value || isListLoading.value) {
       return
@@ -304,16 +305,26 @@ function loadLiveItems(loadMoreValue : boolean) : void {
       }
       isLoading.value = false
       isListLoading.value = false
+      isRefreshing.value = false
     },
     (message) => {
       errorText.value = message.length > 0 ? message : loadFailedText
       isLoading.value = false
       isListLoading.value = false
+      isRefreshing.value = false
     }
   )
 }
 
 function reloadList() : void {
+  loadLiveItems(false)
+}
+
+function refreshList() : void {
+  if (isRefreshing.value) {
+    return
+  }
+  isRefreshing.value = true
   loadLiveItems(false)
 }
 

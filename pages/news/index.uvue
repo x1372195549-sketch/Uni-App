@@ -46,7 +46,7 @@
 			</view>
 		</view>
 
-		<scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
+		<scroll-view class="content" scroll-y="true" refresher-enabled="true" :refresher-triggered="isRefreshing" @refresherrefresh="refreshList" @scrolltolower="loadMore">
 			<view class="content-shell">
 				<view v-if="isLoading" class="state-wrap">
 					<text class="state-text">{{ loadingText }}</text>
@@ -126,7 +126,7 @@
 
 <script setup lang="uts">
 import { ref } from 'vue'
-import { fetchArticles, type Article } from '../../utils/auth.uts'
+import { fetchArticles, normalizeAppUrl, type Article } from '../../utils/auth.uts'
 
 type ArticleCard = {
 	id : number
@@ -171,6 +171,7 @@ const page = ref(1)
 const hasMore = ref(true)
 const isLoading = ref(true)
 const isListLoading = ref(false)
+const isRefreshing = ref(false)
 const errorText = ref('')
 
 const safeText = (value : string | null) : string => {
@@ -190,7 +191,7 @@ const mapArticle = (item : Article) : ArticleCard => {
 		id: item.id,
 		title: safeText(item.title),
 		summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryText,
-		coverUrl: safeText(item.coverUrl),
+		coverUrl: normalizeAppUrl(safeText(item.coverUrl)),
 		source: safeText(item.source),
 		publishedAt: formatDate(item.publishedAt),
 		viewCount: item.viewCount,
@@ -203,7 +204,7 @@ const loadArticles = (loadMoreValue : boolean) => {
 		page.value = 1
 		hasMore.value = true
 		errorText.value = ''
-		isLoading.value = true
+		isLoading.value = !isRefreshing.value
 	} else {
 		if (!hasMore.value || isListLoading.value) {
 			return
@@ -234,16 +235,26 @@ const loadArticles = (loadMoreValue : boolean) => {
 
 			isLoading.value = false
 			isListLoading.value = false
+			isRefreshing.value = false
 		},
 		(message) => {
 			errorText.value = message.length > 0 ? message : loadFailedText
 			isLoading.value = false
 			isListLoading.value = false
+			isRefreshing.value = false
 		}
 	)
 }
 
 const reloadList = () => {
+	loadArticles(false)
+}
+
+const refreshList = () => {
+	if (isRefreshing.value) {
+		return
+	}
+	isRefreshing.value = true
 	loadArticles(false)
 }
 

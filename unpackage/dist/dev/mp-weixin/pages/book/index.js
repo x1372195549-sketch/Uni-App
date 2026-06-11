@@ -179,8 +179,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       loadBooks(false);
     }
     function handleRefresh() {
+      if (isRefreshing.value) {
+        return null;
+      }
       isRefreshing.value = true;
-      loadBooks(false);
+      utils_auth.fetchBookCategories(1, 100, "", 0, (pageData) => {
+        categories.value = pageData.records != null ? pageData.records : [];
+        loadBooks(false);
+      }, () => {
+        categories.value = [];
+        loadBooks(false);
+      });
     }
     function loadMore() {
       loadBooks(true);

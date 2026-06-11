@@ -100,6 +100,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const hasMore = common_vendor.ref(true);
     const isLoading = common_vendor.ref(true);
     const isListLoading = common_vendor.ref(false);
+    const isRefreshing = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
     const allItems = common_vendor.ref([]);
     const filteredItems = common_vendor.computed(() => {
@@ -367,6 +368,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         hasMore.value = false;
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
         return null;
       }
       const nextItems = new Array();
@@ -387,6 +389,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
             }
             isLoading.value = false;
             isListLoading.value = false;
+            isRefreshing.value = false;
           }
         });
       });
@@ -396,7 +399,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         page.value = 1;
         hasMore.value = true;
         errorText.value = "";
-        isLoading.value = true;
+        isLoading.value = !isRefreshing.value;
       } else {
         if (!hasMore.value || isListLoading.value) {
           return null;
@@ -410,9 +413,17 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         errorText.value = message.length > 0 ? message : loadFailedText;
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       });
     }
     function reloadHistory() {
+      loadHistory(false);
+    }
+    function refreshHistory() {
+      if (isRefreshing.value) {
+        return null;
+      }
+      isRefreshing.value = true;
       loadHistory(false);
     }
     function changeTab(tabKey) {
@@ -538,8 +549,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }), {
         g: errorText.value.length > 0,
         k: filteredItems.value.length == 0,
-        v: common_vendor.o(loadMore),
-        w: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        v: isRefreshing.value,
+        w: common_vendor.o(refreshHistory),
+        x: common_vendor.o(loadMore),
+        y: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

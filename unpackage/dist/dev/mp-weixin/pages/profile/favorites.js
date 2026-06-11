@@ -87,6 +87,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     ];
     const activeTab = common_vendor.ref(TYPE_ALL);
     const isLoading = common_vendor.ref(true);
+    const isRefreshing = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
     const allItems = common_vendor.ref([]);
     const filteredItems = common_vendor.computed(() => {
@@ -327,13 +328,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       success(buildFallbackItem(record));
     };
     const loadFavorites = () => {
-      isLoading.value = true;
+      isLoading.value = !isRefreshing.value;
       errorText.value = "";
       utils_auth.fetchProfileFavorites(1, 50, (pageData) => {
         const records = pageData.records != null ? pageData.records : [];
         if (records.length == 0) {
           allItems.value = [];
           isLoading.value = false;
+          isRefreshing.value = false;
           return null;
         }
         const resultItems = new Array();
@@ -350,6 +352,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
                 return left.timeText > right.timeText ? -1 : 1;
               });
               isLoading.value = false;
+              isRefreshing.value = false;
             }
           });
         });
@@ -357,7 +360,15 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         errorText.value = message.length > 0 ? message : loadFailedText;
         allItems.value = [];
         isLoading.value = false;
+        isRefreshing.value = false;
       }, "occurredAt,desc");
+    };
+    const refreshFavorites = () => {
+      if (isRefreshing.value) {
+        return null;
+      }
+      isRefreshing.value = true;
+      loadFavorites();
     };
     const changeTab = (tabKey) => {
       activeTab.value = tabKey;
@@ -475,7 +486,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }, {
         g: errorText.value.length > 0,
         k: filteredItems.value.length == 0,
-        o: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        o: isRefreshing.value,
+        p: common_vendor.o(refreshFavorites),
+        q: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

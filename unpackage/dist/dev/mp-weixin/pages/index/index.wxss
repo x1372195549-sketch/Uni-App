@@ -247,7 +247,7 @@
 	flex-direction: row;
 }
 .topic-card {
-	width: 280rpx;
+	width: 320rpx;
 	margin-right: 18rpx;
 	padding: 18rpx;
 	border-radius: 20rpx;
@@ -255,7 +255,7 @@
 	box-shadow: 0 8rpx 24rpx rgba(110, 100, 80, 0.06);
 }
 .topic-cover {
-	width: 244rpx;
+	width: 284rpx;
 	height: 156rpx;
 	border-radius: 16rpx;
 	background-color: #f4e4cf;
@@ -275,6 +275,10 @@
 	line-height: 24px;
 	color: #2f2f2f;
 	font-weight: 600;
+	width: 284rpx;
+	height: 96rpx;
+	white-space: normal;
+	overflow: hidden;
 }
 .topic-summary {
 	margin-top: 10rpx;

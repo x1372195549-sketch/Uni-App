@@ -133,7 +133,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         id: String(item.id > 0 ? item.id : index + 1),
         title: titleText.length > 0 ? titleText : "视频 " + String(index + 1),
         videoUrl: utils_auth.normalizeAppUrl(safeText(item.videoUrl)),
-        durationText: "--:--"
+        durationText: formatDuration(item.durationSeconds)
       });
     }
     function goBack() {

@@ -123,6 +123,10 @@ function formatDuration(seconds : number) : string {
   return minuteText + ':' + secondText
 }
 
+function formatBackendDuration(seconds : number) : string {
+  return seconds > 0 ? formatDuration(seconds) : '--:--'
+}
+
 function readDurationFromEvent(event : any) : number {
   if (event == null || event.detail == null) {
     return 0
@@ -286,7 +290,7 @@ function applyCourseDetail(detail : Course) : void {
       return {
         id: String(item.id),
         title: safeText(item.title).length > 0 ? item.title : '课程 ' + String(index + 1),
-        duration: '--:--',
+        duration: formatBackendDuration(item.durationSeconds),
         videoUrl: normalizeAppUrl(safeText(item.videoUrl))
       }
     })

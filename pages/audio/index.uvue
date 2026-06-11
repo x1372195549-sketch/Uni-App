@@ -45,7 +45,7 @@
       </view>
     </view>
 
-    <scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
+    <scroll-view class="content" scroll-y="true" refresher-enabled="true" :refresher-triggered="isRefreshing" @refresherrefresh="refreshList" @scrolltolower="loadMore">
       <view class="content-shell">
         <view v-if="isLoading" class="skeleton-list">
           <view class="skeleton-card" v-for="item in skeletonItems" :key="item">
@@ -132,7 +132,7 @@
 <script setup lang="uts">
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { type AppPodcast } from '../../utils/auth.uts'
+import { normalizeAppUrl, type AppPodcast } from '../../utils/auth.uts'
 
 type AudioCardItem = {
   id : string
@@ -179,6 +179,7 @@ const page = ref(1)
 const hasMore = ref(true)
 const isLoading = ref(true)
 const isListLoading = ref(false)
+const isRefreshing = ref(false)
 const errorText = ref('')
 const hasLoadedOnce = ref(false)
 const isNavigating = ref(false)
@@ -224,7 +225,7 @@ const mapAudioItem = (item : AppPodcast, index : number) : AudioCardItem => {
   const firstAudio = item.audios != null && item.audios.length > 0 ? item.audios[0] : null
   return {
     id: String(item.id),
-    coverUrl: safeText(item.coverUrl),
+    coverUrl: normalizeAppUrl(safeText(item.coverUrl)),
     coverTitle: title.length > 0 ? title : fallbackCoverTitle,
     coverSubtitle: firstAudio != null && safeText(firstAudio.title).length > 0
       ? safeText(firstAudio.title)
@@ -241,7 +242,7 @@ const loadAudioItems = (loadMoreValue : boolean) => {
     page.value = 1
     hasMore.value = true
     errorText.value = ''
-    isLoading.value = true
+    isLoading.value = !isRefreshing.value
   } else {
     if (!hasMore.value || isListLoading.value) {
       return
@@ -284,7 +285,7 @@ const loadAudioItems = (loadMoreValue : boolean) => {
           page.value += 1
         }
       } else {
-        if (!loadMoreValue) {
+        if (!loadMoreValue && !isRefreshing.value) {
           audioItems.value = []
         }
         hasMore.value = false
@@ -294,16 +295,26 @@ const loadAudioItems = (loadMoreValue : boolean) => {
       }
       isLoading.value = false
       isListLoading.value = false
+      isRefreshing.value = false
     },
     fail: () => {
       errorText.value = loadFailedText
       isLoading.value = false
       isListLoading.value = false
+      isRefreshing.value = false
     }
   })
 }
 
 const reloadList = () => {
+  loadAudioItems(false)
+}
+
+const refreshList = () => {
+  if (isRefreshing.value) {
+    return
+  }
+  isRefreshing.value = true
   loadAudioItems(false)
 }
 

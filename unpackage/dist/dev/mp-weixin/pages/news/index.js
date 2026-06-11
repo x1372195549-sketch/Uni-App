@@ -68,6 +68,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const hasMore = common_vendor.ref(true);
     const isLoading = common_vendor.ref(true);
     const isListLoading = common_vendor.ref(false);
+    const isRefreshing = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
@@ -84,7 +85,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         id: item.id,
         title: safeText(item.title),
         summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryText,
-        coverUrl: safeText(item.coverUrl),
+        coverUrl: utils_auth.normalizeAppUrl(safeText(item.coverUrl)),
         source: safeText(item.source),
         publishedAt: formatDate(item.publishedAt),
         viewCount: item.viewCount,
@@ -96,7 +97,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         page.value = 1;
         hasMore.value = true;
         errorText.value = "";
-        isLoading.value = true;
+        isLoading.value = !isRefreshing.value;
       } else {
         if (!hasMore.value || isListLoading.value) {
           return null;
@@ -119,13 +120,22 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       }, (message) => {
         errorText.value = message.length > 0 ? message : loadFailedText;
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       });
     };
     const reloadList = () => {
+      loadArticles(false);
+    };
+    const refreshList = () => {
+      if (isRefreshing.value) {
+        return null;
+      }
+      isRefreshing.value = true;
       loadArticles(false);
     };
     const loadMore = () => {
@@ -236,22 +246,24 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }), {
         y: errorText.value.length > 0,
         C: articleItems.value.length == 0,
-        K: common_vendor.o(loadMore),
-        L: common_assets._imports_1$2,
-        M: common_vendor.t(learningTabText),
-        N: common_assets._imports_2$1,
-        O: common_vendor.t(examTabText),
-        P: common_vendor.o(goExamPage),
-        Q: common_assets._imports_4,
-        R: common_vendor.t(consultTabText),
-        S: common_vendor.o(goConsultPage),
-        T: common_assets._imports_5,
-        U: common_vendor.t(knowledgeTabText),
-        V: common_vendor.o(goKnowledgePage),
-        W: common_assets._imports_6$1,
-        X: common_vendor.t(mineTabText),
-        Y: common_vendor.o(goMinePage),
-        Z: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        K: isRefreshing.value,
+        L: common_vendor.o(refreshList),
+        M: common_vendor.o(loadMore),
+        N: common_assets._imports_1$2,
+        O: common_vendor.t(learningTabText),
+        P: common_assets._imports_2$1,
+        Q: common_vendor.t(examTabText),
+        R: common_vendor.o(goExamPage),
+        S: common_assets._imports_4,
+        T: common_vendor.t(consultTabText),
+        U: common_vendor.o(goConsultPage),
+        V: common_assets._imports_5,
+        W: common_vendor.t(knowledgeTabText),
+        X: common_vendor.o(goKnowledgePage),
+        Y: common_assets._imports_6$1,
+        Z: common_vendor.t(mineTabText),
+        aa: common_vendor.o(goMinePage),
+        ab: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

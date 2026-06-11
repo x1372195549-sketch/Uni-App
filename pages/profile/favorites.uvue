@@ -20,7 +20,7 @@
 			</view>
 		</view>
 
-		<scroll-view class="list-scroll" scroll-y="true">
+		<scroll-view class="list-scroll" scroll-y="true" refresher-enabled="true" :refresher-triggered="isRefreshing" @refresherrefresh="refreshFavorites">
 			<view v-if="isLoading" class="state-wrap">
 				<text class="state-text">{{ loadingText }}</text>
 			</view>
@@ -137,6 +137,7 @@ const tabs : FavoriteTab[] = [
 
 const activeTab = ref(TYPE_ALL)
 const isLoading = ref(true)
+const isRefreshing = ref(false)
 const errorText = ref('')
 const allItems = ref<FavoriteDisplayItem[]>([])
 
@@ -424,7 +425,7 @@ const enrichFavoriteItem = (
 }
 
 const loadFavorites = () => {
-	isLoading.value = true
+	isLoading.value = !isRefreshing.value
 	errorText.value = ''
 
 	fetchProfileFavorites(
@@ -435,6 +436,7 @@ const loadFavorites = () => {
 			if (records.length == 0) {
 				allItems.value = []
 				isLoading.value = false
+				isRefreshing.value = false
 				return
 			}
 
@@ -453,6 +455,7 @@ const loadFavorites = () => {
 							return left.timeText > right.timeText ? -1 : 1
 						})
 						isLoading.value = false
+						isRefreshing.value = false
 					}
 				})
 			})
@@ -461,9 +464,18 @@ const loadFavorites = () => {
 			errorText.value = message.length > 0 ? message : loadFailedText
 			allItems.value = []
 			isLoading.value = false
+			isRefreshing.value = false
 		},
 		'occurredAt,desc'
 	)
+}
+
+const refreshFavorites = () => {
+	if (isRefreshing.value) {
+		return
+	}
+	isRefreshing.value = true
+	loadFavorites()
 }
 
 const changeTab = (tabKey : string) => {

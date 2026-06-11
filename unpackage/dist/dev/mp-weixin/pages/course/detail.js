@@ -55,6 +55,9 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       const secondText = second < 10 ? "0" + String(second) : String(second);
       return minuteText + ":" + secondText;
     }
+    function formatBackendDuration(seconds) {
+      return seconds > 0 ? formatDuration(seconds) : "--:--";
+    }
     function readDurationFromEvent(event = null) {
       if (event == null || event.detail == null) {
         return 0;
@@ -192,7 +195,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           return new CatalogItem({
             id: String(item.id),
             title: safeText(item.title).length > 0 ? item.title : "课程 " + String(index + 1),
-            duration: "--:--",
+            duration: formatBackendDuration(item.durationSeconds),
             videoUrl: utils_auth.normalizeAppUrl(safeText(item.videoUrl))
           });
         });

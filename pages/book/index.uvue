@@ -364,8 +364,24 @@ function handleSearch() : void {
 }
 
 function handleRefresh() : void {
+	if (isRefreshing.value) {
+		return
+	}
 	isRefreshing.value = true
-	loadBooks(false)
+	fetchBookCategories(
+		1,
+		100,
+		'',
+		0,
+		(pageData) => {
+			categories.value = pageData.records != null ? pageData.records : []
+			loadBooks(false)
+		},
+		() => {
+			categories.value = []
+			loadBooks(false)
+		}
+	)
 }
 
 function loadMore() : void {

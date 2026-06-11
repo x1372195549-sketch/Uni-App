@@ -33,7 +33,7 @@
 			</view>
 		</view>
 
-		<scroll-view class="content" scroll-y="true">
+		<scroll-view class="content" scroll-y="true" refresher-enabled="true" :refresher-triggered="isRefreshing" @refresherrefresh="refreshList">
 			<view class="content-shell">
 				<swiper
 					v-if="heroSlides.length > 0"
@@ -164,6 +164,7 @@
 import { ref } from 'vue'
 import {
 	fetchAppHome,
+	normalizeAppUrl,
 	type AppHomeItem,
 	type AppHomeSection
 } from '../../utils/auth.uts'
@@ -240,6 +241,7 @@ const topicItems = ref<HomeTopicCard[]>([])
 const recommendItems = ref<HomeRecommendItem[]>([])
 const heroSlides = ref<HomeHeroSlide[]>([])
 const isNavigating = ref(false)
+const isRefreshing = ref(false)
 
 const safeText = (value : string | null) : string => {
 	return value == null || value.length == 0 ? '' : value
@@ -346,7 +348,7 @@ const mapRecommendItem = (item : AppHomeItem) : HomeRecommendItem => {
 		typeLabel: label,
 		title: safeText(item.title),
 		summary: summary.length > 0 ? summary : fallbackSummaryByResourceType(type),
-		coverUrl: safeText(item.coverUrl)
+		coverUrl: normalizeAppUrl(safeText(item.coverUrl))
 	}
 }
 
@@ -358,7 +360,7 @@ const mapTopicItem = (item : AppHomeItem) : HomeTopicCard => {
 		resourceId: safeNumber(item.targetId),
 		title: safeText(item.title),
 		summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackTopicSummary,
-		coverUrl: safeText(item.coverUrl),
+		coverUrl: normalizeAppUrl(safeText(item.coverUrl)),
 		tags: [],
 		viewCount: 0,
 		favoriteCount: 0
@@ -374,7 +376,7 @@ const mapHeroSlide = (item : AppHomeItem) : HomeHeroSlide => {
 		kicker: labelByResourceType(type, safeText(item.contentTypeLabel)),
 		title: safeText(item.title),
 		subtitle: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryByResourceType(type),
-		coverUrl: safeText(item.coverUrl),
+		coverUrl: normalizeAppUrl(safeText(item.coverUrl)),
 		actionText: actionTextByResourceType(type)
 	}
 }
@@ -454,13 +456,23 @@ const loadHomeData = () => {
 			heroSlides.value = heroSource.slice(0, 5).map((item : AppHomeItem) : HomeHeroSlide => {
 				return mapHeroSlide(item)
 			})
+			isRefreshing.value = false
 		},
 		() => {
 			recommendItems.value = []
 			topicItems.value = []
 			heroSlides.value = []
+			isRefreshing.value = false
 		}
 	)
+}
+
+const refreshList = () => {
+	if (isRefreshing.value) {
+		return
+	}
+	isRefreshing.value = true
+	loadHomeData()
 }
 
 const goHeroDetail = (item : HomeHeroSlide) => {
@@ -881,7 +893,7 @@ loadHomeData()
 }
 
 .topic-card {
-	width: 280rpx;
+	width: 320rpx;
 	margin-right: 18rpx;
 	padding: 18rpx;
 	border-radius: 20rpx;
@@ -890,7 +902,7 @@ loadHomeData()
 }
 
 .topic-cover {
-	width: 244rpx;
+	width: 284rpx;
 	height: 156rpx;
 	border-radius: 16rpx;
 	background-color: #f4e4cf;
@@ -913,6 +925,10 @@ loadHomeData()
 	line-height: 24px;
 	color: #2f2f2f;
 	font-weight: 600;
+	width: 284rpx;
+	height: 96rpx;
+	white-space: normal;
+	overflow: hidden;
 }
 
 .topic-summary {

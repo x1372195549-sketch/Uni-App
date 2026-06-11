@@ -71,6 +71,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const hasMore = common_vendor.ref(true);
     const isLoading = common_vendor.ref(true);
     const isListLoading = common_vendor.ref(false);
+    const isRefreshing = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
@@ -81,7 +82,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         title: safeText(item.title),
         summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryText,
         learningRequirements: safeText(item.learningRequirements).length > 0 ? safeText(item.learningRequirements) : fallbackRequirementText,
-        coverUrl: safeText(item.coverUrl),
+        coverUrl: utils_auth.normalizeAppUrl(safeText(item.coverUrl)),
         tags: item.tags != null ? item.tags.slice(0, 3) : [],
         viewCount: item.viewCount,
         favoriteCount: item.favoriteCount
@@ -92,7 +93,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         page.value = 1;
         hasMore.value = true;
         errorText.value = "";
-        isLoading.value = true;
+        isLoading.value = !isRefreshing.value;
       } else {
         if (!hasMore.value || isListLoading.value) {
           return null;
@@ -115,13 +116,22 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       }, (message) => {
         errorText.value = message.length > 0 ? message : loadFailedText;
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       });
     };
     const reloadList = () => {
+      loadTopics(false);
+    };
+    const refreshList = () => {
+      if (isRefreshing.value) {
+        return null;
+      }
+      isRefreshing.value = true;
       loadTopics(false);
     };
     const loadMore = () => {
@@ -235,22 +245,24 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }), {
         y: errorText.value.length > 0,
         C: topicItems.value.length == 0,
-        L: common_vendor.o(loadMore),
-        M: common_assets._imports_1$2,
-        N: common_vendor.t(learningTabText),
-        O: common_assets._imports_2$1,
-        P: common_vendor.t(examTabText),
-        Q: common_vendor.o(goExamPage),
-        R: common_assets._imports_4,
-        S: common_vendor.t(consultTabText),
-        T: common_vendor.o(goConsultPage),
-        U: common_assets._imports_5,
-        V: common_vendor.t(knowledgeTabText),
-        W: common_vendor.o(goKnowledgePage),
-        X: common_assets._imports_6$1,
-        Y: common_vendor.t(mineTabText),
-        Z: common_vendor.o(goMinePage),
-        aa: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        L: isRefreshing.value,
+        M: common_vendor.o(refreshList),
+        N: common_vendor.o(loadMore),
+        O: common_assets._imports_1$2,
+        P: common_vendor.t(learningTabText),
+        Q: common_assets._imports_2$1,
+        R: common_vendor.t(examTabText),
+        S: common_vendor.o(goExamPage),
+        T: common_assets._imports_4,
+        U: common_vendor.t(consultTabText),
+        V: common_vendor.o(goConsultPage),
+        W: common_assets._imports_5,
+        X: common_vendor.t(knowledgeTabText),
+        Y: common_vendor.o(goKnowledgePage),
+        Z: common_assets._imports_6$1,
+        aa: common_vendor.t(mineTabText),
+        ab: common_vendor.o(goMinePage),
+        ac: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

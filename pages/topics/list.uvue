@@ -46,7 +46,7 @@
 			</view>
 		</view>
 
-		<scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
+		<scroll-view class="content" scroll-y="true" refresher-enabled="true" :refresher-triggered="isRefreshing" @refresherrefresh="refreshList" @scrolltolower="loadMore">
 			<view class="content-shell">
 				<view v-if="isLoading" class="state-wrap">
 					<text class="state-text">{{ loadingText }}</text>
@@ -125,7 +125,7 @@
 
 <script setup lang="uts">
 import { ref } from 'vue'
-import { fetchTopicCards, type TopicCard } from '../../utils/auth.uts'
+import { fetchTopicCards, normalizeAppUrl, type TopicCard } from '../../utils/auth.uts'
 
 type TopicListItem = {
 	id : number
@@ -173,6 +173,7 @@ const page = ref(1)
 const hasMore = ref(true)
 const isLoading = ref(true)
 const isListLoading = ref(false)
+const isRefreshing = ref(false)
 const errorText = ref('')
 
 const safeText = (value : string | null) : string => {
@@ -185,7 +186,7 @@ const mapTopic = (item : TopicCard) : TopicListItem => {
 		title: safeText(item.title),
 		summary: safeText(item.summary).length > 0 ? safeText(item.summary) : fallbackSummaryText,
 		learningRequirements: safeText(item.learningRequirements).length > 0 ? safeText(item.learningRequirements) : fallbackRequirementText,
-		coverUrl: safeText(item.coverUrl),
+		coverUrl: normalizeAppUrl(safeText(item.coverUrl)),
 		tags: item.tags != null ? item.tags.slice(0, 3) : [],
 		viewCount: item.viewCount,
 		favoriteCount: item.favoriteCount
@@ -197,7 +198,7 @@ const loadTopics = (loadMoreValue : boolean) => {
 		page.value = 1
 		hasMore.value = true
 		errorText.value = ''
-		isLoading.value = true
+		isLoading.value = !isRefreshing.value
 	} else {
 		if (!hasMore.value || isListLoading.value) {
 			return
@@ -228,16 +229,26 @@ const loadTopics = (loadMoreValue : boolean) => {
 
 			isLoading.value = false
 			isListLoading.value = false
+			isRefreshing.value = false
 		},
 		(message) => {
 			errorText.value = message.length > 0 ? message : loadFailedText
 			isLoading.value = false
 			isListLoading.value = false
+			isRefreshing.value = false
 		}
 	)
 }
 
 const reloadList = () => {
+	loadTopics(false)
+}
+
+const refreshList = () => {
+	if (isRefreshing.value) {
+		return
+	}
+	isRefreshing.value = true
 	loadTopics(false)
 }
 

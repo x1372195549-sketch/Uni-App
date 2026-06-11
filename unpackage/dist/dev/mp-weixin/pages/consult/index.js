@@ -96,6 +96,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const hasMore = common_vendor.ref(true);
     const isLoading = common_vendor.ref(true);
     const isListLoading = common_vendor.ref(false);
+    const isRefreshing = common_vendor.ref(false);
     const errorText = common_vendor.ref("");
     const safeText = (value = null) => {
       return value == null || value.length == 0 ? "" : value;
@@ -239,7 +240,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         page.value = 1;
         hasMore.value = true;
         errorText.value = "";
-        isLoading.value = true;
+        isLoading.value = !isRefreshing.value;
       } else {
         if (!hasMore.value || isListLoading.value) {
           return null;
@@ -266,16 +267,26 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
         }
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       }, (message) => {
         errorText.value = message.length > 0 ? message : loadFailedText;
         isLoading.value = false;
         isListLoading.value = false;
+        isRefreshing.value = false;
       });
     };
     const handleSearch = () => {
       loadExperts(false);
     };
     const reloadExperts = () => {
+      loadExperts(false);
+    };
+    const refreshExperts = () => {
+      if (isRefreshing.value) {
+        return null;
+      }
+      isRefreshing.value = true;
+      loadCategories();
       loadExperts(false);
     };
     const selectCategory = (item) => {
@@ -407,24 +418,26 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }), {
         q: errorText.value.length > 0,
         v: expertItems.value.length == 0,
-        C: common_vendor.o(loadMore),
-        D: common_vendor.t(myQuestionsText),
-        E: common_vendor.o(goMyQuestions),
-        F: common_assets._imports_2,
-        G: common_vendor.t(learningText),
-        H: common_vendor.o(goLearningPage),
-        I: common_assets._imports_2$1,
-        J: common_vendor.t(examText),
-        K: common_vendor.o(goExamPage),
-        L: common_assets._imports_3,
-        M: common_vendor.t(consultText),
-        N: common_assets._imports_5,
-        O: common_vendor.t(knowledgeText),
-        P: common_vendor.o(goKnowledgePage),
-        Q: common_assets._imports_6$1,
-        R: common_vendor.t(mineText),
-        S: common_vendor.o(goMinePage),
-        T: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
+        C: isRefreshing.value,
+        D: common_vendor.o(refreshExperts),
+        E: common_vendor.o(loadMore),
+        F: common_vendor.t(myQuestionsText),
+        G: common_vendor.o(goMyQuestions),
+        H: common_assets._imports_2,
+        I: common_vendor.t(learningText),
+        J: common_vendor.o(goLearningPage),
+        K: common_assets._imports_2$1,
+        L: common_vendor.t(examText),
+        M: common_vendor.o(goExamPage),
+        N: common_assets._imports_3,
+        O: common_vendor.t(consultText),
+        P: common_assets._imports_5,
+        Q: common_vendor.t(knowledgeText),
+        R: common_vendor.o(goKnowledgePage),
+        S: common_assets._imports_6$1,
+        T: common_vendor.t(mineText),
+        U: common_vendor.o(goMinePage),
+        V: common_vendor.sei(common_vendor.gei(_ctx, ""), "view")
       });
       return __returned__;
     };

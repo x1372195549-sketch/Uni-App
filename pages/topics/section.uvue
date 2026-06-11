@@ -7,7 +7,7 @@
 			<text class="header-title">{{ titleText }}</text>
 		</view>
 
-		<scroll-view class="content" scroll-y="true" @scrolltolower="loadMore">
+		<scroll-view class="content" scroll-y="true" refresher-enabled="true" :refresher-triggered="isRefreshing" @refresherrefresh="refreshList" @scrolltolower="loadMore">
 			<view class="content-shell">
 				<view v-if="isLoading" class="state-wrap">
 					<text class="state-text">{{ loadingText }}</text>
@@ -81,6 +81,7 @@ const page = ref(1)
 const hasMore = ref(true)
 const isLoading = ref(true)
 const isListLoading = ref(false)
+const isRefreshing = ref(false)
 const errorText = ref('')
 
 const safeText = (value : string | null) : string => {
@@ -134,7 +135,7 @@ const loadResources = (loadMoreValue : boolean) => {
 		page.value = 1
 		hasMore.value = true
 		errorText.value = ''
-		isLoading.value = true
+		isLoading.value = !isRefreshing.value
 	} else {
 		if (!hasMore.value || isListLoading.value) {
 			return
@@ -160,16 +161,26 @@ const loadResources = (loadMoreValue : boolean) => {
 			}
 			isLoading.value = false
 			isListLoading.value = false
+			isRefreshing.value = false
 		},
 		(message) => {
 			errorText.value = message.length > 0 ? message : loadFailedText
 			isLoading.value = false
 			isListLoading.value = false
+			isRefreshing.value = false
 		}
 	)
 }
 
 const reloadList = () => {
+	loadResources(false)
+}
+
+const refreshList = () => {
+	if (isRefreshing.value) {
+		return
+	}
+	isRefreshing.value = true
 	loadResources(false)
 }
 

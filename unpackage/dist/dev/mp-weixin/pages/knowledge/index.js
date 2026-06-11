@@ -220,8 +220,11 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       loadKnowledgeList(false);
     }
     function handleRefresh() {
+      if (isRefreshing.value) {
+        return null;
+      }
       isRefreshing.value = true;
-      loadKnowledgeList(false);
+      loadCategories();
     }
     function loadMore() {
       loadKnowledgeList(true);
